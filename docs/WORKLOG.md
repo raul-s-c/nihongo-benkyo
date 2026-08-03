@@ -419,3 +419,10 @@ Se genero una bateria original de 1.500 frases de traduccion: 100 N5, 200 N4, 30
 - Las tarjetas de la radial muestran y explican al mantener pulsado la meta orientativa del nivel, el numero de elementos disponibles en el catalogo, cuantos han aparecido ya en ejercicios y cuantos quedan por introducir. No se confunde ese contador con dominio linguistico.
 - La ficha de cada habilidad separa ahora la practica confirmada de ejercicios, los terminos vistos y los terminos pendientes de introducir. La lista pasa a llamarse "Proximos terminos" y declara que es una muestra de 28 elementos para no sugerir que se han cargado todos en pantalla.
 - Se incorporo una seccion "Hoy en esta habilidad". Indica las tareas previstas hoy para esa arista o, si no hay ninguna, explica por que y remite de forma clara al siguiente contenido disponible.
+
+# 2026-08-03 - Replanteo de experiencia movil
+
+- La navegacion se reorganizo alrededor de cuatro destinos claros: Hoy, Practicar, Progreso y Ajustes. `Hoy` se limita a la siguiente accion y a la cola del dia; ya no intercala radar, calendario, analitica ni Renshuu.
+- `Progreso` concentra el esfuerzo y XP, el calendario desplegable de los ultimos 35 dias, la integracion de Renshuu, la ruta posterior, la preparacion JLPT, la matriz y las estadisticas. Cada dato mantiene su funcionalidad anterior, pero ya no compite con la accion principal.
+- El plan diario pasa de tarjetas pesadas a filas de lista. Resume el bloque actual y conserva acciones para abrir, sustituir o saltar una tarea sin aumentar el ruido visual.
+- Se adopto una base visual mas neutra y legible: fondo gris claro, superficies blancas, bordes finos, acento teal y navegacion inferior con seleccion discreta. Se redujeron sombras, marcos y textos explicativos repetidos.

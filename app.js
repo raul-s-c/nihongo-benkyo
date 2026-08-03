@@ -4,7 +4,7 @@ const GITHUB_SYNC_KEY = "nihongo-benkyo-github-sync-v1";
 const GITHUB_GIST_DESCRIPTION = "Nihongo Benkyo private progress sync";
 const GITHUB_GIST_FILE = "nihongo-benkyo-progress.json";
 const GITHUB_AUTH_PROXY_URL = "https://nihongo-benkyo-auth.raul-nihongo.workers.dev";
-const APP_VERSION = "0.9.2";
+const APP_VERSION = "0.10.0";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -1313,10 +1313,7 @@ function renderStudyActivity() {
   const start = new Date();
   start.setHours(0, 0, 0, 0);
   start.setDate(start.getDate() - 34);
-  const monthFormatter = new Intl.DateTimeFormat("es-ES", { month: "long", year: "numeric" });
-  title.textContent = monthFormatter.format(start) === monthFormatter.format(new Date())
-    ? monthFormatter.format(new Date())
-    : `${monthFormatter.format(start)} - ${monthFormatter.format(new Date())}`;
+  title.textContent = "Ultimos 35 dias";
   calendar.innerHTML = ["L", "M", "X", "J", "V", "S", "D"].map((day) => `<span class="calendar-weekday">${day}</span>`).join("");
   const leading = (start.getDay() + 6) % 7;
   calendar.innerHTML += Array.from({ length: leading }, () => '<span class="calendar-empty"></span>').join("");
@@ -1731,12 +1728,12 @@ function renderDailyPlan() {
   document.querySelector("#planCount").textContent = completedCount + " / " + activeIds.length;
   const focusText = { balanced: "equilibrar tus habilidades", work: "situaciones de empresa", daily: "vida diaria", writing: "producción escrita", grammar: "gramática y partículas" }[state.settings.studyFocus] || "equilibrar tus habilidades";
   const themeText = themes[state.settings.themeFocus || "balanced"] || themes.balanced;
-  document.querySelector("#planReason").textContent = "Plan para " + focusText + ", con temática " + themeText.toLowerCase() + " y ajustado a tu objetivo " + state.settings.targetJlpt + ".";
+  document.querySelector("#planReason").textContent = "Plan adaptado a " + focusText + ", " + themeText.toLowerCase() + " y " + state.settings.targetJlpt + ".";
   const currentStage = getCurrentCurriculumStage();
   const stageEvidence = currentStage ? getStageEvidence(currentStage) : null;
   document.querySelector("#curriculumStatus").textContent = currentStage
-    ? `Bloque actual: ${currentStage.label} (${stageEvidence.confirmedCount}/${currentStage.exerciseIds.length} confirmados). ${stageEvidence.pendingReviews.length ? `${stageEvidence.pendingReviews.length} repaso${stageEvidence.pendingReviews.length === 1 ? "" : "s"} pendiente${stageEvidence.pendingReviews.length === 1 ? "" : "s"}.` : "Al completar el bloque, se desbloquea el siguiente."}`
-    : "Has terminado los bloques disponibles para tu objetivo. Sube el objetivo JLPT para continuar con el siguiente nivel o usa los repasos pendientes.";
+    ? `${currentStage.label} · ${stageEvidence.confirmedCount}/${currentStage.exerciseIds.length} confirmados${stageEvidence.pendingReviews.length ? ` · ${stageEvidence.pendingReviews.length} repaso${stageEvidence.pendingReviews.length === 1 ? "" : "s"}` : ""}`
+    : "Ruta completada para este objetivo. Sube el nivel JLPT o continua con repasos.";
   document.querySelector("#planSteps").innerHTML = activeIds.map((id, index) => {
     const item = getPlanItem(id);
     const done = plan.completedIds.includes(id);
@@ -1774,6 +1771,28 @@ function renderDailyPlan() {
   }));
   document.querySelectorAll("[data-replace-exercise]").forEach((button) => button.addEventListener("click", () => replacePlanExercise(button.dataset.replaceExercise)));
   document.querySelectorAll("[data-skip-exercise]").forEach((button) => button.addEventListener("click", () => skipPlanExercise(button.dataset.skipExercise)));
+  renderTodayFocus();
+}
+
+function renderTodayFocus() {
+  const activeIds = state.dailyPlan.exerciseIds.filter((id) => isPlanExerciseActive(id));
+  const next = getPlanItem(activeIds[0]);
+  const title = document.querySelector("#todayTitle");
+  const summary = document.querySelector("#focusSummary");
+  const meta = document.querySelector("#focusMeta");
+  const button = document.querySelector("#startSessionButton");
+  if (!next) {
+    title.textContent = "Sesion completada";
+    summary.textContent = "No tienes tareas activas en el plan de hoy. Puedes anadir una recomendacion o elegir una practica libre.";
+    meta.textContent = "Plan de hoy terminado";
+    button.textContent = "Elegir practica";
+    return;
+  }
+  const completed = state.dailyPlan.completedIds.filter((id) => !state.dailyPlan.skippedIds.includes(id)).length;
+  title.textContent = next.type;
+  summary.textContent = getPlanRecommendation(next);
+  meta.textContent = `${next.level} · ${themes[next.theme] || "Vida diaria"} · ${completed + 1} de ${completed + activeIds.length}`;
+  button.textContent = completed ? "Continuar" : "Empezar";
 }
 
 function renderExercise() {

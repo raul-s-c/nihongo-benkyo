@@ -32,12 +32,13 @@
         <section class="view active" id="view-today" aria-labelledby="todayTitle">
           <div class="focus-panel">
             <div>
-              <p class="eyebrow">Sesion de hoy</p>
-              <h2 id="todayTitle">10 minutos con intencion</h2>
-              <p class="muted">Ejercicios cortos, correccion flexible y progreso ligado a JLPT y vida laboral.</p>
+              <p class="eyebrow">Siguiente paso</p>
+              <h2 id="todayTitle">Prepara tu sesion</h2>
+              <p class="muted" id="focusSummary">Ejercicios cortos, correccion flexible y progreso ligado a JLPT y vida laboral.</p>
+              <p class="focus-meta" id="focusMeta"></p>
             </div>
             <div class="focus-actions">
-              <button class="primary-action" id="startSessionButton" data-tooltip="Abre la practica recomendada para tu sesion de hoy.">Empezar</button>
+              <button class="primary-action" id="startSessionButton" data-tooltip="Abre la siguiente practica recomendada para tu sesion de hoy.">Continuar</button>
               <button class="ghost-button hidden" id="installAppButton" data-tooltip="Pide al navegador instalar esta app en la pantalla de inicio. Solo aparece cuando el navegador lo permite.">Instalar</button>
             </div>
           </div>
@@ -56,6 +57,17 @@
             <button class="ghost-button plan-add-button" id="addPlanExerciseButton" data-tooltip="Anade una recomendacion extra basada en tus puntos debiles, repasos pendientes y objetivo. No cambia tu progreso.">+ Anadir recomendacion</button>
           </section>
 
+        </section>
+
+        <section class="view" id="view-progress" aria-labelledby="progressTitle">
+          <div class="section-head progress-heading">
+            <div>
+              <p class="eyebrow">Tu aprendizaje</p>
+              <h2 id="progressTitle">Progreso</h2>
+            </div>
+            <button class="ghost-button danger" id="resetProgressButton" data-tooltip="Pide confirmacion y pone a cero solo los puntos propios de Nihongo Benkyo. No cambia Renshuu ni tus ajustes.">Reiniciar</button>
+          </div>
+
           <section class="activity-panel" aria-labelledby="activityTitle">
             <div class="section-head compact-head">
               <div>
@@ -66,8 +78,10 @@
             </div>
             <div class="activity-summary" id="activitySummary"></div>
             <p class="muted" id="activityStatus"></p>
-            <div class="calendar-head"><strong id="activityCalendarTitle"></strong><small>XP por dia</small></div>
-            <div class="activity-calendar" id="activityCalendar" aria-label="Calendario de actividad de estudio"></div>
+            <details class="calendar-disclosure">
+              <summary><strong id="activityCalendarTitle"></strong><small>Ver calendario</small></summary>
+              <div class="activity-calendar" id="activityCalendar" aria-label="Calendario de actividad de estudio"></div>
+            </details>
           </section>
 
           <section class="renshuu-panel" aria-labelledby="renshuuTitle">
@@ -117,6 +131,20 @@
           </div>
 
           <div class="skill-grid" id="skillGrid"></div>
+          <p class="matrix-intro">Registra evidencia de practica dentro de esta app, no una estimacion directa de tu japones. Al finalizar un ejercicio, <strong>Necesito repasarlo</strong> suma 1 punto a sus habilidades; <strong>Lo he entendido</strong> suma de 2 a 4 segun los elementos de la respuesta modelo reconocidos. Los ejercicios abiertos suman 2 al confirmarlos. Renshuu se muestra aparte y nunca se mezcla aqui.</p>
+          <p class="muted" id="matrixStatus"></p>
+          <div class="matrix" id="progressMatrix"></div>
+          <section class="analytics-panel" aria-labelledby="analyticsTitle">
+            <div class="section-head compact-head">
+              <div>
+                <p class="eyebrow">Evidencia de practica</p>
+                <h3 id="analyticsTitle">Estadisticas</h3>
+              </div>
+            </div>
+            <p class="muted" id="analyticsSummary"></p>
+            <div class="analytics-cards" id="analyticsCards"></div>
+            <div class="mastery-map" id="masteryMap"></div>
+          </section>
         </section>
 
         <section class="view" id="view-skill-detail" aria-labelledby="skillDetailTitle">
@@ -250,27 +278,6 @@
           </section>
         </section>
 
-        <section class="view" id="view-progress" aria-labelledby="progressTitle">
-          <div class="section-head">
-            <h2 id="progressTitle">Matriz</h2>
-            <button class="ghost-button danger" id="resetProgressButton" data-tooltip="Pide confirmacion y pone a cero solo los puntos propios de Nihongo Benkyo. No cambia Renshuu ni tus ajustes.">Reiniciar</button>
-          </div>
-          <p class="matrix-intro">Registra evidencia de practica dentro de esta app, no una estimacion directa de tu japones. Al finalizar un ejercicio, <strong>Necesito repasarlo</strong> suma 1 punto a sus habilidades; <strong>Lo he entendido</strong> suma de 2 a 4 segun los elementos de la respuesta modelo reconocidos. Los ejercicios abiertos suman 2 al confirmarlos. Renshuu se muestra aparte y nunca se mezcla aqui.</p>
-          <p class="muted" id="matrixStatus"></p>
-          <div class="matrix" id="progressMatrix"></div>
-          <section class="analytics-panel" aria-labelledby="analyticsTitle">
-            <div class="section-head compact-head">
-              <div>
-                <p class="eyebrow">Evidencia de practica</p>
-                <h3 id="analyticsTitle">Estadisticas</h3>
-              </div>
-            </div>
-            <p class="muted" id="analyticsSummary"></p>
-            <div class="analytics-cards" id="analyticsCards"></div>
-            <div class="mastery-map" id="masteryMap"></div>
-          </section>
-        </section>
-
         <section class="view" id="view-settings" aria-labelledby="settingsTitle">
           <h2 id="settingsTitle">Ajustes</h2>
           <label class="field">
@@ -359,7 +366,7 @@
       <nav class="bottom-nav" aria-label="Navegacion principal">
         <button class="active" data-view="today" data-tooltip="Vuelve al resumen diario y radar JLPT.">Hoy</button>
         <button data-view="practice" data-tooltip="Abre los ejercicios de practica.">Practicar</button>
-        <button data-view="progress" data-tooltip="Muestra el progreso guardado por habilidad.">Matriz</button>
+        <button data-view="progress" data-tooltip="Muestra tu avance, calendario, JLPT, Renshuu y estadisticas.">Progreso</button>
         <button data-view="settings" data-tooltip="Abre preferencias, perfiles y Renshuu.">Ajustes</button>
       </nav>
     </div>
@@ -376,10 +383,10 @@
     </div>
 
     <script src="secrets.local.js"></script>
-    <script src="translation-battery.js?v=0.9.2"></script>
-    <script src="content.js?v=0.9.2"></script>
-    <script src="data/jlpt-vocabulary.js?v=0.9.2"></script>
-    <script src="data/jlpt-kanji.js?v=0.9.2"></script>
-    <script src="app.js?v=0.9.2"></script>
+    <script src="translation-battery.js?v=0.10.0"></script>
+    <script src="content.js?v=0.10.0"></script>
+    <script src="data/jlpt-vocabulary.js?v=0.10.0"></script>
+    <script src="data/jlpt-kanji.js?v=0.10.0"></script>
+    <script src="app.js?v=0.10.0"></script>
   </body>
 </html>

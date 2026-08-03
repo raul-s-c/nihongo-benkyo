@@ -1387,6 +1387,87 @@ textarea {
   background: var(--red);
 }
 
+/* Version 0.10: a quieter mobile hierarchy built around the next action. */
+:root {
+  --paper: #f5f5f7;
+  --panel: #ffffff;
+  --ink: #1d1d1f;
+  --muted: #6e6e73;
+  --line: #d2d2d7;
+  --teal: #007a70;
+  --green: #26834a;
+  --red: #b6403a;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.app-shell { max-width: 600px; padding: env(safe-area-inset-top) 20px calc(90px + env(safe-area-inset-bottom)); }
+.topbar { padding: 16px 0 22px; }
+.topbar h1 { font-size: 23px; letter-spacing: 0; }
+.topbar .eyebrow { display: none; }
+.icon-button { width: 40px; height: 40px; border: 1px solid var(--line); box-shadow: none; }
+
+.focus-panel, .daily-plan, .activity-panel, .renshuu-panel, .bridge-panel, .analytics-panel, .dictionary-panel { box-shadow: none; border: 0; border-radius: 0; }
+.focus-panel { display: grid; gap: 20px; padding: 8px 0 24px; background: transparent; border-bottom: 1px solid var(--line); }
+.focus-panel h2 { max-width: 14ch; font-size: 32px; line-height: 1.08; }
+.focus-panel .muted { margin-top: 9px; font-size: 15px; }
+.focus-meta { margin-top: 12px; color: var(--muted); font-size: 13px; font-weight: 700; }
+.focus-actions { justify-content: stretch; }
+.focus-actions .primary-action { flex: 1; }
+.primary-action { min-height: 50px; border-radius: 10px; background: var(--teal); box-shadow: none; }
+.ghost-button { min-height: 40px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); box-shadow: none; }
+
+.daily-plan { margin-top: 0; padding: 22px 0 0; background: transparent; }
+.daily-plan .eyebrow, .progress-heading .eyebrow, .section-head .eyebrow { color: var(--muted); }
+.daily-plan .section-head { margin-bottom: 6px; }
+#planReason { display: none; }
+.curriculum-status { margin-top: 8px; padding: 7px 0 7px 10px; background: transparent; color: var(--muted); }
+.plan-count { border: 0; border-radius: 0; background: transparent; color: var(--teal); font-size: 14px; }
+.plan-steps { gap: 0; margin-top: 12px; border-top: 1px solid var(--line); }
+.plan-step-row { min-height: 70px; border-bottom: 1px solid var(--line); }
+.plan-step { grid-template-columns: 26px minmax(0, 1fr); min-height: 70px; padding: 12px 0; border: 0; border-radius: 0; background: transparent; }
+.plan-step small { grid-column: 2; margin-top: -7px; }
+.plan-step span { width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 50%; background: var(--panel); color: var(--muted); }
+.plan-step.current span { border-color: var(--teal); background: var(--teal); }
+.plan-step.current, .plan-step.done { background: transparent; }
+.plan-step.done span { background: #e3f2e8; color: var(--green); }
+.plan-add-button { width: 100%; margin-top: 14px; }
+
+#view-progress { padding-top: 4px; }
+.progress-heading { align-items: flex-end; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+.progress-heading h2 { font-size: 30px; }
+.activity-panel, .renshuu-panel, .bridge-panel, .analytics-panel { margin-top: 0; padding: 26px 0; background: transparent; border-bottom: 1px solid var(--line); }
+.activity-panel, .renshuu-panel, .bridge-panel { border-top: 0; }
+.activity-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 16px 0 10px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.activity-summary > div { min-height: 74px; padding: 10px 8px; border: 0; border-right: 1px solid var(--line); background: var(--panel); }
+.activity-summary > div:last-child { border-right: 0; }
+.activity-summary strong { font-size: 17px; }
+.activity-summary small { font-size: 10px; line-height: 1.2; }
+.calendar-disclosure { margin-top: 16px; border-top: 1px solid var(--line); }
+.calendar-disclosure summary { display: flex; align-items: center; justify-content: space-between; min-height: 48px; cursor: pointer; list-style: none; }
+.calendar-disclosure summary::-webkit-details-marker { display: none; }
+.calendar-disclosure summary small { color: var(--teal); font-weight: 800; }
+.calendar-disclosure[open] summary small { font-size: 0; }
+.calendar-disclosure[open] summary small::after { content: "Ocultar calendario"; font-size: 12px; }
+.calendar-day { border-radius: 5px; }
+.radar-wrap { margin: 26px auto 18px; }
+.skill-grid { gap: 0; border-top: 1px solid var(--line); }
+.skill-pill { min-height: 92px; padding: 12px 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; }
+.skill-pill:nth-child(odd) { padding-right: 12px; border-right: 1px solid var(--line); }
+.skill-pill:nth-child(even) { padding-left: 12px; }
+.matrix-intro { margin: 0; padding: 22px 0 8px; background: transparent; border: 0; font-size: 13px; }
+.matrix { gap: 0; border-top: 1px solid var(--line); }
+.matrix-row { min-height: 48px; padding: 12px 0; border-bottom: 1px solid var(--line); background: transparent; }
+
+.bottom-nav { width: min(600px, 100%); gap: 0; padding: 9px 14px calc(9px + env(safe-area-inset-bottom)); background: rgba(255, 255, 255, 0.92); }
+.bottom-nav button { min-height: 46px; border-radius: 0; font-size: 12px; }
+.bottom-nav button.active { background: transparent; color: var(--teal); }
+.bottom-nav button.active::after { display: block; width: 18px; height: 2px; margin: 5px auto 0; border-radius: 1px; background: currentColor; content: ""; }
+
+@media (max-width: 390px) {
+  .app-shell { padding-inline: 16px; }
+  .activity-summary strong { font-size: 15px; }
+}
+
 @media (min-width: 440px) {
   .focus-panel {
     grid-template-columns: 1fr auto;
