@@ -303,3 +303,7 @@ Se incremento la version de la PWA para que el analisis aparezca tambien en inst
 ### Matriz basada en evidencia propia
 
 Se eliminaron los valores de demostracion con los que nacia el prototipo. Los perfiles nuevos empiezan en cero y los perfiles sin historial que conservaran exactamente aquella semilla se migran a cero. La pantalla Matriz ahora explica que solo se actualiza al finalizar un ejercicio y confirmar la autoevaluacion: repasar suma 1 punto por habilidad y entender suma de 2 a 4. Los datos de Renshuu no se incorporan a estos puntos.
+
+### Plan diario dinamico
+
+El plan usa la evidencia de la app, el foco configurado y los repasos pendientes para priorizar ejercicios. Los usuarios pueden sustituir o saltar cualquier propuesta, anadir una recomendacion extra y recibir un refuerzo relacionado tras marcar "Necesito repasarlo". Los controles solo cambian la ruta de la sesion actual: no alteran el historial ni la matriz.

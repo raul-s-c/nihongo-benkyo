@@ -4,6 +4,8 @@
 
 ### Biblioteca inicial y plan personalizado
 
+El plan diario es dinamico: ordena ejercicios por las habilidades con menos evidencia, el foco elegido en Ajustes y los contenidos marcados como pendientes de repaso. Al indicar "Necesito repasarlo", la app puede incorporar un refuerzo de habilidades relacionadas. Cada propuesta explica su motivo y dispone de controles para sustituirla o saltarla; tambien se puede anadir una recomendacion extra. Estas acciones reorganizan la sesion, pero no modifican el progreso.
+
 La app incluye un primer paquete de 27 ejercicios originales N5-N4 para practicar desde el movil: traducciones, particulas, respuestas utiles, descripciones, preguntas abiertas, vocabulario por categoria y situaciones de vida diaria y empresa.
 
 Cada ejercicio aporta nivel, habilidades relacionadas, vocabulario con lectura, significado y explicacion gramatical o comunicativa.

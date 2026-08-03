@@ -1,6 +1,6 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
-const APP_VERSION = "0.4.5";
+const APP_VERSION = "0.4.6";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -51,7 +51,7 @@ const defaultUserState = {
     error: ""
   },
   currentExerciseId: "n5-01",
-  dailyPlan: { date: "", exerciseIds: [], completedIds: [] },
+  dailyPlan: { date: "", exerciseIds: [], completedIds: [], skippedIds: [] },
   exerciseHistory: {},
   renshuuBridge: null,
   draftAnswers: {}
@@ -531,7 +531,7 @@ function renderMatrix() {
 function getCurrentExercise() {
   return (state.currentExerciseId === "renshuu-bridge" ? state.renshuuBridge : null)
     || exercises.find((exercise) => exercise.id === state.currentExerciseId)
-    || exercises.find((exercise) => exercise.id === state.dailyPlan.exerciseIds[0])
+    || exercises.find((exercise) => state.dailyPlan.exerciseIds.includes(exercise.id) && !(state.dailyPlan.skippedIds || []).includes(exercise.id))
     || exercises[0];
 }
 
@@ -545,41 +545,112 @@ function levelRank(level) {
 
 function ensureDailyPlan() {
   if (!exercises.length || (state.dailyPlan.date === todayKey() && state.dailyPlan.exerciseIds.length)) return;
-  const targetLevel = state.settings.targetJlpt || "N4";
-  const candidates = exercises.filter((item) => levelRank(item.level) <= levelRank(targetLevel));
   const count = state.settings.dailyMinutes <= 6 ? 2 : state.settings.dailyMinutes <= 15 ? 3 : 4;
-  const target = jlptTargets[targetLevel];
-  const focus = state.settings.studyFocus;
-  const sorted = [...candidates].sort((left, right) => scorePlanExercise(left, target, focus) - scorePlanExercise(right, target, focus));
-  const ids = sorted.slice(0, count).map((item) => item.id);
-  state.dailyPlan = { date: todayKey(), exerciseIds: ids, completedIds: [] };
+  const ids = getRecommendedExercises(count).map((item) => item.id);
+  state.dailyPlan = { date: todayKey(), exerciseIds: ids, completedIds: [], skippedIds: [] };
   state.currentExerciseId = ids[0];
   saveState();
 }
 
-function scorePlanExercise(exercise, target, focus) {
+function getRecommendedExercises(count = 1, excludedIds = [], preferredTags = []) {
+  const targetLevel = state.settings.targetJlpt || "N4";
+  const target = jlptTargets[targetLevel];
+  const focus = state.settings.studyFocus;
+  return exercises
+    .filter((item) => levelRank(item.level) <= levelRank(targetLevel) && !excludedIds.includes(item.id))
+    .sort((left, right) => scorePlanExercise(left, target, focus, preferredTags) - scorePlanExercise(right, target, focus, preferredTags))
+    .slice(0, count);
+}
+
+function scorePlanExercise(exercise, target, focus, preferredTags = []) {
   const history = state.exerciseHistory[exercise.id] || {};
   const weakness = exercise.tags.reduce((sum, tag) => sum + ((state.progress[tag] || 0) / (target[tag] || 1)), 0) / exercise.tags.length;
-  return weakness + (focus !== "balanced" && exercise.tags.includes(focus) ? -0.5 : 0) + (history.status === "review" ? -1 : 0) + (history.attempts || 0) * 0.08;
+  const preferred = exercise.tags.some((tag) => preferredTags.includes(tag)) ? -1.2 : 0;
+  return weakness + preferred + (focus !== "balanced" && exercise.tags.includes(focus) ? -0.5 : 0) + (history.status === "review" ? -1 : 0) + (history.attempts || 0) * 0.08;
+}
+
+function getPlanItem(id) {
+  return id === "renshuu-bridge" ? state.renshuuBridge : exercises.find((exercise) => exercise.id === id);
+}
+
+function getPlanRecommendation(item) {
+  const history = state.exerciseHistory[item.id] || {};
+  if (history.status === "review") return "Repaso pendiente";
+  if (state.settings.studyFocus !== "balanced" && item.tags.includes(state.settings.studyFocus)) return "Tu foco de estudio";
+  const weakestTag = [...item.tags].sort((left, right) => (state.progress[left] || 0) - (state.progress[right] || 0))[0];
+  return `Refuerza ${skills.find((skill) => skill.id === weakestTag)?.label?.toLowerCase() || "una habilidad"}`;
+}
+
+function replacePlanExercise(id) {
+  const plan = state.dailyPlan;
+  if (plan.completedIds.includes(id)) return;
+  const replacement = getRecommendedExercises(1, plan.exerciseIds.filter((itemId) => itemId !== id).concat(plan.skippedIds || []));
+  if (!replacement.length) return;
+  plan.exerciseIds[plan.exerciseIds.indexOf(id)] = replacement[0].id;
+  if (state.currentExerciseId === id) state.currentExerciseId = replacement[0].id;
+  saveState();
+  renderDailyPlan();
+  renderExercise();
+}
+
+function skipPlanExercise(id) {
+  const plan = state.dailyPlan;
+  if (plan.completedIds.includes(id)) return;
+  if (!plan.skippedIds.includes(id)) plan.skippedIds.push(id);
+  if (state.currentExerciseId === id) {
+    state.currentExerciseId = plan.exerciseIds.find((itemId) => !plan.skippedIds.includes(itemId) && !plan.completedIds.includes(itemId)) || "";
+  }
+  saveState();
+  renderDailyPlan();
+  if (state.currentExerciseId) renderExercise();
+}
+
+function addRecommendedPlanExercise(preferredTags = []) {
+  const plan = state.dailyPlan;
+  const extra = getRecommendedExercises(1, plan.exerciseIds.concat(plan.skippedIds || []), preferredTags);
+  if (!extra.length) return;
+  plan.exerciseIds.push(extra[0].id);
+  saveState();
 }
 
 function renderDailyPlan() {
   ensureDailyPlan();
   const plan = state.dailyPlan;
-  document.querySelector("#planCount").textContent = plan.completedIds.length + " / " + plan.exerciseIds.length;
+  const activeIds = plan.exerciseIds.filter((id) => !(plan.skippedIds || []).includes(id));
+  const completedCount = plan.completedIds.filter((id) => activeIds.includes(id)).length;
+  document.querySelector("#planCount").textContent = completedCount + " / " + activeIds.length;
   const focusText = { balanced: "equilibrar tus habilidades", work: "situaciones de empresa", daily: "vida diaria", writing: "producción escrita", grammar: "gramática y partículas" }[state.settings.studyFocus] || "equilibrar tus habilidades";
   document.querySelector("#planReason").textContent = "Plan para " + focusText + ", ajustado a tu objetivo " + state.settings.targetJlpt + ".";
-  document.querySelector("#planSteps").innerHTML = plan.exerciseIds.map((id, index) => {
-    const item = id === "renshuu-bridge" ? state.renshuuBridge : exercises.find((exercise) => exercise.id === id);
+  document.querySelector("#planSteps").innerHTML = activeIds.map((id, index) => {
+    const item = getPlanItem(id);
     const done = plan.completedIds.includes(id);
     return '<button class="plan-step ' + (done ? "done" : "") + ' ' + (id === state.currentExerciseId ? "current" : "") + '" data-plan-exercise="' + id + '"><span>' + (done ? "✓" : index + 1) + "</span><strong>" + item.type + "</strong><small>" + item.level + "</small></button>";
   }).join("");
+  document.querySelectorAll("[data-plan-exercise]").forEach((button) => {
+    const id = button.dataset.planExercise;
+    const item = getPlanItem(id);
+    button.querySelector("small").textContent = `${getPlanRecommendation(item)} · ${item.level}`;
+    if (plan.completedIds.includes(id)) return;
+    const row = document.createElement("div");
+    row.className = "plan-step-row";
+    const actions = document.createElement("div");
+    actions.className = "plan-step-actions";
+    actions.innerHTML = `<button class="plan-icon-button" data-replace-exercise="${id}" aria-label="Sustituir ejercicio" data-tooltip="Sustituye este ejercicio por otra recomendacion. No cambia tu progreso.">↻</button><button class="plan-icon-button" data-skip-exercise="${id}" aria-label="Saltar ejercicio" data-tooltip="Quita este ejercicio de la sesion de hoy. No cambia tu progreso.">↷</button>`;
+    actions.querySelectorAll("[data-tooltip]").forEach((element) => element.addEventListener("touchstart", () => {
+      element.classList.add("show-tooltip");
+      window.setTimeout(() => element.classList.remove("show-tooltip"), 1800);
+    }, { passive: true }));
+    button.before(row);
+    row.append(button, actions);
+  });
   document.querySelectorAll("[data-plan-exercise]").forEach((button) => button.addEventListener("click", () => {
     state.currentExerciseId = button.dataset.planExercise;
     saveState();
     switchView("practice");
     renderExercise();
   }));
+  document.querySelectorAll("[data-replace-exercise]").forEach((button) => button.addEventListener("click", () => replacePlanExercise(button.dataset.replaceExercise)));
+  document.querySelectorAll("[data-skip-exercise]").forEach((button) => button.addEventListener("click", () => skipPlanExercise(button.dataset.skipExercise)));
 }
 
 function renderExercise() {
@@ -632,6 +703,10 @@ function applyProgress(exercise, confidence, result) {
     status: confidence,
     lastAttempted: new Date().toISOString()
   };
+  const unfinishedCount = state.dailyPlan.exerciseIds.filter((id) => !(state.dailyPlan.skippedIds || []).includes(id) && !state.dailyPlan.completedIds.includes(id)).length;
+  if (confidence === "review" && unfinishedCount < 4) {
+    addRecommendedPlanExercise(exercise.tags);
+  }
   if (!state.dailyPlan.completedIds.includes(exercise.id)) state.dailyPlan.completedIds.push(exercise.id);
   saveState();
   drawRadar();
@@ -662,6 +737,10 @@ function bindEvents() {
   document.querySelector("#jlptLevelSelect").addEventListener("change", drawRadar);
   document.querySelector("#syncRenshuuButton").addEventListener("click", syncRenshuuProgress);
   document.querySelector("#startBridgeButton").addEventListener("click", startRenshuuBridge);
+  document.querySelector("#addPlanExerciseButton").addEventListener("click", () => {
+    addRecommendedPlanExercise();
+    renderDailyPlan();
+  });
   document.querySelector("#dictionarySearch").addEventListener("input", (event) => renderDictionary(event.target.value));
   document.addEventListener("click", (event) => {
     const helper = event.target.closest("[data-dictionary-term]");
@@ -1004,7 +1083,7 @@ renderAll();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js?v=0.4.5").catch(() => {
+    navigator.serviceWorker.register("service-worker.js?v=0.4.6").catch(() => {
       // La app sigue funcionando en navegadores que no permiten cache offline.
     });
   });

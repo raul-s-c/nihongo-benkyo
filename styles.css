@@ -242,6 +242,34 @@ rt {
   opacity: 0.66;
 }
 
+.plan-step-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.plan-step-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 38px);
+  gap: 4px;
+}
+
+.plan-icon-button {
+  min-height: 46px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--teal);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.plan-add-button {
+  width: 100%;
+  margin-top: 12px;
+}
+
 .practice-meta {
   margin: -4px 0 12px;
   color: var(--muted);
