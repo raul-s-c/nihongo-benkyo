@@ -6,6 +6,8 @@ import vm from "node:vm";
 const source = readFileSync(new URL("../app.js", import.meta.url), "utf8");
 const start = source.indexOf("function getRenshuuBridgeTerm");
 const end = source.indexOf("function renderRenshuuBridge");
+const currentExerciseStart = source.indexOf("function getCurrentExercise");
+const currentExerciseEnd = source.indexOf("function todayKey");
 const contentContext = { window: {} };
 vm.createContext(contentContext);
 vm.runInContext(readFileSync(new URL("../content.js", import.meta.url), "utf8"), contentContext);
@@ -38,4 +40,16 @@ test("el puente vuelve a usar el catalogo cuando ya se ofrecieron todas las alte
 
   const term = getTerm(state, "grammar", 2);
   assert.ok(["から", "なら"].includes(term.text));
+});
+
+test("un puente Renshuu completado no vuelve a ocupar la pantalla de practica", () => {
+  const state = {
+    manualExerciseId: "",
+    currentExerciseId: "renshuu-bridge",
+    renshuuBridge: { id: "renshuu-bridge", type: "Puente con Renshuu" },
+    dailyPlan: { exerciseIds: ["renshuu-bridge", "next"], completedIds: ["renshuu-bridge"], skippedIds: [] }
+  };
+  const getCurrentExercise = new Function("state", "exercises", `${source.slice(currentExerciseStart, currentExerciseEnd)}; return getCurrentExercise;`)(state, [{ id: "next", type: "Siguiente ejercicio" }]);
+
+  assert.equal(getCurrentExercise().id, "next");
 });

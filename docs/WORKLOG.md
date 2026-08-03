@@ -371,6 +371,10 @@ Se sustituyo el mensaje generico de fallo al actualizar el Gist privado por diag
 
 El ejercicio posterior a Renshuu dejaba de cambiar porque su selector se basaba solo en fecha, categoria y cantidad de actividad. Ahora cada perfil conserva las propuestas del dia, evita los terminos ya ofrecidos mientras existan alternativas y permite solicitar `Otra propuesta`. Al hacerlo, reactiva el puente incluso si la propuesta anterior se completo o se salto.
 
+### Avance tras confirmar una respuesta
+
+Se corrigio un caso en el que el puente de Renshuu podia seguir mostrandose despues de pulsar `Lo he entendido`. Un ejercicio completado ya no es elegible como ejercicio actual: la practica avanza a la siguiente propuesta activa y la barra de sesion refleja el intento guardado. Se anadio una prueba de regresion para este flujo.
+
 ### Correccion explicable y progreso de sesion
 
 Se sustituyo el renderizado iterativo de furigana por un recorrido de texto que genera cada bloque `ruby` una sola vez; asi se evita que terminos solapados vuelvan a envolver kanji ya anotados. La correccion distingue ahora entre coincidencia con la referencia y comprension probable. Cuando falta un requisito, enumera el termino ausente y detecta sustituciones sencillas de particula, por ejemplo `家に` frente a `家で` al indicar el lugar donde se estudia. La vista Practicar incorpora una barra con el avance real de la sesion diaria y conserva ese contador cuando se abre una practica libre.

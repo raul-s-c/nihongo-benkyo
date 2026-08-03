@@ -1,4 +1,4 @@
-const CACHE_NAME = "nihongo-benkyo-v32";
+const CACHE_NAME = "nihongo-benkyo-v33";
 const APP_FILES = ["./", "index.html", "styles.css", "translation-battery.js", "content.js", "app.js", "manifest.webmanifest", "assets/app-icon.svg"];
 
 self.addEventListener("install", (event) => {

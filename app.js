@@ -4,7 +4,7 @@ const GITHUB_SYNC_KEY = "nihongo-benkyo-github-sync-v1";
 const GITHUB_GIST_DESCRIPTION = "Nihongo Benkyo private progress sync";
 const GITHUB_GIST_FILE = "nihongo-benkyo-progress.json";
 const GITHUB_AUTH_PROXY_URL = "https://nihongo-benkyo-auth.raul-nihongo.workers.dev";
-const APP_VERSION = "0.8.5";
+const APP_VERSION = "0.8.6";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -1114,7 +1114,7 @@ function renderLearningAnalytics() {
 
 function getCurrentExercise() {
   return exercises.find((exercise) => exercise.id === state.manualExerciseId)
-    || (state.currentExerciseId === "renshuu-bridge" ? state.renshuuBridge : null)
+    || (state.currentExerciseId === "renshuu-bridge" && isPlanExerciseActive("renshuu-bridge") ? state.renshuuBridge : null)
     || exercises.find((exercise) => exercise.id === state.currentExerciseId && isPlanExerciseActive(exercise.id))
     || exercises.find((exercise) => isPlanExerciseActive(exercise.id))
     || null;
