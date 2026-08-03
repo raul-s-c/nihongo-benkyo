@@ -1,5 +1,13 @@
 # Arquitectura
 
+## Entrega web
+
+La aplicacion se publica como sitio estatico desde GitHub Pages. El workflow `.github/workflows/deploy-pages.yml` se ejecuta en cada push a `main` y entrega la raiz del repositorio.
+
+El manifest `manifest.webmanifest`, el icono `assets/app-icon.svg` y `service-worker.js` permiten instalar la aplicacion desde navegadores compatibles y conservar una copia offline de los recursos de interfaz.
+
+El service worker no cachea `secrets.local.js`, por lo que una clave local nunca se incluye en la version publicada.
+
 ## Estado actual
 
 La app es estatica y funciona con tres archivos principales:

@@ -26,11 +26,25 @@ La app debe valorar:
 - Que aspecto conviene entrenar despues.
 - Como se relaciona el avance con JLPT y con situaciones reales de vida/trabajo.
 
+## Uso desde el movil
+
+La version publicada se sirve en:
+
+`https://raul-s-c.github.io/nihongo-benkyo/`
+
+Cada `push` a la rama `main` activa el despliegue de GitHub Pages y actualiza esa misma direccion. En Android, abre el enlace con Chrome y elige **Anadir a pantalla de inicio** para usarla como una app.
+
+El progreso se guarda actualmente en el navegador y dispositivo donde usas la app. Por tanto, movil y ordenador mantienen progresos distintos hasta que exista una cuenta con sincronizacion.
+
 ## Ejecucion local
 
 Abre `index.html` directamente en el navegador.
 
-No hay build, servidor ni instalacion por ahora.
+No hay build ni dependencias. La app incluye manifest y cache offline para poder instalarse desde un navegador compatible.
+
+## Publicacion
+
+El workflow [deploy-pages.yml](.github/workflows/deploy-pages.yml) publica el contenido de `main` en GitHub Pages. La primera vez, en GitHub ve a **Settings > Pages** y selecciona **GitHub Actions** como fuente. Despues, cada push actualizara el enlace publicado.
 
 ## Documentacion
 
@@ -43,15 +57,4 @@ No hay build, servidor ni instalacion por ahora.
 
 ## Repositorio remoto
 
-Repositorio previsto: `https://github.com/raul-s-c/nihongo-benkyo`
-
-Cuando se conecte Git localmente:
-
-```powershell
-git init
-git branch -M main
-git remote add origin https://github.com/raul-s-c/nihongo-benkyo.git
-git add .
-git commit -m "Initial mobile prototype"
-git push -u origin main
-```
+Repositorio: `https://github.com/raul-s-c/nihongo-benkyo`

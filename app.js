@@ -1,5 +1,6 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
+const APP_VERSION = "0.2.0";
 
 const skills = [
   { id: "vocab", label: "Vocabulario" },
@@ -464,6 +465,7 @@ function hydrateSettings() {
     "aria-label",
     state.settings.showFurigana ? "Desactivar furigana" : "Activar furigana"
   );
+  document.querySelector("#appVersion").textContent = `Version ${APP_VERSION} · progreso local`;
 }
 
 function renderAll() {
@@ -629,3 +631,11 @@ function romajiToHiragana(input) {
 
 bindEvents();
 renderAll();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("service-worker.js").catch(() => {
+      // La app sigue funcionando en navegadores que no permiten cache offline.
+    });
+  });
+}

@@ -4,7 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#f7f4ec">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Nihongo Benkyo">
     <title>Nihongo Benkyo</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="assets/app-icon.svg">
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
@@ -133,7 +140,8 @@
             <input id="dailyMinutes" type="number" min="3" max="90" step="1">
           </label>
           <button class="primary-action wide" id="saveSettingsButton" data-tooltip="Guarda los ajustes solo para el perfil activo.">Guardar</button>
-          <p class="muted">La clave se guarda solo en este navegador. Cuando haya backend, la moveremos fuera del dispositivo.</p>
+          <p class="muted">El progreso y la clave se guardan solo en este navegador y dispositivo. Aun no se sincronizan entre movil y ordenador.</p>
+          <p class="muted version-note" id="appVersion"></p>
         </section>
       </main>
 

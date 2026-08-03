@@ -1,0 +1,19 @@
+{
+  "name": "Nihongo Benkyo",
+  "short_name": "Nihongo",
+  "description": "Practica japones en sesiones breves desde tu movil.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f4ec",
+  "theme_color": "#f7f4ec",
+  "icons": [
+    {
+      "src": "assets/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

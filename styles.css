@@ -84,6 +84,11 @@ h3 {
   line-height: 1.45;
 }
 
+.version-note {
+  margin-top: 10px;
+  font-size: 12px;
+}
+
 .icon-button,
 .ghost-button,
 .primary-action,

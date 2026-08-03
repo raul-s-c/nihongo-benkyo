@@ -1,5 +1,16 @@
 # Registro de decisiones
 
+## 2026-08-03: Publicacion PWA en GitHub Pages
+
+Se elige GitHub Pages para el MVP porque el proyecto es estatico, no necesita un servidor propio y cada push a `main` puede actualizar un enlace estable para movil.
+
+Consecuencias:
+
+- La URL publica contiene solo archivos versionados.
+- `secrets.local.js` permanece ignorado y no puede usarse como configuracion de la version publicada.
+- El estado en `localStorage` no se sincroniza entre dispositivos.
+- La futura comercializacion requerira autenticacion y backend antes de prometer continuidad de progreso.
+
 ## 2026-08-03: Empezar con HTML movil
 
 Decision: crear una app estatica HTML/CSS/JS antes de convertir a APK.

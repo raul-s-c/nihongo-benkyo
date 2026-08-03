@@ -13,6 +13,20 @@ La app usa una navegacion inferior con cuatro vistas:
 
 Objetivo: que la app sea comoda con una mano y parezca pensada para telefono desde el primer dia.
 
+### Instalacion web en movil
+
+La app incluye un manifest web, un icono y cache offline mediante service worker.
+
+Funcionamiento:
+
+- Se publica desde GitHub Pages.
+- Android permite anadirla a la pantalla de inicio desde Chrome.
+- Una nueva version publicada reemplaza la cache anterior al volver a abrir la app.
+
+Limitacion:
+
+- El progreso sigue siendo local al navegador y no se comparte entre dispositivos.
+
 ### Pantalla Hoy
 
 Muestra una sesion diaria sugerida y acceso rapido a practicar.
@@ -119,6 +133,11 @@ Devuelve:
 
 Objetivo: fijar la forma de feedback antes de conectar IA real.
 
+Limitacion importante:
+
+- La puntuacion actual se basa en senales simples de presencia, longitud y escritura japonesa; no comprende el significado de la respuesta.
+- No debe interpretarse como una medicion real de nivel ni como una correccion linguistica definitiva.
+
 ### Perfiles locales
 
 Permite crear y cambiar perfiles de usuario dentro del navegador.
@@ -195,3 +214,7 @@ Necesario para:
 - Seguridad de claves.
 - Sincronizacion.
 - Modelos de pago.
+
+### Sincronizacion de cuenta
+
+Necesaria para conservar el mismo perfil y progreso en movil, ordenador y futuras instalaciones.

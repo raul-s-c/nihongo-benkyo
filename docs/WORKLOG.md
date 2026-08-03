@@ -217,3 +217,20 @@ Objetivo:
 
 - Poder escribir respuestas en japones aunque el movil no tenga teclado japones instalado.
 - Reducir friccion durante las sesiones cortas.
+
+### Publicacion movil y PWA
+
+Se anadieron los archivos necesarios para poder instalar la web en movil:
+
+- `manifest.webmanifest` para identidad de aplicacion web.
+- `assets/app-icon.svg` como icono.
+- `service-worker.js` para cache offline.
+- `.github/workflows/deploy-pages.yml` para desplegar automaticamente GitHub Pages desde `main`.
+
+Tambien se actualizo el README con el enlace estable previsto y con las instrucciones de instalacion desde Android.
+
+Decision de producto:
+
+- El progreso y la clave siguen siendo locales a cada navegador.
+- No se presentara esta version como sincronizada entre movil y ordenador.
+- La correccion actual se documenta explicitamente como provisional: aun no analiza significado ni naturalidad.
