@@ -1,6 +1,6 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
-const APP_VERSION = "0.5.4";
+const APP_VERSION = "0.5.5";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -60,6 +60,24 @@ const curriculumStages = [
   { id: "n2-professional", level: "N2", label: "Empresa N2: negociacion", exerciseIds: ["n2-01", "n2-02", "n2-03", "n2-04", "n2-05"] },
   { id: "n1-professional", level: "N1", label: "Empresa N1: comunicacion formal", exerciseIds: ["n1-01", "n1-02", "n1-03", "n1-04", "n1-05"] }
 ];
+
+function validateCurriculumIntegrity() {
+  const errors = [];
+  const exerciseIds = new Set(exercises.map((exercise) => exercise.id));
+  const stagedIds = curriculumStages.flatMap((stage) => stage.exerciseIds);
+  const stagedCounts = stagedIds.reduce((counts, id) => ({ ...counts, [id]: (counts[id] || 0) + 1 }), {});
+  Object.entries(stagedCounts).forEach(([id, count]) => {
+    if (!exerciseIds.has(id)) errors.push(`Ruta con ejercicio inexistente: ${id}`);
+    if (count > 1) errors.push(`Ejercicio repetido en rutas: ${id}`);
+    if (exercises.find((exercise) => exercise.id === id && !exercise.core)) errors.push(`Ejercicio tematico incluido en ruta troncal: ${id}`);
+  });
+  exercises.filter((exercise) => exercise.core).forEach((exercise) => {
+    if (!stagedCounts[exercise.id]) errors.push(`Ejercicio troncal sin ruta: ${exercise.id}`);
+  });
+  if (errors.length) throw new Error(`Curriculo invalido: ${errors.join("; ")}`);
+}
+
+validateCurriculumIntegrity();
 
 const defaultUserState = {
   settings: {
@@ -795,11 +813,36 @@ function getCurriculumCandidates(excludedIds = []) {
 }
 
 function ensureDailyPlan() {
-  if (!exercises.length || (state.dailyPlan.date === todayKey() && state.dailyPlan.exerciseIds.length)) return;
+  if (!exercises.length) return;
+  if (state.dailyPlan.date === todayKey() && state.dailyPlan.exerciseIds.length) {
+    reconcileDailyPlan();
+    return;
+  }
   const count = state.settings.dailyMinutes <= 6 ? 2 : state.settings.dailyMinutes <= 15 ? 3 : 4;
   const ids = getRecommendedExercises(count).map((item) => item.id);
   state.dailyPlan = { date: todayKey(), exerciseIds: ids, completedIds: [], skippedIds: [] };
   state.currentExerciseId = ids[0];
+  saveState();
+}
+
+function reconcileDailyPlan() {
+  const plan = state.dailyPlan;
+  const allowedIds = new Set(getCurriculumCandidates().map((exercise) => exercise.id));
+  const seenIds = new Set();
+  const stableIds = plan.exerciseIds.filter((id) => {
+    if (seenIds.has(id)) return false;
+    seenIds.add(id);
+    return id === "renshuu-bridge" || plan.completedIds.includes(id) || plan.skippedIds.includes(id) || allowedIds.has(id);
+  });
+  if (stableIds.length === plan.exerciseIds.length) return;
+  const desiredCount = state.settings.dailyMinutes <= 6 ? 2 : state.settings.dailyMinutes <= 15 ? 3 : 4;
+  const replacementIds = getRecommendedExercises(Math.max(0, desiredCount - stableIds.length), stableIds).map((exercise) => exercise.id);
+  plan.exerciseIds = [...stableIds, ...replacementIds.filter((id) => !stableIds.includes(id))];
+  plan.completedIds = plan.completedIds.filter((id) => plan.exerciseIds.includes(id));
+  plan.skippedIds = plan.skippedIds.filter((id) => plan.exerciseIds.includes(id));
+  if (!plan.exerciseIds.includes(state.currentExerciseId) || plan.completedIds.includes(state.currentExerciseId) || plan.skippedIds.includes(state.currentExerciseId)) {
+    state.currentExerciseId = plan.exerciseIds.find((id) => !plan.completedIds.includes(id) && !plan.skippedIds.includes(id)) || "";
+  }
   saveState();
 }
 
@@ -849,7 +892,7 @@ function getPlanRecommendation(item) {
 function replacePlanExercise(id) {
   const plan = state.dailyPlan;
   if (plan.completedIds.includes(id)) return;
-  const replacement = getRecommendedExercises(1, plan.exerciseIds.filter((itemId) => itemId !== id).concat(plan.skippedIds || []));
+  const replacement = getRecommendedExercises(1, plan.exerciseIds.concat(plan.skippedIds || []));
   if (!replacement.length) return;
   plan.exerciseIds[plan.exerciseIds.indexOf(id)] = replacement[0].id;
   if (state.currentExerciseId === id) state.currentExerciseId = replacement[0].id;
@@ -1371,7 +1414,7 @@ renderAll();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js?v=0.5.4").catch(() => {
+    navigator.serviceWorker.register("service-worker.js?v=0.5.5").catch(() => {
       // La app sigue funcionando en navegadores que no permiten cache offline.
     });
   });

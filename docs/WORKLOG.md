@@ -327,3 +327,7 @@ Se anadio un segundo eje de contenido: tematica. Compras, Ciudad y transporte, y
 ### Ficha de detalle desde la radial JLPT
 
 Se convirtieron los ejes de la radial y las tarjetas de habilidad en accesos a una ficha de detalle. La ficha agrega intentos por habilidad, contenidos pendientes, terminos deduplicados y etiquetas multiples de tema y JLPT. Para cada ejercicio explica el estado real de disponibilidad en el plan, incluido el bloque previo necesario cuando sigue bloqueado. La navegacion vuelve a Hoy sin modificar el progreso.
+
+### Auditoria de duplicados y rutas
+
+Se revisaron los 57 ejercicios y se anadieron validaciones para impedir IDs o ejercicios exactos duplicados, ejercicios troncales fuera de ruta, piezas repetidas entre bloques y contenido tematico tratado como obligatorio. El plan diario se reconcilia al abrir la app: elimina propuestas repetidas o heredadas de una ruta anterior y busca sustitutos compatibles con el bloque actual. Tambien se corrigio la sustitucion manual para que no pueda devolver el mismo ejercicio que se queria cambiar.

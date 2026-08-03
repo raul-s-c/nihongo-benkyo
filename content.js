@@ -103,5 +103,17 @@ window.NIHONGO_CONTENT = (() => {
     };
   });
 
+  const contentErrors = [];
+  const seenExerciseIds = new Set();
+  const seenExerciseSignatures = new Set();
+  exercises.forEach((exercise) => {
+    if (seenExerciseIds.has(exercise.id)) contentErrors.push(`ID de ejercicio duplicado: ${exercise.id}`);
+    seenExerciseIds.add(exercise.id);
+    const signature = [exercise.level, exercise.type, exercise.prompt, exercise.target].join("|").toLowerCase();
+    if (seenExerciseSignatures.has(signature)) contentErrors.push(`Ejercicio duplicado: ${exercise.id}`);
+    seenExerciseSignatures.add(signature);
+  });
+  if (contentErrors.length) throw new Error(`Biblioteca de contenido invalida: ${contentErrors.join("; ")}`);
+
   return { dictionary: catalog, exercises: enrichedExercises };
 })();

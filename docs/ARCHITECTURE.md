@@ -92,6 +92,8 @@ El perfil conserva un plan diario con fecha, ejercicios elegidos, ejercicios com
 
 `content.js` enriquece cada ejercicio con `theme`, `level` y `core`. Los ejercicios `core` forman los bloques que desbloquean nivel; los ejercicios tematicos son rutas paralelas opcionales. `themeFocus` se guarda por perfil y `getCurriculumCandidates()` solo anade contenido tematico con un nivel igual o inferior al bloque actual. De este modo la preferencia tematica no permite saltar la progresion JLPT.
 
+Antes de iniciar la app, la biblioteca valida IDs y firmas de ejercicio para impedir duplicados exactos. La capa de curriculo verifica que cada ejercicio troncal este en una sola ruta y que ninguna ruta incluya ejercicios tematicos. Al cargar un plan diario existente, `reconcileDailyPlan()` elimina propuestas repetidas o que ya no pertenecen al bloque actual y las sustituye sin tocar la evidencia de progreso ya registrada.
+
 El contenido vive en content.js, separado de la interfaz. Esto permite ampliar bancos de preguntas sin mezclar datos pedagogicos con logica de pantalla.
 
 ## Furigana
