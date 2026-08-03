@@ -33,7 +33,7 @@ La app usa una navegacion inferior con cuatro vistas:
 
 Objetivo: que la app sea comoda con una mano y parezca pensada para telefono desde el primer dia.
 
-Dentro de Practicar se muestra una flecha para volver al plan de hoy. No registra ni reinicia el ejercicio; los borradores se guardan por ejercicio y reaparecen al volver.
+Dentro de Practicar se muestra una flecha para volver al plan de hoy. No registra ni reinicia el ejercicio; los borradores se guardan por ejercicio y reaparecen al volver. Los controles `Elegir` y `Nuevo` permiten apartarse de la recomendacion sin perderla: `Elegir` abre los ejercicios ya desbloqueados y `Nuevo` cambia a otro ejercicio disponible.
 
 ### Instalacion web en movil
 
@@ -132,9 +132,9 @@ Objetivo:
 - Reducir friccion durante la practica.
 - Preparar una futura experiencia de entrada similar a una IME real.
 
-### Cola de practica sin repeticiones accidentales
+### Plan diario y practica libre
 
-La pantalla Practicar consume los ejercicios activos del plan. Cuando solo queda uno, `Nuevo` busca una recomendacion adicional que no pertenezca ya a la sesion. Al completar el ultimo, se anade la siguiente propuesta disponible segun la ruta y los repasos. Si no existe contenido desbloqueado, la interfaz muestra que la sesion ha terminado; nunca vuelve silenciosamente al primer ejercicio N5.
+El plan diario sigue siendo una recomendacion dinamica, no una jaula. La pantalla Practicar puede abrir un selector con todos los ejercicios desbloqueados por la ruta actual, el nivel y los contenidos suplementarios disponibles. Una eleccion manual conserva sus intentos, estadisticas y programacion de repaso, pero no marca como terminada una tarea distinta del plan diario. `Nuevo` pasa primero a otra tarea activa y, si no hay ninguna, a otra practica disponible; nunca vuelve silenciosamente al primer ejercicio N5.
 
 ### Toggle de furigana
 

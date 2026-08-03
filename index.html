@@ -131,10 +131,17 @@
               <button class="back-button" id="backToPlanButton" aria-label="Volver al plan de hoy" data-tooltip="Vuelve a tu plan de hoy sin registrar ni borrar este ejercicio. Tu borrador se conserva.">←</button>
               <h2 id="practiceTitle">Practicar</h2>
             </div>
-            <button class="ghost-button" id="newExerciseButton" data-tooltip="Cambia al siguiente ejercicio sin modificar tu progreso.">Nuevo</button>
+            <div class="practice-actions">
+              <button class="ghost-button" id="chooseExerciseButton" data-tooltip="Abre ejercicios ya desbloqueados. Elegir uno no modifica el plan diario.">Elegir</button>
+              <button class="ghost-button" id="newExerciseButton" data-tooltip="Cambia a otro ejercicio disponible sin modificar tu progreso ni reiniciar el plan diario.">Nuevo</button>
+            </div>
           </div>
 
           <div class="practice-meta" id="practiceMeta"></div>
+          <section class="practice-picker hidden" id="practicePicker" aria-label="Elegir ejercicio">
+            <div class="picker-head"><strong>Ejercicios disponibles</strong><small>Tu plan diario sigue intacto</small></div>
+            <div class="practice-choices" id="practiceChoices"></div>
+          </section>
 
           <div class="exercise-card">
             <p class="tag" id="exerciseType">Traduccion JP → ES</p>
@@ -308,7 +315,7 @@
     </div>
 
     <script src="secrets.local.js"></script>
-    <script src="content.js?v=0.7.5"></script>
-    <script src="app.js?v=0.7.5"></script>
+    <script src="content.js?v=0.7.6"></script>
+    <script src="app.js?v=0.7.6"></script>
   </body>
 </html>

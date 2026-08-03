@@ -1,6 +1,6 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
-const APP_VERSION = "0.7.5";
+const APP_VERSION = "0.7.6";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -106,6 +106,7 @@ const defaultUserState = {
     error: ""
   },
   currentExerciseId: "n5-01",
+  manualExerciseId: "",
   dailyPlan: { date: "", exerciseIds: [], completedIds: [], skippedIds: [] },
   exerciseHistory: {},
   attemptLog: [],
@@ -753,6 +754,7 @@ function startRenshuuBridge() {
   if (!bridge) return;
   state.renshuuBridge = bridge;
   if (!state.dailyPlan.exerciseIds.includes(bridge.id)) state.dailyPlan.exerciseIds.unshift(bridge.id);
+  state.manualExerciseId = "";
   state.currentExerciseId = bridge.id;
   saveState();
   switchView("practice");
@@ -885,7 +887,8 @@ function renderLearningAnalytics() {
 }
 
 function getCurrentExercise() {
-  return (state.currentExerciseId === "renshuu-bridge" ? state.renshuuBridge : null)
+  return exercises.find((exercise) => exercise.id === state.manualExerciseId)
+    || (state.currentExerciseId === "renshuu-bridge" ? state.renshuuBridge : null)
     || exercises.find((exercise) => exercise.id === state.currentExerciseId && isPlanExerciseActive(exercise.id))
     || exercises.find((exercise) => isPlanExerciseActive(exercise.id))
     || null;
@@ -975,6 +978,24 @@ function getCurriculumCandidates(excludedIds = []) {
   return [...new Set([...reviewIds, ...newIds, ...thematicIds, ...supplementalIds])]
     .map((id) => exercises.find((exercise) => exercise.id === id))
     .filter(Boolean);
+}
+
+function getPracticeCandidates() {
+  const stages = getAvailableCurriculumStages();
+  const currentStage = getCurrentCurriculumStage();
+  const currentStageIndex = currentStage ? stages.findIndex((stage) => stage.id === currentStage.id) : stages.length - 1;
+  const unlockedCoreIds = stages
+    .slice(0, Math.max(0, currentStageIndex) + 1)
+    .flatMap((stage) => stage.exerciseIds);
+  const unlockedLevel = currentStage?.level || state.settings.targetJlpt || "N5";
+  const supplementalIds = exercises
+    .filter((exercise) => !exercise.core && levelRank(exercise.level) <= levelRank(unlockedLevel))
+    .map((exercise) => exercise.id);
+  const recommendedIds = getCurriculumCandidates().map((exercise) => exercise.id);
+  return [...new Set([...recommendedIds, ...unlockedCoreIds, ...supplementalIds])]
+    .map((id) => exercises.find((exercise) => exercise.id === id))
+    .filter(Boolean)
+    .sort((left, right) => levelRank(left.level) - levelRank(right.level) || left.id.localeCompare(right.id));
 }
 
 function ensureDailyPlan() {
@@ -1075,18 +1096,56 @@ function getNextActivePlanExerciseId(currentId) {
 
 function moveToNextPlanExercise() {
   ensureActivePlanExercise();
+  const currentId = getCurrentExercise()?.id;
   const activeIds = state.dailyPlan.exerciseIds.filter((id) => isPlanExerciseActive(id));
-  if (activeIds.length > 1) {
-    state.currentExerciseId = getNextActivePlanExerciseId(state.currentExerciseId);
+  const nextPlanId = activeIds.find((id) => id !== currentId);
+  if (nextPlanId) {
+    state.manualExerciseId = "";
+    state.currentExerciseId = nextPlanId;
     saveState();
     return;
   }
   const extra = getRecommendedExercises(1, [...state.dailyPlan.exerciseIds, ...(state.dailyPlan.skippedIds || [])]);
   if (extra.length) {
     state.dailyPlan.exerciseIds.push(extra[0].id);
+    state.manualExerciseId = "";
     state.currentExerciseId = extra[0].id;
     saveState();
+    return;
   }
+  const candidates = getPracticeCandidates();
+  const currentIndex = candidates.findIndex((exercise) => exercise.id === currentId);
+  const next = candidates.length > 1
+    ? candidates[(Math.max(currentIndex, 0) + 1) % candidates.length]
+    : candidates[0];
+  if (next && next.id !== currentId) {
+    state.manualExerciseId = next.id;
+    saveState();
+  }
+}
+
+function selectManualExercise(id) {
+  if (!getPracticeCandidates().some((exercise) => exercise.id === id)) return;
+  state.manualExerciseId = id;
+  saveState();
+}
+
+function renderPracticePicker() {
+  const picker = document.querySelector("#practicePicker");
+  const choices = document.querySelector("#practiceChoices");
+  const currentId = getCurrentExercise()?.id;
+  const candidates = getPracticeCandidates();
+  choices.innerHTML = candidates.map((exercise) => {
+    const themeLabel = themes[exercise.theme] || "Vida diaria";
+    const isCurrent = exercise.id === currentId;
+    return `<button class="practice-choice ${isCurrent ? "current" : ""}" data-practice-choice="${exercise.id}" aria-pressed="${isCurrent}"><strong>${exercise.type}</strong><span>${exercise.level} · ${themeLabel}</span><small>${exercise.tags.map((tag) => skills.find((skill) => skill.id === tag)?.label || tag).join(" · ")}</small></button>`;
+  }).join("") || "<p class=\"muted\">Aun no hay contenido desbloqueado para elegir.</p>";
+  picker.classList.add("hidden");
+  choices.querySelectorAll("[data-practice-choice]").forEach((button) => button.addEventListener("click", () => {
+    selectManualExercise(button.dataset.practiceChoice);
+    picker.classList.add("hidden");
+    renderExercise();
+  }));
 }
 
 function getPlanRecommendation(item) {
@@ -1170,6 +1229,7 @@ function renderDailyPlan() {
     row.append(button, actions);
   });
   document.querySelectorAll("[data-plan-exercise]").forEach((button) => button.addEventListener("click", () => {
+    state.manualExerciseId = "";
     state.currentExerciseId = button.dataset.planExercise;
     saveState();
     switchView("practice");
@@ -1182,6 +1242,7 @@ function renderDailyPlan() {
 function renderExercise() {
   ensureActivePlanExercise();
   const exercise = getCurrentExercise();
+  renderPracticePicker();
   if (!exercise) {
     document.querySelector("#exerciseType").textContent = "Sesion completada";
     document.querySelector("#exercisePrompt").textContent = "No hay otro ejercicio disponible para tu nivel ahora mismo.";
@@ -1246,6 +1307,7 @@ function normalizeAnswer(value) {
 }
 
 function applyProgress(exercise, confidence, result) {
+  const isManualPractice = state.manualExerciseId === exercise.id;
   const previousHistory = state.exerciseHistory[exercise.id] || {};
   const checkedScore = result.objective ?? 50;
   const gain = confidence === "solid" ? Math.max(2, Math.round(checkedScore / 25)) : 1;
@@ -1271,7 +1333,7 @@ function applyProgress(exercise, confidence, result) {
   if (confidence === "review" && unfinishedCount < 4) {
     addRecommendedPlanExercise(exercise.tags);
   }
-  if (!state.dailyPlan.completedIds.includes(exercise.id)) state.dailyPlan.completedIds.push(exercise.id);
+  if (!isManualPractice && !state.dailyPlan.completedIds.includes(exercise.id)) state.dailyPlan.completedIds.push(exercise.id);
   saveState();
   drawRadar();
   renderMatrix();
@@ -1326,6 +1388,10 @@ function bindEvents() {
   document.querySelector("#newExerciseButton").addEventListener("click", () => {
     moveToNextPlanExercise();
     renderExercise();
+  });
+  document.querySelector("#chooseExerciseButton").addEventListener("click", () => {
+    const picker = document.querySelector("#practicePicker");
+    picker.classList.toggle("hidden");
   });
 
   document.querySelector("#helpToggle").addEventListener("click", () => {
@@ -1384,10 +1450,16 @@ function bindEvents() {
     document.querySelector("#feedbackPanel").classList.remove("hidden");
     document.querySelectorAll("[data-review]").forEach((button) => {
       button.onclick = () => {
+        const wasManualPractice = state.manualExerciseId === exercise.id;
         applyProgress(exercise, button.dataset.review, result);
         delete state.draftAnswers[exercise.id];
-        state.currentExerciseId = getNextActivePlanExerciseId(exercise.id);
-        ensureActivePlanExercise();
+        if (wasManualPractice) {
+          state.manualExerciseId = "";
+          moveToNextPlanExercise();
+        } else {
+          state.currentExerciseId = getNextActivePlanExerciseId(exercise.id);
+          ensureActivePlanExercise();
+        }
         renderExercise();
       };
     });
@@ -1738,7 +1810,7 @@ renderAll();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js?v=0.7.5").catch(() => {
+    navigator.serviceWorker.register("service-worker.js?v=0.7.6").catch(() => {
       // La app sigue funcionando en navegadores que no permiten cache offline.
     });
   });

@@ -296,6 +296,62 @@ rt {
   font-weight: 700;
 }
 
+.practice-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.practice-picker {
+  margin: 0 0 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.picker-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.picker-head small,
+.practice-choice small {
+  color: var(--muted);
+}
+
+.practice-choices {
+  display: grid;
+  gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.practice-choice {
+  display: grid;
+  width: 100%;
+  gap: 2px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--ink);
+  text-align: left;
+}
+
+.practice-choice.current {
+  border-color: var(--teal);
+  background: #e2f0ed;
+}
+
+.practice-choice span {
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .focus-panel {
   display: grid;
   gap: 18px;

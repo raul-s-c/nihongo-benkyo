@@ -336,3 +336,9 @@ Se convirtieron los ejes de la radial y las tarjetas de habilidad en accesos a u
 ### Auditoria de duplicados y rutas
 
 Se revisaron los 57 ejercicios y se anadieron validaciones para impedir IDs o ejercicios exactos duplicados, ejercicios troncales fuera de ruta, piezas repetidas entre bloques y contenido tematico tratado como obligatorio. El plan diario se reconcilia al abrir la app: elimina propuestas repetidas o heredadas de una ruta anterior y busca sustitutos compatibles con el bloque actual. Tambien se corrigio la sustitucion manual para que no pueda devolver el mismo ejercicio que se queria cambiar.
+
+### Eleccion libre dentro de Practicar
+
+Se separo la recomendacion diaria de la navegacion de practica. `Elegir` muestra el contenido desbloqueado de la ruta actual y los ejercicios tematicos o suplementarios del nivel disponible; seleccionar uno no altera las tareas del dia. `Nuevo` busca otra tarea activa y, si la cola no puede ampliarse, rota por ese mismo catalogo disponible. Los intentos de practica libre se guardan en las estadisticas y el repaso espaciado, sin marcar una tarea diaria ajena como completada.
+
+Se actualizo la PWA a la version 0.7.6 y se renovo el cache del service worker para que el cambio llegue tambien a instalaciones moviles existentes.
