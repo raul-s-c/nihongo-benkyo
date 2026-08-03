@@ -292,3 +292,4 @@ Se detecto que la PWA podia seguir mostrando un app.js anterior pese a que GitHu
 Se anadio una flecha visible para volver al plan diario desde Practicar. Los borradores se almacenan por ejercicio en el perfil local, de modo que salir de la pantalla no borra la respuesta en curso ni modifica el progreso.
 
 La cache y las referencias de scripts se han versionado de nuevo para que las instalaciones moviles reciban esta actualizacion tras el despliegue.
+Tambien se versiona el registro del service worker para activar la renovacion en instalaciones que estuvieran abiertas durante la publicacion.
