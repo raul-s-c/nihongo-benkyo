@@ -138,6 +138,29 @@ Limitacion importante:
 - La puntuacion actual se basa en senales simples de presencia, longitud y escritura japonesa; no comprende el significado de la respuesta.
 - No debe interpretarse como una medicion real de nivel ni como una correccion linguistica definitiva.
 
+### Analisis de progreso Renshuu
+
+La pantalla Hoy incluye un bloque de Renshuu que se actualiza manualmente con la clave read-only configurada en Ajustes.
+
+Datos mostrados:
+
+- Nivel de aventura.
+- Actividad total del dia.
+- Mayor racha activa entre las categorias disponibles.
+- Cobertura de vocabulario, kanji, gramatica y frases para el nivel JLPT seleccionado.
+
+Integracion con la matriz:
+
+- Las barras de habilidades indican el porcentaje propio de Nihongo Benkyo.
+- Cuando existe informacion equivalente, se muestra debajo la cobertura de Renshuu como fuente separada.
+- No se mezclan ambas cifras en una puntuacion falsa, porque miden actividades distintas.
+
+Privacidad y limites:
+
+- La consulta se realiza solo al pulsar Actualizar.
+- Se guarda una copia local del perfil para consulta offline.
+- Cambiar la API key elimina esa copia para no mostrar datos de otra cuenta.
+
 ### Perfiles locales
 
 Permite crear y cambiar perfiles de usuario dentro del navegador.
@@ -186,7 +209,9 @@ Debe valorar respuestas libres sin depender de una lista cerrada.
 
 ### Integracion Renshuu
 
-Debe usar datos read-only para proponer ejercicios personalizados.
+Implementado: lectura read-only del perfil y de sus porcentajes JLPT.
+
+Pendiente: usar esos datos para proponer ejercicios personalizados.
 
 ### Sesiones diarias adaptativas
 

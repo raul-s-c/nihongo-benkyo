@@ -142,6 +142,22 @@ secrets.local.js
 
 Ese archivo esta ignorado por Git y no debe subirse al repositorio.
 
+### Sincronizacion de perfil
+
+La app usa el endpoint read-only `GET https://api.renshuu.org/v1/profile` con el encabezado `Authorization: Bearer <api-key>` cuando el usuario pulsa Actualizar.
+
+La respuesta se guarda por perfil en `state.renshuu`:
+
+```js
+{
+  profile: {},
+  syncedAt: "2026-08-03T00:00:00.000Z",
+  error: ""
+}
+```
+
+Se extraen `studied`, `streaks` y `level_progress_percs`. La informacion de Renshuu se presenta como fuente independiente: no se combina matematicamente con los puntos internos de Nihongo Benkyo.
+
 Regla de seguridad:
 
 - No escribir claves reales en el codigo fuente.

@@ -38,6 +38,19 @@
             <button class="primary-action" id="startSessionButton" data-tooltip="Abre la practica recomendada para tu sesion de hoy.">Empezar</button>
           </div>
 
+          <section class="renshuu-panel" aria-labelledby="renshuuTitle">
+            <div class="section-head compact-head">
+              <div>
+                <p class="eyebrow">Fuente complementaria</p>
+                <h3 id="renshuuTitle">Progreso en Renshuu</h3>
+              </div>
+              <button class="ghost-button" id="syncRenshuuButton" data-tooltip="Consulta tu perfil read-only de Renshuu. Guarda una copia local para mostrarla sin conexion.">Actualizar</button>
+            </div>
+            <p class="muted" id="renshuuStatus">Anade tu clave de Renshuu en Ajustes para leer tu progreso.</p>
+            <div class="renshuu-summary hidden" id="renshuuSummary"></div>
+            <div class="renshuu-levels hidden" id="renshuuLevels"></div>
+          </section>
+
           <div class="section-head">
             <h3>Preparacion JLPT</h3>
             <select id="jlptLevelSelect" aria-label="Nivel JLPT">
@@ -140,7 +153,7 @@
             <input id="dailyMinutes" type="number" min="3" max="90" step="1">
           </label>
           <button class="primary-action wide" id="saveSettingsButton" data-tooltip="Guarda los ajustes solo para el perfil activo.">Guardar</button>
-          <p class="muted">El progreso y la clave se guardan solo en este navegador y dispositivo. Aun no se sincronizan entre movil y ordenador.</p>
+          <p class="muted">La clave se usa solo para leer tu perfil en Renshuu y se guarda en este navegador y dispositivo. Aun no se sincroniza entre movil y ordenador.</p>
           <p class="muted version-note" id="appVersion"></p>
         </section>
       </main>

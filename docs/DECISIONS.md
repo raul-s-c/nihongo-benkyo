@@ -42,6 +42,12 @@ Motivo:
 - La API de Renshuu no esta pensada para replicar quizzes.
 - La app debe centrarse en practica flexible, produccion y objetivos personales.
 
+Actualizacion:
+
+- La app consulta el perfil read-only de Renshuu de forma manual.
+- Sus porcentajes JLPT se muestran junto al progreso propio, sin fusionar escalas diferentes.
+- Cambiar la clave elimina la copia local del perfil anterior.
+
 ## 2026-08-03: No guardar API keys en codigo
 
 Decision: la clave read-only de Renshuu se introduce en Ajustes y se guarda localmente.

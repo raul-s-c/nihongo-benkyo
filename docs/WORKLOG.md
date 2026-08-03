@@ -235,3 +235,21 @@ Decision de producto:
 - No se presentara esta version como sincronizada entre movil y ordenador.
 - La correccion actual se documenta explicitamente como provisional: aun no analiza significado ni naturalidad.
 - El cache offline usa red primero para que el enlace publicado muestre la ultima version siempre que haya conexion.
+
+### Analisis de progreso Renshuu
+
+Se verifico el endpoint oficial read-only `/v1/profile` con la clave local del MVP, sin registrar ni mostrar la clave.
+
+La respuesta aporta nivel de aventura, actividad diaria, totales, rachas y cobertura por nivel JLPT en vocabulario, kanji, gramatica y frases.
+
+Implementado:
+
+- Boton Actualizar en la pantalla Hoy.
+- Estado de carga y error legible.
+- Resumen de actividad y racha.
+- Cobertura Renshuu para el nivel JLPT seleccionado.
+- Referencia Renshuu bajo las habilidades equivalentes de la matriz personal.
+
+Decision:
+
+- Renshuu y Nihongo Benkyo se muestran como fuentes separadas; no se mezclan para fabricar una unica puntuacion.

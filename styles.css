@@ -153,7 +153,8 @@ rt {
 
 .focus-panel,
 .exercise-card,
-.feedback-panel {
+.feedback-panel,
+.renshuu-panel {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -164,6 +165,65 @@ rt {
   display: grid;
   gap: 18px;
   padding: 18px;
+}
+
+.renshuu-panel {
+  margin-top: 16px;
+  padding: 16px;
+}
+
+.compact-head {
+  margin: 0 0 10px;
+}
+
+.renshuu-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.renshuu-summary div {
+  display: grid;
+  min-height: 68px;
+  place-items: center;
+  border-radius: 8px;
+  background: #e2f0ed;
+  text-align: center;
+}
+
+.renshuu-summary strong {
+  font-size: 18px;
+}
+
+.renshuu-summary small,
+.renshuu-level-title {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.renshuu-levels {
+  display: grid;
+  gap: 9px;
+  margin-top: 16px;
+}
+
+.renshuu-level-row {
+  display: grid;
+  grid-template-columns: 82px 1fr 38px;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.renshuu-level-row .meter span {
+  background: var(--teal);
+}
+
+.ghost-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .primary-action {
@@ -268,6 +328,14 @@ rt {
   display: block;
   margin-bottom: 8px;
   font-size: 14px;
+}
+
+.skill-pill small {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .meter {

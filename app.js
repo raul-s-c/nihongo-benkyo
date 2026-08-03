@@ -1,6 +1,7 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
-const APP_VERSION = "0.2.0";
+const APP_VERSION = "0.3.0";
+const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
   { id: "vocab", label: "Vocabulario" },
@@ -70,6 +71,11 @@ const defaultUserState = {
     writing: 14,
     listening: 8,
     work: 5
+  },
+  renshuu: {
+    profile: null,
+    syncedAt: "",
+    error: ""
   },
   currentExercise: 0
 };
@@ -181,7 +187,8 @@ function mergeUserState(userState) {
     ...structuredClone(defaultUserState),
     ...userState,
     settings: { ...defaultUserState.settings, ...(userState?.settings || {}) },
-    progress: { ...defaultUserState.progress, ...(userState?.progress || {}) }
+    progress: { ...defaultUserState.progress, ...(userState?.progress || {}) },
+    renshuu: { ...defaultUserState.renshuu, ...(userState?.renshuu || {}) }
   };
 }
 
@@ -280,16 +287,109 @@ function radarPoint(index, distance, center) {
 
 function renderSkillGrid(level) {
   const target = jlptTargets[level];
+  const renshuu = getRenshuuLevelProgress(level);
   const grid = document.querySelector("#skillGrid");
   grid.innerHTML = skills.map((skill) => {
     const percent = Math.min(100, Math.round((state.progress[skill.id] / target[skill.id]) * 100));
+    const renshuuPercent = renshuu[skill.id];
     return `
       <div class="skill-pill">
         <strong>${skill.label} · ${percent}%</strong>
         <div class="meter"><span style="width: ${percent}%"></span></div>
+        ${renshuuPercent === undefined ? "" : `<small>Renshuu: ${renshuuPercent}%</small>`}
       </div>
     `;
   }).join("");
+}
+
+function getRenshuuLevelProgress(level) {
+  const source = state.renshuu.profile?.level_progress_percs || {};
+  return {
+    vocab: readRenshuuPercent(source.vocab, level),
+    kanji: readRenshuuPercent(source.kanji, level),
+    grammar: readRenshuuPercent(source.grammar, level),
+    reading: readRenshuuPercent(source.sent, level)
+  };
+}
+
+function readRenshuuPercent(category, level) {
+  const value = category?.[level.toLowerCase()];
+  return Number.isFinite(Number(value)) ? Number(value) : undefined;
+}
+
+function renderRenshuuProgress() {
+  const profile = state.renshuu.profile;
+  const status = document.querySelector("#renshuuStatus");
+  const summary = document.querySelector("#renshuuSummary");
+  const levels = document.querySelector("#renshuuLevels");
+  const syncButton = document.querySelector("#syncRenshuuButton");
+  const level = document.querySelector("#jlptLevelSelect").value;
+
+  syncButton.disabled = false;
+  if (!profile) {
+    status.textContent = state.renshuu.error || (state.settings.renshuuApiKey
+      ? "Pulsa Actualizar para leer tu progreso de Renshuu."
+      : "Anade tu clave de Renshuu en Ajustes para leer tu progreso.");
+    summary.classList.add("hidden");
+    levels.classList.add("hidden");
+    return;
+  }
+
+  const studied = profile.studied || {};
+  const streaks = profile.streaks || {};
+  const streak = Math.max(...Object.values(streaks).map((item) => Number(item?.days_studied_in_a_row) || 0), 0);
+  const syncedAt = state.renshuu.syncedAt ? new Date(state.renshuu.syncedAt).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" }) : "ahora";
+  status.textContent = `Datos de Renshuu actualizados: ${syncedAt}.`;
+  summary.innerHTML = `
+    <div><strong>Nivel ${profile.adventure_level || "-"}</strong><small>aventura</small></div>
+    <div><strong>${studied.today_all || 0}</strong><small>hoy</small></div>
+    <div><strong>${streak}</strong><small>dias de racha</small></div>
+  `;
+
+  const progress = getRenshuuLevelProgress(level);
+  const items = [
+    ["Vocabulario", progress.vocab],
+    ["Kanji", progress.kanji],
+    ["Gramatica", progress.grammar],
+    ["Frases", progress.reading]
+  ].filter(([, value]) => value !== undefined);
+  levels.innerHTML = `<p class="renshuu-level-title">Cobertura Renshuu para ${level}</p>${items.map(([label, value]) => `
+    <div class="renshuu-level-row"><span>${label}</span><div class="meter"><span style="width: ${value}%"></span></div><strong>${value}%</strong></div>
+  `).join("")}`;
+  summary.classList.remove("hidden");
+  levels.classList.remove("hidden");
+}
+
+async function syncRenshuuProgress() {
+  const key = state.settings.renshuuApiKey.trim();
+  const status = document.querySelector("#renshuuStatus");
+  const button = document.querySelector("#syncRenshuuButton");
+
+  if (!key) {
+    state.renshuu.error = "Anade primero tu clave read-only de Renshuu en Ajustes.";
+    saveState();
+    renderRenshuuProgress();
+    switchView("settings");
+    return;
+  }
+
+  button.disabled = true;
+  status.textContent = "Leyendo tu perfil de Renshuu...";
+  try {
+    const response = await fetch(RENSHUU_PROFILE_URL, {
+      headers: { Authorization: `Bearer ${key}`, Accept: "application/json" }
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const profile = await response.json();
+    if (!profile || typeof profile !== "object") throw new Error("Respuesta no valida");
+    state.renshuu = { profile, syncedAt: new Date().toISOString(), error: "" };
+    saveState();
+    renderAll();
+  } catch {
+    state.renshuu.error = "No se pudo actualizar Renshuu. Comprueba la clave y tu conexion.";
+    saveState();
+    renderRenshuuProgress();
+  }
 }
 
 function renderMatrix() {
@@ -359,6 +459,7 @@ function bindEvents() {
   document.querySelector("#settingsButton").addEventListener("click", () => switchView("settings"));
   document.querySelector("#startSessionButton").addEventListener("click", () => switchView("practice"));
   document.querySelector("#jlptLevelSelect").addEventListener("change", drawRadar);
+  document.querySelector("#syncRenshuuButton").addEventListener("click", syncRenshuuProgress);
 
   document.querySelector("#newExerciseButton").addEventListener("click", () => {
     state.currentExercise = (state.currentExercise + 1) % exercises.length;
@@ -399,7 +500,11 @@ function bindEvents() {
   });
 
   document.querySelector("#saveSettingsButton").addEventListener("click", () => {
-    state.settings.renshuuApiKey = document.querySelector("#renshuuApiKey").value.trim();
+    const nextRenshuuApiKey = document.querySelector("#renshuuApiKey").value.trim();
+    if (nextRenshuuApiKey !== state.settings.renshuuApiKey) {
+      state.renshuu = structuredClone(defaultUserState.renshuu);
+    }
+    state.settings.renshuuApiKey = nextRenshuuApiKey;
     state.settings.mainGoal = document.querySelector("#mainGoal").value;
     state.settings.dailyMinutes = Number(document.querySelector("#dailyMinutes").value || 10);
     saveState();
@@ -473,6 +578,7 @@ function renderAll() {
   renderExercise();
   drawRadar();
   renderMatrix();
+  renderRenshuuProgress();
 }
 
 function setJapaneseText(element, text) {
