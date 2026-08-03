@@ -4,7 +4,7 @@ const GITHUB_SYNC_KEY = "nihongo-benkyo-github-sync-v1";
 const GITHUB_GIST_DESCRIPTION = "Nihongo Benkyo private progress sync";
 const GITHUB_GIST_FILE = "nihongo-benkyo-progress.json";
 const GITHUB_AUTH_PROXY_URL = "https://nihongo-benkyo-auth.raul-nihongo.workers.dev";
-const APP_VERSION = "0.8.3";
+const APP_VERSION = "0.8.4";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -26,7 +26,7 @@ const jlptTargets = {
   N1: { vocab: 11000, kanji: 2100, grammar: 300, particles: 520, reading: 650, writing: 500, listening: 520, work: 300 }
 };
 
-const exercises = window.NIHONGO_CONTENT?.exercises || [];
+const exercises = [...(window.NIHONGO_CONTENT?.exercises || []), ...(window.NIHONGO_TRANSLATION_BATTERY || [])];
 const embeddedDictionary = window.NIHONGO_CONTENT?.dictionary || [];
 const themes = {
   balanced: "Todas las tematicas",
@@ -1749,7 +1749,10 @@ function bindEvents() {
         : "La app no ha encontrado suficiente evidencia local para estimar la comprension.";
     document.querySelector("#feedbackText").textContent = [result.feedback, result.correction].filter(Boolean).join(" ");
     setJapaneseText(document.querySelector("#betterAnswer"), result.better);
-    document.querySelector("#exerciseExplanation").textContent = exercise.explanation;
+    document.querySelector("#exerciseExplanation").textContent = [
+      exercise.explanation,
+      result.objective !== 100 ? exercise.diagnostic?.remediation : ""
+    ].filter(Boolean).join(" ");
     document.querySelector("#feedbackPanel").classList.remove("hidden");
     document.querySelectorAll("[data-review]").forEach((button) => {
       button.onclick = () => {

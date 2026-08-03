@@ -368,3 +368,7 @@ Se registro una OAuth App propia y se desplego un Cloudflare Worker para complet
 ### Correccion explicable y progreso de sesion
 
 Se sustituyo el renderizado iterativo de furigana por un recorrido de texto que genera cada bloque `ruby` una sola vez; asi se evita que terminos solapados vuelvan a envolver kanji ya anotados. La correccion distingue ahora entre coincidencia con la referencia y comprension probable. Cuando falta un requisito, enumera el termino ausente y detecta sustituciones sencillas de particula, por ejemplo `家に` frente a `家で` al indicar el lugar donde se estudia. La vista Practicar incorpora una barra con el avance real de la sesion diaria y conserva ese contador cuando se abre una practica libre.
+
+### Bateria de traduccion N5-N1
+
+Se genero una bateria original de 1.500 frases de traduccion: 100 N5, 200 N4, 300 N3, 400 N2 y 500 N1. Cada nivel reparte por igual traducciones espanol-japones y japones-espanol. Cada entrada incorpora tema, patron gramatical, terminos requeridos y una indicacion de repaso; el catalogo se valida para impedir frases duplicadas y se publica como contenido suplementario de practica libre.
