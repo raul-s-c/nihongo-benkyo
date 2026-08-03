@@ -7,7 +7,7 @@ Este documento convierte la auditoria tecnica y de producto en trabajo verificab
 ## P0: Confianza y correccion
 
 - [ ] Evaluacion semantica flexible: requiere un evaluador remoto y una politica de privacidad antes de enviar respuestas de usuarios.
-- [ ] Cuentas, tokens de Renshuu protegidos y sincronizacion: requiere backend y proveedor de autenticacion.
+- [ ] Cuentas, tokens de Renshuu protegidos y sincronizacion: el cliente de cuentas y la sincronizacion con RLS estan implementados; falta crear y configurar el proyecto Supabase. La clave de Renshuu sigue siendo local hasta disponer de cifrado de secretos en servidor.
 
 ## P1: Utilidad diaria del MVP
 

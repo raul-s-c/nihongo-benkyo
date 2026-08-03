@@ -1,7 +1,8 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
-const APP_VERSION = "0.6.0";
+const APP_VERSION = "0.7.0";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
+const CLOUD_STATE_TABLE = "user_states";
 
 const skills = [
   { id: "vocab", label: "Vocabulario" },
@@ -117,6 +118,9 @@ let appState = loadAppState();
 let state = getActiveUserState();
 let activeSkillId = "vocab";
 let deferredInstallPrompt = null;
+let cloudClient = null;
+let cloudPushTimer = null;
+let cloudHydrating = false;
 
 const furiganaEntries = [
   ["日本語", "にほんご"],
@@ -212,6 +216,154 @@ function loadAppState() {
 function saveState() {
   appState.users[appState.activeUserId] = { ...appState.users[appState.activeUserId], ...state };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+  scheduleCloudPush();
+}
+
+function getCloudClient() {
+  if (cloudClient) return cloudClient;
+  const config = window.NIHONGO_CLOUD_CONFIG || {};
+  if (!config.url || !config.publishableKey || !window.supabase?.createClient) return null;
+  cloudClient = window.supabase.createClient(config.url, config.publishableKey);
+  return cloudClient;
+}
+
+function getCloudSnapshot() {
+  const snapshot = structuredClone(appState);
+  Object.values(snapshot.users).forEach((user) => {
+    if (user.settings) delete user.settings.renshuuApiKey;
+  });
+  return snapshot;
+}
+
+function restoreCloudSnapshot(snapshot) {
+  if (!snapshot?.users || !snapshot.activeUserId || !snapshot.users[snapshot.activeUserId]) throw new Error("Copia remota no valida");
+  const localKeys = Object.fromEntries(Object.entries(appState.users).map(([id, user]) => [id, user.settings?.renshuuApiKey || ""]));
+  appState = structuredClone(snapshot);
+  Object.values(appState.users).forEach((user) => {
+    user.settings = { ...(user.settings || {}), renshuuApiKey: localKeys[user.id] || "" };
+  });
+  state = getActiveUserState();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+}
+
+function setCloudStatus(message) {
+  const element = document.querySelector("#cloudStatus");
+  if (element) element.textContent = message;
+}
+
+function renderCloudAccount(session = null) {
+  const configured = Boolean(getCloudClient());
+  const account = document.querySelector("#cloudAccount");
+  const email = document.querySelector("#cloudEmail");
+  const password = document.querySelector("#cloudPassword");
+  const signUp = document.querySelector("#cloudSignUpButton");
+  const signIn = document.querySelector("#cloudSignInButton");
+  const signOut = document.querySelector("#cloudSignOutButton");
+  if (!account || !email || !password || !signUp || !signIn || !signOut) return;
+  const user = session?.user;
+  account.classList.toggle("hidden", !configured || Boolean(user));
+  signOut.classList.toggle("hidden", !user);
+  signOut.disabled = !user;
+  email.disabled = !configured || Boolean(user);
+  password.disabled = !configured || Boolean(user);
+  signUp.disabled = !configured || Boolean(user);
+  signIn.disabled = !configured || Boolean(user);
+  if (!configured) {
+    setCloudStatus("La sincronizacion aun no esta configurada para esta instalacion.");
+  } else if (user) {
+    setCloudStatus(`Sincronizacion activa para ${user.email}. Tu progreso se guarda al cambiar.`);
+  } else {
+    setCloudStatus("Inicia sesion para guardar este perfil y retomarlo desde otro dispositivo.");
+  }
+}
+
+async function refreshCloudAccount() {
+  const client = getCloudClient();
+  if (!client) {
+    renderCloudAccount();
+    return null;
+  }
+  const { data } = await client.auth.getSession();
+  renderCloudAccount(data.session);
+  return data.session;
+}
+
+function scheduleCloudPush() {
+  if (cloudHydrating || !getCloudClient()) return;
+  window.clearTimeout(cloudPushTimer);
+  cloudPushTimer = window.setTimeout(() => pushCloudState(), 800);
+}
+
+async function pushCloudState() {
+  const client = getCloudClient();
+  if (!client || cloudHydrating) return;
+  try {
+    const { data: { session } } = await client.auth.getSession();
+    if (!session?.user) return;
+    const { error } = await client.from(CLOUD_STATE_TABLE).upsert({
+      user_id: session.user.id,
+      state: getCloudSnapshot(),
+      updated_at: new Date().toISOString()
+    }, { onConflict: "user_id" });
+    if (error) setCloudStatus("No se pudo guardar en la nube. El progreso sigue seguro en este dispositivo.");
+    else setCloudStatus(`Sincronizado hace un momento para ${session.user.email}.`);
+  } catch {
+    setCloudStatus("Sin conexion con la nube. El progreso seguira guardandose en este dispositivo.");
+  }
+}
+
+async function pullCloudState() {
+  const client = getCloudClient();
+  if (!client) return;
+  const { data: { session } } = await client.auth.getSession();
+  if (!session?.user) return;
+  const { data, error } = await client.from(CLOUD_STATE_TABLE).select("state").eq("user_id", session.user.id).maybeSingle();
+  if (error) {
+    setCloudStatus("No se pudo leer la copia en la nube.");
+    return;
+  }
+  if (!data?.state) {
+    await pushCloudState();
+    return;
+  }
+  cloudHydrating = true;
+  try {
+    restoreCloudSnapshot(data.state);
+    renderAll();
+    setCloudStatus(`Progreso recuperado para ${session.user.email}.`);
+  } finally {
+    cloudHydrating = false;
+  }
+}
+
+async function submitCloudAccount(mode) {
+  const client = getCloudClient();
+  if (!client) return;
+  const email = document.querySelector("#cloudEmail").value.trim();
+  const password = document.querySelector("#cloudPassword").value;
+  if (!email || password.length < 8) {
+    setCloudStatus("Escribe un email y una contrasena de al menos 8 caracteres.");
+    return;
+  }
+  setCloudStatus(mode === "signup" ? "Creando cuenta..." : "Iniciando sesion...");
+  const result = mode === "signup"
+    ? await client.auth.signUp({ email, password })
+    : await client.auth.signInWithPassword({ email, password });
+  if (result.error) {
+    setCloudStatus("No se pudo completar la cuenta. Revisa los datos o confirma tu email.");
+    return;
+  }
+  document.querySelector("#cloudPassword").value = "";
+  await refreshCloudAccount();
+  if (result.data.session) await pullCloudState();
+  else setCloudStatus("Revisa tu email para confirmar la cuenta y despues inicia sesion.");
+}
+
+async function signOutCloudAccount() {
+  const client = getCloudClient();
+  if (!client) return;
+  await client.auth.signOut();
+  renderCloudAccount();
 }
 
 function getActiveUserState() {
@@ -1322,6 +1474,10 @@ function bindEvents() {
     document.querySelector("#newProfileName").value = "";
   });
 
+  document.querySelector("#cloudSignInButton").addEventListener("click", () => submitCloudAccount("signin"));
+  document.querySelector("#cloudSignUpButton").addEventListener("click", () => submitCloudAccount("signup"));
+  document.querySelector("#cloudSignOutButton").addEventListener("click", signOutCloudAccount);
+
   document.querySelector("#exportProfileButton").addEventListener("click", exportActiveProfile);
   document.querySelector("#importProfileInput").addEventListener("change", (event) => {
     importProfile(event.target.files[0]);
@@ -1404,6 +1560,7 @@ function renderAll() {
   renderRenshuuProgress();
   renderRenshuuBridge();
   renderDictionary();
+  refreshCloudAccount().catch(() => setCloudStatus("No se pudo comprobar la cuenta ahora mismo."));
 }
 
 window.addEventListener("beforeinstallprompt", (event) => {
@@ -1590,7 +1747,7 @@ renderAll();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js?v=0.6.0").catch(() => {
+    navigator.serviceWorker.register("service-worker.js?v=0.7.0").catch(() => {
       // La app sigue funcionando en navegadores que no permiten cache offline.
     });
   });
