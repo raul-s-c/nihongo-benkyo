@@ -42,6 +42,27 @@ test("el puente vuelve a usar el catalogo cuando ya se ofrecieron todas las alte
   assert.ok(["から", "なら"].includes(term.text));
 });
 
+test("la ruta posterior a Renshuu resume las areas y genera varias practicas vinculadas", () => {
+  const routeStart = source.indexOf("function getRenshuuTodayActivity");
+  const routeEnd = source.indexOf("function renderRenshuuBridge", routeStart);
+  const state = {
+    settings: { targetJlpt: "N4" },
+    renshuu: { profile: { studied: { today_vocab: 73, today_kanji: 2, today_grammar: 1, today_sent: 0 } } },
+    renshuuBridgeHistory: []
+  };
+  const createRoute = new Function("state", "todayKey", "getRenshuuBridge", "getRenshuuBridgeTerm", `${source.slice(routeStart, routeEnd)}; return createRenshuuBridgePlan;`)(
+    state,
+    todayKey,
+    () => null,
+    (category) => ({ text: category === "kanji" ? "人" : "会う", reading: category === "kanji" ? "ひと" : "あう", meaning: "prueba", level: "N5", theme: "vida-diaria" })
+  );
+  const route = createRoute();
+
+  assert.deepEqual(route.activity.map((item) => [item.category, item.count]), [["vocab", 73], ["kanji", 2], ["grammar", 1]]);
+  assert.equal(route.items.length, 5);
+  assert.equal(new Set(route.items.map((item) => item.id)).size, route.items.length);
+});
+
 test("un puente Renshuu completado no vuelve a ocupar la pantalla de practica", () => {
   const state = {
     manualExerciseId: "",
@@ -49,7 +70,20 @@ test("un puente Renshuu completado no vuelve a ocupar la pantalla de practica", 
     renshuuBridge: { id: "renshuu-bridge", type: "Puente con Renshuu" },
     dailyPlan: { exerciseIds: ["renshuu-bridge", "next"], completedIds: ["renshuu-bridge"], skippedIds: [] }
   };
-  const getCurrentExercise = new Function("state", "exercises", `${source.slice(currentExerciseStart, currentExerciseEnd)}; return getCurrentExercise;`)(state, [{ id: "next", type: "Siguiente ejercicio" }]);
+  const getCurrentExercise = new Function("state", "exercises", `function getActiveRenshuuBridgePlan() { return null; } ${source.slice(currentExerciseStart, currentExerciseEnd)}; return getCurrentExercise;`)(state, [{ id: "next", type: "Siguiente ejercicio" }]);
 
   assert.equal(getCurrentExercise().id, "next");
+});
+
+test("una ruta Renshuu completada no salta a la sesion diaria", () => {
+  const state = {
+    manualExerciseId: "",
+    activePracticeMode: "renshuu",
+    currentExerciseId: "",
+    renshuuBridgePlan: { sourceDate: todayKey(), items: [{ id: "renshuu-route-1" }], completedIds: ["renshuu-route-1"] },
+    dailyPlan: { exerciseIds: ["next"], completedIds: [], skippedIds: [] }
+  };
+  const getCurrentExercise = new Function("state", "exercises", "todayKey", `function getActiveRenshuuBridgePlan() { return state.renshuuBridgePlan; } ${source.slice(currentExerciseStart, currentExerciseEnd)}; return getCurrentExercise;`)(state, [{ id: "next", type: "Siguiente ejercicio" }], todayKey);
+
+  assert.equal(getCurrentExercise(), null);
 });

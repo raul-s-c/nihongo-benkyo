@@ -220,6 +220,61 @@ rt {
   background: #fff1ed;
 }
 
+.bridge-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(86px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.bridge-summary > div {
+  padding: 9px;
+  border: 1px solid #edc7bf;
+  background: #fffaf7;
+}
+
+.bridge-summary strong,
+.bridge-summary small {
+  display: block;
+}
+
+.bridge-summary strong {
+  font-size: 19px;
+}
+
+.bridge-summary small,
+.bridge-exercise small {
+  color: var(--muted);
+}
+
+.bridge-exercises {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.bridge-exercise {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  padding: 10px;
+  color: inherit;
+  text-align: left;
+  background: #fff;
+  border: 1px solid #edc7bf;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.bridge-exercise span {
+  font-size: 14px;
+}
+
+.bridge-exercise.done {
+  color: var(--muted);
+  background: #f6ece8;
+}
+
 .dictionary-panel {
   background: var(--panel);
   border: 1px solid var(--line);

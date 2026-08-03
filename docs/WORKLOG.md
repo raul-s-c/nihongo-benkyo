@@ -401,3 +401,8 @@ Se genero una bateria original de 1.500 frases de traduccion: 100 N5, 200 N4, 30
 
 - Las particulas y conectores frecuentes tienen prioridad exacta en las sugerencias de romaji. Por ejemplo, `he` y `e` proponen `へ` como particula de direccion antes de cualquier palabra larga.
 - Se incluyen `wa`, `ga`, `wo`/`o`, `ni`, `de`, `to`, `no`, `mo`, `kara` y `made`.
+# 2026-08-03 - Ruta posterior a Renshuu
+
+- El bloque "Despues de Renshuu" ahora resume la actividad registrada por area y presenta una ruta separada con ejercicios vinculados a vocabulario, kanji, gramatica y frases.
+- La ruta tiene su propia barra de avance y no se mezcla con la sesion diaria; completarla no deja el mensaje erroneo de que no hay mas ejercicios disponibles.
+- La API read-only actual solo aporta contadores diarios, no los nombres de cada termino. La interfaz lo declara y no presenta las propuestas de Nihongo Benkyo como si fueran exactamente las palabras que Renshuu ha mostrado.

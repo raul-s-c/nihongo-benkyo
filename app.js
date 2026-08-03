@@ -4,7 +4,7 @@ const GITHUB_SYNC_KEY = "nihongo-benkyo-github-sync-v1";
 const GITHUB_GIST_DESCRIPTION = "Nihongo Benkyo private progress sync";
 const GITHUB_GIST_FILE = "nihongo-benkyo-progress.json";
 const GITHUB_AUTH_PROXY_URL = "https://nihongo-benkyo-auth.raul-nihongo.workers.dev";
-const APP_VERSION = "0.8.9";
+const APP_VERSION = "0.9.0";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -164,7 +164,9 @@ const defaultUserState = {
   exerciseHistory: {},
   attemptLog: [],
   renshuuBridge: null,
+  renshuuBridgePlan: null,
   renshuuBridgeHistory: [],
+  activePracticeMode: "daily",
   sessionLastAction: null,
   draftAnswers: {}
 };
@@ -526,7 +528,9 @@ function mergeUserState(userState) {
     exerciseHistory: history,
     attemptLog: userState?.attemptLog || [],
     renshuuBridge: userState?.renshuuBridge || null,
+    renshuuBridgePlan: userState?.renshuuBridgePlan || null,
     renshuuBridgeHistory: Array.isArray(userState?.renshuuBridgeHistory) ? userState.renshuuBridgeHistory.slice(-60) : [],
+    activePracticeMode: userState?.activePracticeMode || "daily",
     sessionLastAction: userState?.sessionLastAction || null,
     draftAnswers: userState?.draftAnswers || {}
   };
@@ -1046,43 +1050,106 @@ function getRenshuuBridgeTerm(category, sourceCount, rotation = 0) {
   return pool[(seed + rotation) % pool.length] || { text: "日本語", reading: "にほんご", meaning: "japones", level: "N5", theme: "hogar-y-estudio" };
 }
 
-function renderRenshuuBridge() {
-  const activeBridge = state.renshuuBridge?.sourceDate === todayKey() ? state.renshuuBridge : null;
-  const bridge = activeBridge || getRenshuuBridge();
-  const description = document.querySelector("#bridgeDescription");
-  const button = document.querySelector("#startBridgeButton");
-  button.disabled = !bridge;
-  button.textContent = activeBridge ? "Otra propuesta" : "Practicar";
-  if (!bridge) {
-    description.textContent = state.renshuu.profile
-      ? "Renshuu no registra actividad de vocabulario, kanji, gramática o frases para hoy todavía."
-      : "Actualiza Renshuu para proponer una práctica relacionada con tu actividad de hoy.";
-    return;
-  }
-  const label = { vocab: "vocabulario", kanji: "kanji", grammar: "gramática", reading: "frases" }[bridge.tags[0]];
-  description.textContent = "Hoy Renshuu registra " + bridge.sourceCount + " elementos de " + label + ". Te proponemos una aplicación breve y personal.";
-  description.textContent = "Hoy Renshuu registra " + bridge.sourceCount + " elementos de " + label + ". Propuesta lista: " + bridge.suggestedTerm.text + " (" + bridge.suggestedTerm.reading + ", " + bridge.suggestedTerm.meaning + ").";
+function getRenshuuTodayActivity() {
+  const studied = state.renshuu.profile?.studied || {};
+  return [
+    { category: "vocab", label: "Vocabulario", count: Number(studied.today_vocab) || 0 },
+    { category: "kanji", label: "Kanji", count: Number(studied.today_kanji) || 0 },
+    { category: "grammar", label: "Gramatica", count: Number(studied.today_grammar) || 0 },
+    { category: "reading", label: "Frases", count: Number(studied.today_sent) || 0 }
+  ].filter((item) => item.count > 0);
 }
 
-function startRenshuuBridge() {
-  const rotation = (state.renshuuBridgeHistory || []).filter((item) => item.date === todayKey()).length;
-  const bridge = getRenshuuBridge(rotation);
-  if (!bridge) return;
-  state.renshuuBridge = bridge;
-  state.renshuuBridgeHistory = [...(state.renshuuBridgeHistory || []), {
-    date: todayKey(),
-    category: bridge.category,
-    term: bridge.suggestedTerm.text
-  }].slice(-60);
-  if (!state.dailyPlan.exerciseIds.includes(bridge.id)) state.dailyPlan.exerciseIds.unshift(bridge.id);
-  state.dailyPlan.completedIds = state.dailyPlan.completedIds.filter((id) => id !== bridge.id);
-  state.dailyPlan.skippedIds = (state.dailyPlan.skippedIds || []).filter((id) => id !== bridge.id);
+function getActiveRenshuuBridgePlan() {
+  return state.renshuuBridgePlan?.sourceDate === todayKey() ? state.renshuuBridgePlan : null;
+}
+
+function createRenshuuBridgePlan() {
+  const activity = getRenshuuTodayActivity();
+  if (!activity.length) return null;
+  const route = [];
+  const totalLimit = 6;
+  activity.forEach((area, areaIndex) => {
+    const count = Math.min(3, Math.max(1, Math.ceil(area.count / 25)));
+    for (let index = 0; index < count && route.length < totalLimit; index += 1) {
+      const bridge = getRenshuuBridge(areaIndex + index);
+      if (!bridge || bridge.category !== area.category) {
+        const term = getRenshuuBridgeTerm(area.category, area.count, index);
+        const tags = area.category === "grammar" ? ["grammar", "writing", "particles"] : area.category === "kanji" ? ["kanji", "writing", "reading"] : area.category === "reading" ? ["reading", "writing", "vocab"] : ["vocab", "writing"];
+        route.push({
+          id: `renshuu-route-${todayKey()}-${area.category}-${index}`,
+          level: state.settings.targetJlpt,
+          type: `Renshuu: ${area.label}`,
+          prompt: area.category === "grammar"
+            ? `Escribe una frase corta y natural usando ${term.text} (${term.meaning}).`
+            : `Escribe una frase corta y natural con ${term.text} (${term.reading}: ${term.meaning}).`,
+          accepted: `Una frase personal que use ${term.text}.`,
+          tags,
+          help: [{ ...term, theme: term.theme || "vida-diaria", level: term.level || state.settings.targetJlpt }],
+          explanation: `Ejercicio vinculado a los ${area.count} elementos de ${area.label.toLowerCase()} que Renshuu registra hoy. La API read-only no comparte sus nombres, por eso esta propuesta usa contenido equivalente de tu nivel.`,
+          keywords: [term.text, term.reading],
+          target: term.text,
+          category: area.category,
+          sourceCount: area.count,
+          sourceDate: todayKey()
+        });
+      } else {
+        route.push({ ...bridge, id: `renshuu-route-${todayKey()}-${area.category}-${index}`, type: `Renshuu: ${area.label}` });
+      }
+    }
+  });
+  return { sourceDate: todayKey(), activity, items: route, completedIds: [] };
+}
+
+function renderRenshuuBridge() {
+  const preview = getActiveRenshuuBridgePlan() || createRenshuuBridgePlan();
+  const description = document.querySelector("#bridgeDescription");
+  const button = document.querySelector("#startBridgeButton");
+  const summary = document.querySelector("#bridgeSummary");
+  const exercisesPanel = document.querySelector("#bridgeExercises");
+  button.disabled = !preview;
+  if (!preview) {
+    description.textContent = state.renshuu.profile
+      ? "Renshuu no registra actividad de vocabulario, kanji, gramatica o frases para hoy todavia."
+      : "Actualiza Renshuu para preparar una ruta relacionada con lo que estudies hoy.";
+    summary.classList.add("hidden");
+    exercisesPanel.classList.add("hidden");
+    return;
+  }
+  const completed = preview.completedIds?.length || 0;
+  const pending = preview.items.length - completed;
+  button.textContent = completed ? `Continuar ruta (${pending})` : `Abrir ruta (${preview.items.length})`;
+  description.textContent = "Resumen de la actividad registrada hoy. La API read-only no incluye el nombre de cada termino; las propuestas se vinculan a cada area y a tu nivel actual.";
+  summary.innerHTML = preview.activity.map((area) => `<div><strong>${area.count}</strong><small>${area.label.toLowerCase()}</small></div>`).join("");
+  exercisesPanel.innerHTML = preview.items.map((item) => {
+    const done = preview.completedIds?.includes(item.id);
+    return `<button class="bridge-exercise ${done ? "done" : ""}" data-renshuu-route-item="${item.id}" ${done ? "disabled" : ""}><strong>${done ? "✓ " : ""}${item.type}</strong><span>${item.help[0].text} · ${item.help[0].meaning}</span><small>${item.sourceCount} elementos registrados en Renshuu</small></button>`;
+  }).join("");
+  summary.classList.remove("hidden");
+  exercisesPanel.classList.remove("hidden");
+  exercisesPanel.querySelectorAll("[data-renshuu-route-item]").forEach((item) => item.addEventListener("click", () => startRenshuuBridge(item.dataset.renshuuRouteItem)));
+}
+
+function startRenshuuBridge(itemId = "") {
+  const plan = getActiveRenshuuBridgePlan() || createRenshuuBridgePlan();
+  if (!plan) return;
+  const next = itemId
+    ? plan.items.find((item) => item.id === itemId && !plan.completedIds.includes(item.id))
+    : plan.items.find((item) => !plan.completedIds.includes(item.id));
+  if (!next) {
+    showNotice("La ruta de Renshuu de hoy ya esta completada.", "success");
+    return;
+  }
+  state.renshuuBridgePlan = plan;
+  state.renshuuBridge = next;
+  state.renshuuBridgeHistory = [...(state.renshuuBridgeHistory || []), { date: todayKey(), category: next.category, term: next.help[0].text }].slice(-60);
   state.manualExerciseId = "";
-  state.currentExerciseId = bridge.id;
+  state.activePracticeMode = "renshuu";
+  state.currentExerciseId = next.id;
   saveState();
   switchView("practice");
   renderExercise();
-  renderDailyPlan();
+  renderRenshuuBridge();
 }
 
 async function syncRenshuuProgress() {
@@ -1212,7 +1279,11 @@ function renderLearningAnalytics() {
 }
 
 function getCurrentExercise() {
+  const bridgePlan = getActiveRenshuuBridgePlan();
+  const bridgeExercise = bridgePlan?.items.find((exercise) => exercise.id === state.currentExerciseId && !bridgePlan.completedIds.includes(exercise.id));
+  if (state.activePracticeMode === "renshuu" && bridgePlan) return bridgeExercise || null;
   return exercises.find((exercise) => exercise.id === state.manualExerciseId)
+    || bridgeExercise
     || (state.currentExerciseId === "renshuu-bridge" && isPlanExerciseActive("renshuu-bridge") ? state.renshuuBridge : null)
     || exercises.find((exercise) => exercise.id === state.currentExerciseId && isPlanExerciseActive(exercise.id))
     || exercises.find((exercise) => isPlanExerciseActive(exercise.id))
@@ -1339,6 +1410,8 @@ function ensureDailyPlan() {
 
 function ensureActivePlanExercise() {
   ensureDailyPlan();
+  const bridgePlan = getActiveRenshuuBridgePlan();
+  if (state.activePracticeMode === "renshuu" && bridgePlan) return;
   if (getCurrentExercise()) return;
   const plan = state.dailyPlan;
   const extra = getRecommendedExercises(1, [...plan.exerciseIds, ...(plan.skippedIds || [])]);
@@ -1601,9 +1674,10 @@ function renderExercise() {
   renderPracticePicker();
   renderSessionProgress();
   if (!exercise) {
-    document.querySelector("#exerciseType").textContent = "Sesion completada";
-    document.querySelector("#exercisePrompt").textContent = "No hay otro ejercicio disponible para tu nivel ahora mismo.";
-    document.querySelector("#practiceMeta").textContent = "Vuelve mas tarde para repasar o ajusta tu objetivo JLPT.";
+    const renshuuComplete = state.activePracticeMode === "renshuu" && getActiveRenshuuBridgePlan();
+    document.querySelector("#exerciseType").textContent = renshuuComplete ? "Ruta de Renshuu completada" : "Sesion completada";
+    document.querySelector("#exercisePrompt").textContent = renshuuComplete ? "Has terminado las propuestas vinculadas a la actividad de Renshuu de hoy." : "No hay otro ejercicio disponible para tu nivel ahora mismo.";
+    document.querySelector("#practiceMeta").textContent = renshuuComplete ? "Puedes volver a Hoy para ver el resumen o abrir tu sesion diaria sin perder este progreso." : "Vuelve mas tarde para repasar o ajusta tu objetivo JLPT.";
     document.querySelector("#answerInput").value = "";
     document.querySelector("#answerInput").disabled = true;
     document.querySelector("#checkAnswerButton").disabled = true;
@@ -1628,6 +1702,17 @@ function renderExercise() {
 
 function renderSessionProgress() {
   const panel = document.querySelector("#sessionProgress");
+  const bridgePlan = getActiveRenshuuBridgePlan();
+  if (state.activePracticeMode === "renshuu" && bridgePlan) {
+    const completed = bridgePlan.completedIds.length;
+    const total = bridgePlan.items.length;
+    const percent = total ? Math.round((completed / total) * 100) : 0;
+    panel.classList.toggle("hidden", !total);
+    document.querySelector("#sessionProgressText").textContent = `Ruta despues de Renshuu: ${completed} de ${total}`;
+    document.querySelector("#sessionProgressPercent").textContent = `${percent}%`;
+    document.querySelector("#sessionProgressBar").style.width = `${percent}%`;
+    return;
+  }
   const scheduledIds = state.dailyPlan.exerciseIds.filter((id) => !(state.dailyPlan.skippedIds || []).includes(id));
   const completed = scheduledIds.filter((id) => state.dailyPlan.completedIds.includes(id)).length;
   const total = scheduledIds.length;
@@ -1766,6 +1851,8 @@ function normalizeAnswer(value) {
 
 function applyProgress(exercise, confidence, result) {
   const isManualPractice = state.manualExerciseId === exercise.id;
+  const bridgePlan = getActiveRenshuuBridgePlan();
+  const isRenshuuRoute = Boolean(bridgePlan?.items.some((item) => item.id === exercise.id));
   const previousHistory = state.exerciseHistory[exercise.id] || {};
   const checkedScore = result.objective ?? 50;
   const gain = confidence === "solid" ? Math.max(2, Math.round(checkedScore / 25)) : 1;
@@ -1787,11 +1874,16 @@ function applyProgress(exercise, confidence, result) {
     objective: result.objective,
     domains
   });
-  const unfinishedCount = state.dailyPlan.exerciseIds.filter((id) => !(state.dailyPlan.skippedIds || []).includes(id) && !state.dailyPlan.completedIds.includes(id)).length;
-  if (confidence === "review" && unfinishedCount < 4) {
-    addRecommendedPlanExercise(exercise.tags);
+  if (isRenshuuRoute) {
+    if (!bridgePlan.completedIds.includes(exercise.id)) bridgePlan.completedIds.push(exercise.id);
+    state.currentExerciseId = bridgePlan.items.find((item) => !bridgePlan.completedIds.includes(item.id))?.id || "";
+  } else {
+    const unfinishedCount = state.dailyPlan.exerciseIds.filter((id) => !(state.dailyPlan.skippedIds || []).includes(id) && !state.dailyPlan.completedIds.includes(id)).length;
+    if (confidence === "review" && unfinishedCount < 4) {
+      addRecommendedPlanExercise(exercise.tags);
+    }
+    if (!isManualPractice && !state.dailyPlan.completedIds.includes(exercise.id)) state.dailyPlan.completedIds.push(exercise.id);
   }
-  if (!isManualPractice && !state.dailyPlan.completedIds.includes(exercise.id)) state.dailyPlan.completedIds.push(exercise.id);
   state.sessionLastAction = { date: todayKey(), confidence };
   saveState();
   drawRadar();
@@ -1815,6 +1907,7 @@ function bindEvents() {
   document.querySelector("#settingsButton").addEventListener("click", () => switchView("settings"));
   document.querySelector("#startSessionButton").addEventListener("click", () => {
     state.manualExerciseId = "";
+    state.activePracticeMode = "daily";
     ensureActivePlanExercise();
     if (!isPlanExerciseActive(state.currentExerciseId)) {
       state.currentExerciseId = state.dailyPlan.exerciseIds.find((id) => isPlanExerciseActive(id)) || "";
@@ -1942,16 +2035,18 @@ function bindEvents() {
     document.querySelectorAll("[data-review]").forEach((button) => {
       button.onclick = () => {
         const wasManualPractice = state.manualExerciseId === exercise.id;
+        const wasRenshuuRoute = Boolean(getActiveRenshuuBridgePlan()?.items.some((item) => item.id === exercise.id));
         applyProgress(exercise, button.dataset.review, result);
         delete state.draftAnswers[exercise.id];
         if (wasManualPractice) {
           state.manualExerciseId = "";
           moveToNextPlanExercise();
-        } else {
+        } else if (!wasRenshuuRoute) {
           state.currentExerciseId = getNextActivePlanExerciseId(exercise.id);
           ensureActivePlanExercise();
         }
         renderExercise();
+        renderRenshuuBridge();
         showNotice(button.dataset.review === "solid" ? "Intento guardado. Pasamos al siguiente ejercicio." : "Intento guardado. Lo priorizaremos para repasar.", "success");
       };
     });
