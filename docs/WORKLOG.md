@@ -397,3 +397,7 @@ Se genero una bateria original de 1.500 frases de traduccion: 100 N5, 200 N4, 30
 - El diccionario rapido ahora busca tanto el contenido de ejercicios como los catalogos; los terminos del detalle de Vocabulario y Kanji se pueden abrir desde esa referencia.
 - El IME de romaji aprovecha el catalogo para sugerir kana, katakana o kanji segun la lectura y el contexto del ejercicio.
 - Se documento la procedencia, licencia y limitacion de las etiquetas JLPT en `data/SOURCES.md`. Los conteos se recalculan con `scripts/report-content-completeness.mjs`.
+# 2026-08-03 - IME: prioridad de particulas
+
+- Las particulas y conectores frecuentes tienen prioridad exacta en las sugerencias de romaji. Por ejemplo, `he` y `e` proponen `へ` como particula de direccion antes de cualquier palabra larga.
+- Se incluyen `wa`, `ga`, `wo`/`o`, `ni`, `de`, `to`, `no`, `mo`, `kara` y `made`.

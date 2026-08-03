@@ -4,7 +4,7 @@ const GITHUB_SYNC_KEY = "nihongo-benkyo-github-sync-v1";
 const GITHUB_GIST_DESCRIPTION = "Nihongo Benkyo private progress sync";
 const GITHUB_GIST_FILE = "nihongo-benkyo-progress.json";
 const GITHUB_AUTH_PROXY_URL = "https://nihongo-benkyo-auth.raul-nihongo.workers.dev";
-const APP_VERSION = "0.8.8";
+const APP_VERSION = "0.8.9";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -235,6 +235,22 @@ const romajiDictionary = [
   { romaji: "ohayou", text: "おはよう", reading: "おはよう", gloss: "buenos dias" },
   { romaji: "konnichiwa", text: "こんにちは", reading: "こんにちは", gloss: "hola" },
   { romaji: "sumimasen", text: "すみません", reading: "すみません", gloss: "perdon" }
+];
+
+const particleImeDictionary = [
+  { romaji: "wa", text: "は", reading: "は", gloss: "particula de tema" },
+  { romaji: "ga", text: "が", reading: "が", gloss: "particula de sujeto" },
+  { romaji: "wo", text: "を", reading: "を", gloss: "particula de objeto" },
+  { romaji: "o", text: "を", reading: "を", gloss: "particula de objeto" },
+  { romaji: "ni", text: "に", reading: "に", gloss: "particula de destino, hora o receptor" },
+  { romaji: "de", text: "で", reading: "で", gloss: "particula de lugar de accion" },
+  { romaji: "he", text: "へ", reading: "へ", gloss: "particula de direccion" },
+  { romaji: "e", text: "へ", reading: "へ", gloss: "particula de direccion" },
+  { romaji: "to", text: "と", reading: "と", gloss: "particula de compania o cita" },
+  { romaji: "no", text: "の", reading: "の", gloss: "particula de posesion" },
+  { romaji: "mo", text: "も", reading: "も", gloss: "particula tambien" },
+  { romaji: "kara", text: "から", reading: "から", gloss: "desde o porque" },
+  { romaji: "made", text: "まで", reading: "まで", gloss: "hasta" }
 ];
 
 const kanaRomanization = [
@@ -2173,7 +2189,8 @@ function getCurrentRomajiToken(input) {
 }
 
 function findImeSuggestions(query, exercise) {
-  if (query.length < 2) return [];
+  const particles = particleImeDictionary.filter((item) => item.romaji === query);
+  if (query.length < 2 && !particles.length) return [];
 
   const direct = romajiDictionary.filter((item) => item.romaji.startsWith(query));
   const contextual = imeVocabularyDictionary
@@ -2185,7 +2202,7 @@ function findImeSuggestions(query, exercise) {
     ? [{ romaji: query, text: kana, reading: kana, gloss: "kana" }]
     : [];
 
-  return uniqueImeSuggestions([...contextual, ...direct, ...kanaSuggestion]).slice(0, 8);
+  return uniqueImeSuggestions([...particles, ...contextual, ...direct, ...kanaSuggestion]).slice(0, 8);
 }
 
 function getImeContextPriority(item, exercise) {
