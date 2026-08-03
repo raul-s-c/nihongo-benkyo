@@ -132,6 +132,10 @@ Objetivo:
 - Reducir friccion durante la practica.
 - Preparar una futura experiencia de entrada similar a una IME real.
 
+### Cola de practica sin repeticiones accidentales
+
+La pantalla Practicar consume los ejercicios activos del plan. Cuando solo queda uno, `Nuevo` busca una recomendacion adicional que no pertenezca ya a la sesion. Al completar el ultimo, se anade la siguiente propuesta disponible segun la ruta y los repasos. Si no existe contenido desbloqueado, la interfaz muestra que la sesion ha terminado; nunca vuelve silenciosamente al primer ejercicio N5.
+
 ### Toggle de furigana
 
 Incluye un boton global `ふ` en la barra superior para activar o desactivar furigana en textos japoneses mostrados por la app.

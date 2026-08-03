@@ -1,6 +1,6 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
-const APP_VERSION = "0.7.3";
+const APP_VERSION = "0.7.4";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -858,9 +858,15 @@ function renderLearningAnalytics() {
 
 function getCurrentExercise() {
   return (state.currentExerciseId === "renshuu-bridge" ? state.renshuuBridge : null)
-    || exercises.find((exercise) => exercise.id === state.currentExerciseId)
-    || exercises.find((exercise) => state.dailyPlan.exerciseIds.includes(exercise.id) && !(state.dailyPlan.skippedIds || []).includes(exercise.id))
-    || exercises[0];
+    || exercises.find((exercise) => exercise.id === state.currentExerciseId && isPlanExerciseActive(exercise.id))
+    || exercises.find((exercise) => isPlanExerciseActive(exercise.id))
+    || null;
+}
+
+function isPlanExerciseActive(id) {
+  return state.dailyPlan.exerciseIds.includes(id)
+    && !(state.dailyPlan.skippedIds || []).includes(id)
+    && !state.dailyPlan.completedIds.includes(id);
 }
 
 function todayKey() {
@@ -956,6 +962,21 @@ function ensureDailyPlan() {
   saveState();
 }
 
+function ensureActivePlanExercise() {
+  ensureDailyPlan();
+  if (getCurrentExercise()) return;
+  const plan = state.dailyPlan;
+  const extra = getRecommendedExercises(1, [...plan.exerciseIds, ...(plan.skippedIds || [])]);
+  if (!extra.length) {
+    state.currentExerciseId = "";
+    saveState();
+    return;
+  }
+  plan.exerciseIds.push(extra[0].id);
+  state.currentExerciseId = extra[0].id;
+  saveState();
+}
+
 function reconcileDailyPlan() {
   const plan = state.dailyPlan;
   const allowedIds = new Set(getCurriculumCandidates().map((exercise) => exercise.id));
@@ -1022,6 +1043,22 @@ function getNextActivePlanExerciseId(currentId) {
   if (!activeIds.length) return "";
   const index = activeIds.indexOf(currentId);
   return activeIds[(index + 1 + activeIds.length) % activeIds.length];
+}
+
+function moveToNextPlanExercise() {
+  ensureActivePlanExercise();
+  const activeIds = state.dailyPlan.exerciseIds.filter((id) => isPlanExerciseActive(id));
+  if (activeIds.length > 1) {
+    state.currentExerciseId = getNextActivePlanExerciseId(state.currentExerciseId);
+    saveState();
+    return;
+  }
+  const extra = getRecommendedExercises(1, [...state.dailyPlan.exerciseIds, ...(state.dailyPlan.skippedIds || [])]);
+  if (extra.length) {
+    state.dailyPlan.exerciseIds.push(extra[0].id);
+    state.currentExerciseId = extra[0].id;
+    saveState();
+  }
 }
 
 function getPlanRecommendation(item) {
@@ -1115,9 +1152,22 @@ function renderDailyPlan() {
 }
 
 function renderExercise() {
-  ensureDailyPlan();
+  ensureActivePlanExercise();
   const exercise = getCurrentExercise();
-  if (!exercise) return;
+  if (!exercise) {
+    document.querySelector("#exerciseType").textContent = "Sesion completada";
+    document.querySelector("#exercisePrompt").textContent = "No hay otro ejercicio disponible para tu nivel ahora mismo.";
+    document.querySelector("#practiceMeta").textContent = "Vuelve mas tarde para repasar o ajusta tu objetivo JLPT.";
+    document.querySelector("#answerInput").value = "";
+    document.querySelector("#answerInput").disabled = true;
+    document.querySelector("#checkAnswerButton").disabled = true;
+    document.querySelector("#listenPromptButton").classList.add("hidden");
+    document.querySelector("#contextHelp").classList.add("hidden");
+    document.querySelector("#feedbackPanel").classList.add("hidden");
+    return;
+  }
+  document.querySelector("#answerInput").disabled = false;
+  document.querySelector("#checkAnswerButton").disabled = false;
   document.querySelector("#exerciseType").textContent = exercise.type;
   setJapaneseText(document.querySelector("#exercisePrompt"), exercise.audioText ? "Escucha y responde al enunciado." : exercise.prompt);
   document.querySelector("#listenPromptButton").classList.toggle("hidden", !exercise.audioText);
@@ -1214,7 +1264,11 @@ function bindEvents() {
   });
 
   document.querySelector("#settingsButton").addEventListener("click", () => switchView("settings"));
-  document.querySelector("#startSessionButton").addEventListener("click", () => switchView("practice"));
+  document.querySelector("#startSessionButton").addEventListener("click", () => {
+    ensureActivePlanExercise();
+    switchView("practice");
+    renderExercise();
+  });
   document.querySelector("#backToPlanButton").addEventListener("click", () => {
     saveState();
     switchView("today");
@@ -1242,9 +1296,7 @@ function bindEvents() {
   });
 
   document.querySelector("#newExerciseButton").addEventListener("click", () => {
-    ensureDailyPlan();
-    state.currentExerciseId = getNextActivePlanExerciseId(state.currentExerciseId);
-    saveState();
+    moveToNextPlanExercise();
     renderExercise();
   });
 
@@ -1289,6 +1341,7 @@ function bindEvents() {
 
   document.querySelector("#checkAnswerButton").addEventListener("click", () => {
     const exercise = getCurrentExercise();
+    if (!exercise) return;
     const result = evaluateAnswer(document.querySelector("#answerInput").value, exercise);
     document.querySelector("#objectiveScore").textContent = result.objective === null ? "—" : result.objective + "%";
     document.querySelector("#comprehensionScore").textContent = "—";
@@ -1306,7 +1359,7 @@ function bindEvents() {
         applyProgress(exercise, button.dataset.review, result);
         delete state.draftAnswers[exercise.id];
         state.currentExerciseId = getNextActivePlanExerciseId(exercise.id);
-        saveState();
+        ensureActivePlanExercise();
         renderExercise();
       };
     });
@@ -1657,7 +1710,7 @@ renderAll();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js?v=0.7.3").catch(() => {
+    navigator.serviceWorker.register("service-worker.js?v=0.7.4").catch(() => {
       // La app sigue funcionando en navegadores que no permiten cache offline.
     });
   });
