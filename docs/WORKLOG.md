@@ -307,3 +307,7 @@ Se eliminaron los valores de demostracion con los que nacia el prototipo. Los pe
 ### Plan diario dinamico
 
 El plan usa la evidencia de la app, el foco configurado y los repasos pendientes para priorizar ejercicios. Los usuarios pueden sustituir o saltar cualquier propuesta, anadir una recomendacion extra y recibir un refuerzo relacionado tras marcar "Necesito repasarlo". Los controles solo cambian la ruta de la sesion actual: no alteran el historial ni la matriz.
+
+### Estadisticas y familias de aprendizaje
+
+Se anadio un registro persistente por intento. La pantalla Matriz muestra aciertos automaticos, parciales, ejercicios abiertos confirmados y contenidos marcados para repasar. Cada ejercicio se clasifica en una familia gramatical y una familia lexica, con los terminos de ayuda asociados. La evidencia se expresa como contextual al ejercicio, no como dominio absoluto de una palabra individual.

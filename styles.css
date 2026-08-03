@@ -776,6 +776,76 @@ textarea {
   background: var(--panel);
 }
 
+.analytics-panel {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.analytics-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 14px 0 18px;
+}
+
+.analytics-card {
+  display: grid;
+  gap: 3px;
+  min-height: 104px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.analytics-card strong {
+  color: var(--teal);
+  font-size: 24px;
+}
+
+.analytics-card span {
+  font-weight: 800;
+}
+
+.analytics-card small,
+.family-row small,
+.analytics-note,
+.analytics-empty {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.mastery-map {
+  display: grid;
+  gap: 14px;
+}
+
+.analytics-note,
+.analytics-empty {
+  margin: 0;
+}
+
+.family-section {
+  display: grid;
+  gap: 8px;
+}
+
+.family-section h4 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.family-row {
+  display: grid;
+  gap: 3px;
+  padding: 10px;
+  border-left: 3px solid var(--coral);
+  background: #fff1ed;
+  font-size: 13px;
+}
+
 .field {
   display: grid;
   gap: 8px;

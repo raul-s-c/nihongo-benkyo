@@ -1,6 +1,6 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
-const APP_VERSION = "0.4.6";
+const APP_VERSION = "0.4.7";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -25,6 +25,16 @@ const jlptTargets = {
 const exercises = window.NIHONGO_CONTENT?.exercises || [];
 const embeddedDictionary = window.NIHONGO_CONTENT?.dictionary || [];
 const PROTOTYPE_PROGRESS_SEED = { vocab: 90, kanji: 12, grammar: 18, particles: 22, reading: 20, writing: 14, listening: 8, work: 5 };
+const exerciseTaxonomy = {
+  "n5-01": ["Forma -masu", "Rutinas y tiempo"], "n5-02": ["Lugar de accion", "Estudio y hogar"], "n5-03": ["Particulas de lugar", "Estudio y lugares"], "n5-04": ["Registro cortés", "Comunicacion basica"],
+  "n5-05": ["Posesion con no", "Objetos cotidianos"], "n5-06": ["Tiempo y destino", "Desplazamientos"], "n5-07": ["Clasificadores y listas", "Comida y bebida"], "n5-08": ["Forma te", "Rutinas y comida"],
+  "n5-09": ["Razon con kara", "Motivacion y trabajo"], "n5-10": ["Particula ni", "Encuentros y ciudad"], "n5-11": ["Receptor con ni", "Correo y oficina"], "n5-12": ["Peticion cortés", "Comunicacion basica"],
+  "n4-01": ["Registro respetuoso", "Clientes y llamadas"], "n4-02": ["Inicio con kara", "Reuniones y horarios"], "n4-03": ["Destino con e", "Viajes de trabajo"], "n4-04": ["Preguntas de objeto", "Gestion y plazos"],
+  "n4-05": ["Secuencia temporal", "Reuniones y documentos"], "n4-06": ["Contraste con ga", "Incidencias laborales"], "n4-07": ["Condicion con nara", "Reuniones y horarios"], "n4-08": ["Categorias", "Vocabulario de oficina"],
+  "n4-09": ["Pregunta cortés", "Reservas y atencion"], "n4-10": ["Secuencia te kara", "Documentos y preguntas"], "n4-11": ["Intervalo kara made", "Horarios de trabajo"], "n4-12": ["Planes con yotei", "Tiempo libre"],
+  "n4-13": ["Forma potencial", "Conversacion laboral"], "n4-14": ["Condicional nakereba", "Ayuda y comunicacion"], "n4-15": ["Tiempo relativo", "Desplazamientos"],
+  "renshuu-bridge": ["Produccion libre", "Transferencia de Renshuu"]
+};
 
 const defaultUserState = {
   settings: {
@@ -53,6 +63,7 @@ const defaultUserState = {
   currentExerciseId: "n5-01",
   dailyPlan: { date: "", exerciseIds: [], completedIds: [], skippedIds: [] },
   exerciseHistory: {},
+  attemptLog: [],
   renshuuBridge: null,
   draftAnswers: {}
 };
@@ -173,6 +184,7 @@ function mergeUserState(userState) {
     renshuu: { ...defaultUserState.renshuu, ...(userState?.renshuu || {}) },
     dailyPlan: { ...defaultUserState.dailyPlan, ...(userState?.dailyPlan || {}) },
     exerciseHistory: history,
+    attemptLog: userState?.attemptLog || [],
     renshuuBridge: userState?.renshuuBridge || null,
     draftAnswers: userState?.draftAnswers || {}
   };
@@ -526,6 +538,78 @@ function renderMatrix() {
       </div>
     `;
   }).join("");
+  renderLearningAnalytics();
+}
+
+function getExerciseDomains(exercise) {
+  const [grammarFamily, lexicalFamily] = exerciseTaxonomy[exercise.id]
+    || [exercise.tags.includes("particles") ? "Particulas" : exercise.tags.includes("grammar") ? "Estructuras basicas" : "Produccion y comprension", exercise.tags.includes("work") ? "Empresa" : "Vida diaria"];
+  return {
+    grammarFamily,
+    lexicalFamily,
+    terms: (exercise.help || []).map((item) => item.text).slice(0, 4)
+  };
+}
+
+function getAttemptOutcome(result, confidence) {
+  if (confidence === "review") return "review";
+  if (result.objective === null) return "manual";
+  return result.objective >= 80 ? "correct" : "partial";
+}
+
+function getMetricSummary(entries) {
+  return entries.reduce((summary, entry) => {
+    summary[entry.outcome] = (summary[entry.outcome] || 0) + 1;
+    summary.total += 1;
+    return summary;
+  }, { total: 0, correct: 0, partial: 0, review: 0, manual: 0 });
+}
+
+function metricLabel(metric) {
+  if (!metric.total) return "Sin intentos";
+  const automatic = metric.correct + metric.partial;
+  const accuracy = automatic ? Math.round(metric.correct / automatic * 100) : null;
+  const accuracyText = accuracy === null ? "sin correccion automatica" : `${accuracy}% aciertos reconocidos`;
+  return `${accuracyText} · ${metric.review} para repasar`;
+}
+
+function renderLearningAnalytics() {
+  const summary = document.querySelector("#analyticsSummary");
+  const cards = document.querySelector("#analyticsCards");
+  const map = document.querySelector("#masteryMap");
+  const entries = state.attemptLog || [];
+  const totals = getMetricSummary(entries);
+  if (!entries.length) {
+    summary.textContent = "Cuando completes ejercicios, aqui veras aciertos reconocidos, respuestas parciales, repasos y dominios trabajados.";
+    cards.innerHTML = "";
+    map.innerHTML = '<p class="analytics-empty">Aun no hay evidencia suficiente para clasificar familias gramaticales o lexicas.</p>';
+    return;
+  }
+
+  summary.textContent = `${totals.total} intentos registrados. Las coincidencias automaticas se separan de las respuestas abiertas confirmadas por ti.`;
+  cards.innerHTML = [
+    ["Aciertos", totals.correct, "Coincidencias automaticas de al menos el 80%."],
+    ["Parciales", totals.partial, "Hay elementos reconocidos, pero no todos los esperados."],
+    ["Confirmados", totals.manual, "Ejercicios abiertos que marcaste como entendidos."],
+    ["A repasar", totals.review, "Contenidos que decidiste volver a trabajar."]
+  ].map(([label, value, note]) => `<div class="analytics-card"><strong>${value}</strong><span>${label}</span><small>${note}</small></div>`).join("");
+
+  const grouped = { grammar: new Map(), lexical: new Map() };
+  entries.forEach((entry) => {
+    [["grammar", entry.domains?.grammarFamily], ["lexical", entry.domains?.lexicalFamily]].forEach(([kind, name]) => {
+      if (!name) return;
+      const current = grouped[kind].get(name) || [];
+      current.push(entry);
+      grouped[kind].set(name, current);
+    });
+  });
+  const renderFamily = (title, kind) => {
+    const rows = [...grouped[kind].entries()]
+      .map(([name, familyEntries]) => ({ name, metric: getMetricSummary(familyEntries), terms: [...new Set(familyEntries.flatMap((entry) => entry.domains?.terms || []))].slice(0, 6) }))
+      .sort((left, right) => right.metric.review - left.metric.review || left.metric.correct - right.metric.correct);
+    return `<section class="family-section"><h4>${title}</h4>${rows.map((row) => `<div class="family-row"><strong>${row.name}</strong><span>${metricLabel(row.metric)}</span><small>${row.terms.length ? `Terminos: ${row.terms.join(" · ")}` : "Sin terminos asociados."}</small></div>`).join("")}</section>`;
+  };
+  map.innerHTML = `<p class="analytics-note">Cada termino hereda la evidencia del ejercicio donde aparece: sirve para orientar el repaso, no para afirmar que una palabra aislada esta dominada.</p>${renderFamily("Familias gramaticales", "grammar")}${renderFamily("Familias lexicas", "lexical")}`;
 }
 
 function getCurrentExercise() {
@@ -695,6 +779,7 @@ function normalizeAnswer(value) {
 function applyProgress(exercise, confidence, result) {
   const checkedScore = result.objective ?? 50;
   const gain = confidence === "solid" ? Math.max(2, Math.round(checkedScore / 25)) : 1;
+  const domains = getExerciseDomains(exercise);
   exercise.tags.forEach((tag) => {
     state.progress[tag] = (state.progress[tag] || 0) + gain;
   });
@@ -703,6 +788,13 @@ function applyProgress(exercise, confidence, result) {
     status: confidence,
     lastAttempted: new Date().toISOString()
   };
+  state.attemptLog.push({
+    exerciseId: exercise.id,
+    at: new Date().toISOString(),
+    outcome: getAttemptOutcome(result, confidence),
+    objective: result.objective,
+    domains
+  });
   const unfinishedCount = state.dailyPlan.exerciseIds.filter((id) => !(state.dailyPlan.skippedIds || []).includes(id) && !state.dailyPlan.completedIds.includes(id)).length;
   if (confidence === "review" && unfinishedCount < 4) {
     addRecommendedPlanExercise(exercise.tags);
@@ -1083,7 +1175,7 @@ renderAll();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js?v=0.4.6").catch(() => {
+    navigator.serviceWorker.register("service-worker.js?v=0.4.7").catch(() => {
       // La app sigue funcionando en navegadores que no permiten cache offline.
     });
   });

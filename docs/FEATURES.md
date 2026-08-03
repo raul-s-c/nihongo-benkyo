@@ -74,6 +74,8 @@ Objetivo: ver de forma visual si el usuario esta listo para un nivel JLPT en cad
 
 La matriz empieza en cero. Guarda puntos propios de Nihongo Benkyo, no una declaracion de nivel ni una prediccion de examen. Al completar un ejercicio, la accion "Necesito repasarlo" suma 1 punto por habilidad relacionada. "Lo he entendido" suma de 2 a 4 puntos segun los elementos de la respuesta modelo reconocidos; si el ejercicio es abierto o requiere revision manual, suma 2 puntos al confirmarlo. Consultar, redactar o pulsar "Corregir" por si solo no cambia la matriz. Los porcentajes de Renshuu permanecen como fuente independiente.
 
+La misma pantalla incluye estadisticas por intento: aciertos reconocidos automaticamente, respuestas parciales, ejercicios abiertos confirmados manualmente y contenidos marcados para repasar. Cada intento se asocia a una familia gramatical y una familia lexica. Los terminos que se listan heredan evidencia contextual del ejercicio donde aparecieron; no se presentan como una correccion aislada de cada palabra.
+
 Lista cada habilidad con un valor acumulado y una barra de avance.
 
 Objetivo: convertir cada ejercicio en progreso visible.
