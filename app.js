@@ -1,6 +1,6 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
-const APP_VERSION = "0.5.5";
+const APP_VERSION = "0.6.0";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -35,6 +35,7 @@ const themes = {
   comunicacion: "Comunicacion",
   "vida-diaria": "Vida diaria"
 };
+const dailyThemes = new Set(["compras", "ciudad-y-transporte", "amistades-y-ocio", "comida", "hogar-y-estudio", "comunicacion", "vida-diaria"]);
 const PROTOTYPE_PROGRESS_SEED = { vocab: 90, kanji: 12, grammar: 18, particles: 22, reading: 20, writing: 14, listening: 8, work: 5 };
 const exerciseTaxonomy = {
   "n5-01": ["Forma -masu", "Rutinas y tiempo"], "n5-02": ["Lugar de accion", "Estudio y hogar"], "n5-03": ["Particulas de lugar", "Estudio y lugares"], "n5-04": ["Registro cortés", "Comunicacion basica"],
@@ -115,6 +116,7 @@ const defaultUserState = {
 let appState = loadAppState();
 let state = getActiveUserState();
 let activeSkillId = "vocab";
+let deferredInstallPrompt = null;
 
 const furiganaEntries = [
   ["日本語", "にほんご"],
@@ -260,9 +262,79 @@ function switchProfile(userId) {
   renderAll();
 }
 
+function exportActiveProfile() {
+  const payload = {
+    format: "nihongo-benkyo-profile",
+    version: APP_VERSION,
+    exportedAt: new Date().toISOString(),
+    profile: { ...appState.users[appState.activeUserId], ...state }
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `nihongo-benkyo-${state.name || "perfil"}-${todayKey()}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function importProfile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const imported = JSON.parse(reader.result);
+      if (imported?.format !== "nihongo-benkyo-profile" || !imported.profile?.id) throw new Error("Formato no valido");
+      const importedId = imported.profile.id;
+      appState.users[importedId] = {
+        ...imported.profile,
+        ...mergeUserState(imported.profile),
+        id: importedId,
+        name: imported.profile.name || "Perfil importado"
+      };
+      appState.activeUserId = importedId;
+      state = getActiveUserState();
+      saveState();
+      renderAll();
+      switchView("today");
+      window.alert("Copia importada en este dispositivo.");
+    } catch {
+      window.alert("No se pudo importar esta copia. Elige un archivo exportado por Nihongo Benkyo.");
+    }
+  };
+  reader.readAsText(file);
+}
+
+function deleteActiveProfile() {
+  const profiles = Object.keys(appState.users);
+  if (profiles.length < 2) {
+    window.alert("Crea otro perfil antes de eliminar el unico perfil local.");
+    return;
+  }
+  if (!window.confirm(`Eliminar el perfil ${state.name || "activo"} y todo su progreso local? Esta accion no se puede deshacer.`)) return;
+  const removedId = appState.activeUserId;
+  delete appState.users[removedId];
+  appState.activeUserId = Object.keys(appState.users)[0];
+  state = getActiveUserState();
+  saveState();
+  renderAll();
+  switchView("settings");
+}
+
+function getContentCoverage(skillId, level) {
+  const content = exercises.filter((exercise) => exercise.tags.includes(skillId) && levelRank(exercise.level) <= levelRank(level));
+  if (!content.length) return 0;
+  const evidence = content.reduce((sum, exercise) => {
+    const history = state.exerciseHistory[exercise.id] || {};
+    if (history.status === "solid") return sum + 1;
+    if (history.status === "review") return sum + 0.25;
+    return sum;
+  }, 0);
+  return Math.round(evidence / content.length * 100);
+}
+
 function getReadiness(level) {
-  const target = jlptTargets[level];
-  const values = skills.map((skill) => Math.min(100, Math.round((state.progress[skill.id] / target[skill.id]) * 100)));
+  const values = skills.map((skill) => getContentCoverage(skill.id, level));
   const average = Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
   return { values, average };
 }
@@ -317,7 +389,7 @@ function drawRadar() {
   ctx.stroke();
 
   document.querySelector("#readinessPercent").textContent = `${average}%`;
-  canvas.setAttribute("aria-label", "Radar de preparacion JLPT. Toca una arista para abrir el detalle de esa habilidad.");
+  canvas.setAttribute("aria-label", "Radar de cobertura del contenido para el nivel JLPT. Toca una arista para abrir el detalle de esa habilidad.");
   canvas.title = "Toca una arista para ver el detalle de la habilidad";
   renderSkillGrid(level);
 }
@@ -331,11 +403,10 @@ function radarPoint(index, distance, center) {
 }
 
 function renderSkillGrid(level) {
-  const target = jlptTargets[level];
   const renshuu = getRenshuuLevelProgress(level);
   const grid = document.querySelector("#skillGrid");
   grid.innerHTML = skills.map((skill) => {
-    const percent = Math.min(100, Math.round((state.progress[skill.id] / target[skill.id]) * 100));
+    const percent = getContentCoverage(skill.id, level);
     const renshuuPercent = renshuu[skill.id];
     return `
       <button class="skill-pill" data-skill-detail="${skill.id}" data-tooltip="Abre contenidos, repasos, etiquetas y siguiente paso de ${skill.label}.">
@@ -359,8 +430,10 @@ function openSkillDetail(skillId) {
 
 function getSkillExerciseSchedule(exercise) {
   const history = state.exerciseHistory[exercise.id] || {};
-  if (history.status === "review") return "Repaso pendiente: el plan puede priorizarlo hoy.";
-  if (history.status === "solid") return "Confirmado; vuelve a aparecer solo si lo marcas para repasar.";
+  if (history.status === "review") return "Repaso pendiente: el plan lo prioriza desde manana.";
+  if (isReviewDue(history)) return "Repaso vencido: vuelve a estar disponible hoy.";
+  if (history.nextReviewAt) return `Proximo repaso: ${new Date(history.nextReviewAt).toLocaleDateString("es-ES")}.`;
+  if (history.status === "solid") return "Confirmado; aun no tiene una fecha de repaso.";
   const current = getCurrentCurriculumStage();
   if (!exercise.core) {
     const unlockedLevel = current?.level || state.settings.targetJlpt || "N5";
@@ -389,10 +462,16 @@ function getSkillDetail(skillId) {
       terms.set(term.text, current);
     });
   });
-  const pending = relatedExercises.filter((exercise) => state.exerciseHistory[exercise.id]?.status === "review");
+  const pending = relatedExercises.filter((exercise) => {
+    const history = state.exerciseHistory[exercise.id];
+    return history?.status === "review" || isReviewDue(history);
+  });
   const newItems = relatedExercises.filter((exercise) => !state.exerciseHistory[exercise.id]?.status);
   const next = [...relatedExercises]
-    .filter((exercise) => state.exerciseHistory[exercise.id]?.status !== "solid")
+    .filter((exercise) => {
+      const history = state.exerciseHistory[exercise.id];
+      return history?.status !== "solid" || isReviewDue(history);
+    })
     .sort((left, right) => scorePlanExercise(left, jlptTargets[state.settings.targetJlpt], state.settings.studyFocus) - scorePlanExercise(right, jlptTargets[state.settings.targetJlpt], state.settings.studyFocus))[0];
   const termList = [...terms.values()].map((term) => {
     const termAttempts = (state.attemptLog || []).filter((entry) => term.exerciseIds.has(entry.exerciseId));
@@ -405,11 +484,11 @@ function renderSkillDetail() {
   const skill = skills.find((item) => item.id === activeSkillId) || skills[0];
   const detail = getSkillDetail(skill.id);
   const level = state.settings.targetJlpt || "N4";
-  const readiness = Math.min(100, Math.round((state.progress[skill.id] / jlptTargets[level][skill.id]) * 100));
+  const readiness = getContentCoverage(skill.id, level);
   document.querySelector("#skillDetailTitle").textContent = skill.label;
   document.querySelector("#skillDetailIntro").textContent = `Evidencia y contenido de ${skill.label.toLowerCase()} para tu objetivo ${level}. Las etiquetas muestran los contextos y niveles donde aparece cada termino.`;
   document.querySelector("#skillDetailSummary").innerHTML = [
-    [readiness + "%", "avance registrado para " + level],
+    [readiness + "%", "contenido confirmado hasta " + level],
     [detail.attempts.length, "intentos en esta habilidad"],
     [detail.pending.length, "ejercicios para repasar"],
     [detail.newItems.length, "ejercicios aun no iniciados"]
@@ -780,11 +859,31 @@ function getAvailableCurriculumStages() {
   return curriculumStages.filter((stage) => levelRank(stage.level) <= levelRank(targetLevel));
 }
 
+function isReviewDue(history) {
+  return Boolean(history?.nextReviewAt && new Date(history.nextReviewAt).getTime() <= Date.now());
+}
+
+function getReviewSchedule(history, confidence, objective) {
+  const now = new Date();
+  if (confidence === "review") {
+    now.setDate(now.getDate() + 1);
+    return { nextReviewAt: now.toISOString(), reviewIntervalDays: 1 };
+  }
+  const previous = Number(history?.reviewIntervalDays) || 0;
+  const factor = objective !== null && objective < 80 ? 1.5 : 2;
+  const interval = previous ? Math.min(60, Math.max(1, Math.round(previous * factor))) : 1;
+  now.setDate(now.getDate() + interval);
+  return { nextReviewAt: now.toISOString(), reviewIntervalDays: interval };
+}
+
 function getStageEvidence(stage) {
   const confirmed = new Set((state.attemptLog || [])
     .filter((entry) => stage.exerciseIds.includes(entry.exerciseId) && entry.outcome !== "review")
     .map((entry) => entry.exerciseId));
-  const pendingReviews = stage.exerciseIds.filter((id) => state.exerciseHistory[id]?.status === "review");
+  const pendingReviews = stage.exerciseIds.filter((id) => {
+    const history = state.exerciseHistory[id];
+    return history?.status === "review" || isReviewDue(history);
+  });
   return { confirmedCount: confirmed.size, pendingReviews, complete: confirmed.size >= stage.exerciseIds.length };
 }
 
@@ -799,15 +898,30 @@ function getCurriculumCandidates(excludedIds = []) {
   const reviewIds = stages.flatMap((stage) => getStageEvidence(stage).pendingReviews).filter((id) => !excludedIds.includes(id));
   const themeFocus = state.settings.themeFocus || "balanced";
   const unlockedLevel = current?.level || state.settings.targetJlpt || "N5";
+  const isAvailableSupplement = (exercise) => {
+    const history = state.exerciseHistory[exercise.id] || {};
+    return history.status !== "solid" || isReviewDue(history);
+  };
   const thematicIds = themeFocus === "balanced" ? [] : exercises
     .filter((exercise) => !exercise.core && exercise.theme === themeFocus && levelRank(exercise.level) <= levelRank(unlockedLevel))
-    .filter((exercise) => !excludedIds.includes(exercise.id) && state.exerciseHistory[exercise.id]?.status !== "solid")
+    .filter((exercise) => !excludedIds.includes(exercise.id) && isAvailableSupplement(exercise))
     .map((exercise) => exercise.id);
+  const supplementalIds = ["kanji", "listening"].includes(state.settings.studyFocus)
+    ? exercises
+      .filter((exercise) => !exercise.core && exercise.tags.includes(state.settings.studyFocus) && levelRank(exercise.level) <= levelRank(unlockedLevel))
+      .filter((exercise) => !excludedIds.includes(exercise.id) && isAvailableSupplement(exercise))
+      .map((exercise) => exercise.id)
+    : [];
+  const continuationIds = !current ? exercises
+    .filter((exercise) => !exercise.core && levelRank(exercise.level) <= levelRank(unlockedLevel))
+    .filter((exercise) => !excludedIds.includes(exercise.id) && isAvailableSupplement(exercise))
+    .map((exercise) => exercise.id)
+    : [];
   if (!current) {
-    return [...new Set([...reviewIds, ...thematicIds])].map((id) => exercises.find((exercise) => exercise.id === id)).filter(Boolean);
+    return [...new Set([...reviewIds, ...thematicIds, ...supplementalIds, ...continuationIds])].map((id) => exercises.find((exercise) => exercise.id === id)).filter(Boolean);
   }
   const newIds = current.exerciseIds.filter((id) => !excludedIds.includes(id) && state.exerciseHistory[id]?.status !== "solid");
-  return [...new Set([...reviewIds, ...newIds, ...thematicIds])]
+  return [...new Set([...reviewIds, ...newIds, ...thematicIds, ...supplementalIds])]
     .map((id) => exercises.find((exercise) => exercise.id === id))
     .filter(Boolean);
 }
@@ -852,8 +966,14 @@ function getRecommendedExercises(count = 1, excludedIds = [], preferredTags = []
   const focus = state.settings.studyFocus;
   const candidates = getCurriculumCandidates(excludedIds)
     .sort((left, right) => scorePlanExercise(left, target, focus, preferredTags) - scorePlanExercise(right, target, focus, preferredTags))
-  const review = candidates.filter((item) => state.exerciseHistory[item.id]?.status === "review").slice(0, 1);
-  const nextBlock = candidates.filter((item) => state.exerciseHistory[item.id]?.status !== "review");
+  const review = candidates.filter((item) => {
+    const history = state.exerciseHistory[item.id];
+    return history?.status === "review" || isReviewDue(history);
+  }).slice(0, 1);
+  const nextBlock = candidates.filter((item) => {
+    const history = state.exerciseHistory[item.id];
+    return history?.status !== "review" && !isReviewDue(history);
+  });
   const core = nextBlock.filter((item) => item.core);
   const themed = nextBlock.filter((item) => !item.core);
   const ordered = state.settings.themeFocus !== "balanced" && themed.length
@@ -867,7 +987,13 @@ function scorePlanExercise(exercise, target, focus, preferredTags = []) {
   const weakness = exercise.tags.reduce((sum, tag) => sum + ((state.progress[tag] || 0) / (target[tag] || 1)), 0) / exercise.tags.length;
   const preferred = exercise.tags.some((tag) => preferredTags.includes(tag)) ? -1.2 : 0;
   const themeBoost = state.settings.themeFocus !== "balanced" && exercise.theme === state.settings.themeFocus ? -1.5 : 0;
-  return weakness + preferred + themeBoost + (focus !== "balanced" && exercise.tags.includes(focus) ? -0.5 : 0) + (history.status === "review" ? -1 : 0) + (history.attempts || 0) * 0.08;
+  const focusBoost = focus === "daily"
+    ? (dailyThemes.has(exercise.theme) ? -0.5 : 0)
+    : (focus !== "balanced" && exercise.tags.includes(focus) ? -0.5 : 0);
+  const mainGoalBoost = state.settings.mainGoal === "work"
+    ? (exercise.tags.includes("work") ? -0.35 : 0)
+    : state.settings.mainGoal === "daily" && dailyThemes.has(exercise.theme) ? -0.35 : 0;
+  return weakness + preferred + themeBoost + focusBoost + mainGoalBoost + ((history.status === "review" || isReviewDue(history)) ? -1 : 0) + (history.attempts || 0) * 0.08;
 }
 
 function getPlanItem(id) {
@@ -875,7 +1001,7 @@ function getPlanItem(id) {
 }
 
 function getNextActivePlanExerciseId(currentId) {
-  const activeIds = state.dailyPlan.exerciseIds.filter((id) => !(state.dailyPlan.skippedIds || []).includes(id));
+  const activeIds = state.dailyPlan.exerciseIds.filter((id) => !(state.dailyPlan.skippedIds || []).includes(id) && !state.dailyPlan.completedIds.includes(id));
   if (!activeIds.length) return "";
   const index = activeIds.indexOf(currentId);
   return activeIds[(index + 1 + activeIds.length) % activeIds.length];
@@ -883,8 +1009,11 @@ function getNextActivePlanExerciseId(currentId) {
 
 function getPlanRecommendation(item) {
   const history = state.exerciseHistory[item.id] || {};
-  if (history.status === "review") return "Repaso pendiente";
+  if (history.status === "review" || isReviewDue(history)) return "Repaso vencido";
+  if (state.settings.studyFocus === "daily" && dailyThemes.has(item.theme)) return "Tu foco de estudio";
   if (state.settings.studyFocus !== "balanced" && item.tags.includes(state.settings.studyFocus)) return "Tu foco de estudio";
+  if (state.settings.mainGoal === "work" && item.tags.includes("work")) return "Tu objetivo profesional";
+  if (state.settings.mainGoal === "daily" && dailyThemes.has(item.theme)) return "Tu objetivo de vida diaria";
   const weakestTag = [...item.tags].sort((left, right) => (state.progress[left] || 0) - (state.progress[right] || 0))[0];
   return `Refuerza ${skills.find((skill) => skill.id === weakestTag)?.label?.toLowerCase() || "una habilidad"}`;
 }
@@ -973,7 +1102,8 @@ function renderExercise() {
   const exercise = getCurrentExercise();
   if (!exercise) return;
   document.querySelector("#exerciseType").textContent = exercise.type;
-  setJapaneseText(document.querySelector("#exercisePrompt"), exercise.prompt);
+  setJapaneseText(document.querySelector("#exercisePrompt"), exercise.audioText ? "Escucha y responde al enunciado." : exercise.prompt);
+  document.querySelector("#listenPromptButton").classList.toggle("hidden", !exercise.audioText);
   document.querySelector("#answerInput").value = state.draftAnswers[exercise.id] || "";
   const themeLabel = themes[exercise.theme] || "Vida diaria";
   document.querySelector("#practiceMeta").textContent = [exercise.level, themeLabel, ...exercise.tags.map((tag) => skills.find((skill) => skill.id === tag)?.label || tag)].join(" · ");
@@ -981,6 +1111,18 @@ function renderExercise() {
   document.querySelector("#contextHelp").classList.add("hidden");
   document.querySelector("#helpToggle").setAttribute("aria-expanded", "false");
   document.querySelector("#feedbackPanel").classList.add("hidden");
+}
+
+function speakJapanese(text) {
+  if (!("speechSynthesis" in window)) {
+    window.alert("Este navegador no permite reproducir la lectura japonesa.");
+    return;
+  }
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "ja-JP";
+  utterance.rate = 0.85;
+  window.speechSynthesis.speak(utterance);
 }
 
 function evaluateAnswer(answer, exercise) {
@@ -1009,16 +1151,19 @@ function normalizeAnswer(value) {
 }
 
 function applyProgress(exercise, confidence, result) {
+  const previousHistory = state.exerciseHistory[exercise.id] || {};
   const checkedScore = result.objective ?? 50;
   const gain = confidence === "solid" ? Math.max(2, Math.round(checkedScore / 25)) : 1;
   const domains = getExerciseDomains(exercise);
+  const schedule = getReviewSchedule(previousHistory, confidence, result.objective);
   exercise.tags.forEach((tag) => {
     state.progress[tag] = (state.progress[tag] || 0) + gain;
   });
   state.exerciseHistory[exercise.id] = {
-    attempts: (state.exerciseHistory[exercise.id]?.attempts || 0) + 1,
+    attempts: (previousHistory.attempts || 0) + 1,
     status: confidence,
-    lastAttempted: new Date().toISOString()
+    lastAttempted: new Date().toISOString(),
+    ...schedule
   };
   state.attemptLog.push({
     exerciseId: exercise.id,
@@ -1090,6 +1235,11 @@ function bindEvents() {
     const help = document.querySelector("#contextHelp");
     const isHidden = help.classList.toggle("hidden");
     document.querySelector("#helpToggle").setAttribute("aria-expanded", String(!isHidden));
+  });
+
+  document.querySelector("#listenPromptButton").addEventListener("click", () => {
+    const exercise = getCurrentExercise();
+    if (exercise?.audioText) speakJapanese(exercise.audioText);
   });
 
   document.querySelectorAll(".keyboard-row button").forEach((button) => {
@@ -1172,6 +1322,21 @@ function bindEvents() {
     document.querySelector("#newProfileName").value = "";
   });
 
+  document.querySelector("#exportProfileButton").addEventListener("click", exportActiveProfile);
+  document.querySelector("#importProfileInput").addEventListener("change", (event) => {
+    importProfile(event.target.files[0]);
+    event.target.value = "";
+  });
+  document.querySelector("#deleteProfileButton").addEventListener("click", deleteActiveProfile);
+
+  document.querySelector("#installAppButton").addEventListener("click", async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    document.querySelector("#installAppButton").classList.add("hidden");
+  });
+
   document.querySelector("#resetProgressButton").addEventListener("click", () => {
     document.querySelector("#resetConfirm").classList.remove("hidden");
   });
@@ -1240,6 +1405,17 @@ function renderAll() {
   renderRenshuuBridge();
   renderDictionary();
 }
+
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  document.querySelector("#installAppButton")?.classList.remove("hidden");
+});
+
+window.addEventListener("appinstalled", () => {
+  deferredInstallPrompt = null;
+  document.querySelector("#installAppButton")?.classList.add("hidden");
+});
 
 function renderDictionary(query = "") {
   const normalized = normalizeAnswer(query);
@@ -1414,7 +1590,7 @@ renderAll();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js?v=0.5.5").catch(() => {
+    navigator.serviceWorker.register("service-worker.js?v=0.6.0").catch(() => {
       // La app sigue funcionando en navegadores que no permiten cache offline.
     });
   });

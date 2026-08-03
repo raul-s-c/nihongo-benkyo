@@ -1,10 +1,10 @@
 window.NIHONGO_CONTENT = (() => {
   const t = (text, reading, meaning, note = "") => ({ text, reading, meaning, note });
-  const e = (id, level, type, prompt, accepted, tags, help, explanation, keywords = [], target = "") => ({
-    id, level, type, prompt, accepted, tags, help, explanation, keywords, target
+  const e = (id, level, type, prompt, accepted, tags, help, explanation, keywords = [], target = "", audioText = "") => ({
+    id, level, type, prompt, accepted, tags, help, explanation, keywords, target, audioText
   });
 
-  const dictionary = [
+  const rawDictionary = [
     t("私", "わたし", "yo"), t("今日", "きょう", "hoy"), t("明日", "あした", "mañana"), t("毎朝", "まいあさ", "cada mañana"),
     t("会社", "かいしゃ", "empresa"), t("会議", "かいぎ", "reunión"), t("資料", "しりょう", "documentación"), t("電話", "でんわ", "teléfono / llamar"),
     t("メール", "メール", "correo electrónico"), t("お客様", "おきゃくさま", "cliente (respetuoso)"), t("上司", "じょうし", "superior / jefe"), t("同僚", "どうりょう", "compañero"),
@@ -20,9 +20,22 @@ window.NIHONGO_CONTENT = (() => {
     t("が", "が", "sujeto / información nueva"), t("を", "を", "objeto directo"), t("に", "に", "destino, hora o receptor"),
     t("で", "で", "lugar donde ocurre una acción"), t("から", "から", "desde / porque"), t("まで", "まで", "hasta")
     ,
+    e("kanji-n5", "N5", "Kanji", "Escribe la lectura de 人.", "ひと", ["kanji", "writing", "vocab"], [t("人", "ひと", "persona")], "Relaciona una forma basica con su lectura y significado.", [], "ひと|人"),
+    e("kanji-n4", "N4", "Kanji", "Escribe una palabra con 会 que signifique reunion.", "会議", ["kanji", "writing", "vocab"], [t("会議", "かいぎ", "reunion"), t("会", "かい", "reunirse")], "El kanji 会 aparece en palabras de encuentro y reunion.", [], "会議|かいぎ"),
+    e("kanji-n3", "N3", "Kanji", "Lee el termino 連絡.", "れんらく", ["kanji", "writing", "vocab", "work"], [t("連絡", "れんらく", "contacto"), t("連", "れん", "conectar")], "Reconoce compuestos frecuentes en comunicacion profesional.", [], "れんらく|連絡"),
+    e("kanji-n2", "N2", "Kanji", "Explica brevemente el significado de 優先事項.", "prioridades", ["kanji", "writing", "vocab", "work"], [t("優先事項", "ゆうせんじこう", "prioridades")], "Aprende el compuesto como una unidad util de trabajo.", ["prioridades"]),
+    e("kanji-n1", "N1", "Kanji", "Lee y usa en una frase 改善.", "かいぜん", ["kanji", "writing", "vocab", "work"], [t("改善", "かいぜん", "mejora")], "A nivel N1 importa reconocer y producir vocabulario abstracto de uso real.", [], "かいぜん|改善"),
+    e("listen-n5", "N5", "Escucha", "Escucha la frase y traduce al espanol.", "Bebo cafe cada manana.", ["listening", "vocab", "reading"], [t("毎朝", "まいあさ", "cada manana"), t("飲みます", "のみます", "bebo")], "Escucha primero; puedes revelar el modelo despues de responder.", ["bebo", "cafe", "manana"], "毎朝コーヒーを飲みます。", "毎朝コーヒーを飲みます。"),
+    e("listen-n4", "N4", "Escucha", "Escucha el aviso y resume la idea.", "La reunion empieza a las tres.", ["listening", "vocab", "work"], [t("会議", "かいぎ", "reunion"), t("始まります", "はじまります", "empieza")], "Entrena la escucha de una informacion concreta de trabajo.", ["reunion", "tres", "empieza"], "会議は三時から始まります。", "会議は三時から始まります。"),
+    e("listen-n3", "N3", "Escucha", "Escucha el mensaje y explica por que hay retraso.", "El tren se ha retrasado, asi que llegare tarde.", ["listening", "grammar", "vocab"], [t("遅れる", "おくれる", "retrasarse"), t("到着", "とうちゃく", "llegada")], "Busca causa y consecuencia, no una traduccion palabra por palabra.", ["tren", "tarde", "retras"], "電車が遅れたので、到着が遅れます。", "電車が遅れたので、到着が遅れます。"),
+    e("listen-n2", "N2", "Escucha", "Escucha la peticion y di que debe hacer el receptor.", "Debe revisar el contrato cuando tenga tiempo.", ["listening", "grammar", "vocab", "work"], [t("契約書", "けいやくしょ", "contrato"), t("確認", "かくにん", "revisar")], "El objetivo es extraer una accion solicitada en registro formal.", ["contrato", "revis"], "お時間のあるときに、契約書をご確認いただけますでしょうか。", "お時間のあるときに、契約書をご確認いただけますでしょうか。"),
+    e("listen-n1", "N1", "Escucha", "Escucha el anuncio y resume el compromiso de la empresa.", "La empresa se compromete a mejorar el proceso para evitar que se repita.", ["listening", "grammar", "vocab", "work"], [t("再発防止", "さいはつぼうし", "prevencion de recurrencia"), t("改善", "かいぜん", "mejora")], "Escucha el significado global de una comunicacion corporativa formal.", ["mejor", "repet", "proceso"], "再発防止のため、手順の改善に努めてまいります。", "再発防止のため、手順の改善に努めてまいります。"),
   ];
 
+  const dictionary = rawDictionary.filter((item) => !item.id);
+
   const exercises = [
+    ...rawDictionary.filter((item) => item.id),
     e("n5-01", "N5", "Traduce JP → ES", "私は毎朝コーヒーを飲みます。", "Bebo café cada mañana.", ["vocab", "reading"], [t("毎朝", "まいあさ", "cada mañana"), t("飲みます", "のみます", "bebo")], "La frecuencia suele aparecer antes del verbo. La forma ます es educada.", ["bebo", "cafe", "manana"]),
     e("n5-02", "N5", "Traduce ES → JP", "Hoy estudio japonés en casa.", "今日は家で日本語を勉強します。", ["writing", "grammar", "particles"], [t("今日", "きょう", "hoy"), t("家", "いえ", "casa"), t("勉強します", "べんきょうします", "estudio")], "Usa で para el lugar en el que realizas la acción de estudiar.", [], "今日|家で|日本語|勉強します"),
     e("n5-03", "N5", "Partícula", "Completa: 図書館___日本語を勉強します。", "図書館で日本語を勉強します。", ["particles", "grammar"], [t("図書館", "としょかん", "biblioteca"), t("で", "で", "lugar de acción")], "で marca el escenario de una acción.", [], "で"),
@@ -86,9 +99,10 @@ window.NIHONGO_CONTENT = (() => {
     "n5-01": "comida", "n5-02": "hogar-y-estudio", "n5-03": "hogar-y-estudio", "n5-04": "comunicacion", "n5-05": "compras", "n5-06": "ciudad-y-transporte", "n5-07": "comida", "n5-08": "vida-diaria", "n5-09": "trabajo", "n5-10": "amistades-y-ocio", "n5-11": "trabajo", "n5-12": "comunicacion",
     "n4-01": "trabajo", "n4-02": "trabajo", "n4-03": "ciudad-y-transporte", "n4-04": "trabajo", "n4-05": "trabajo", "n4-06": "trabajo", "n4-07": "trabajo", "n4-08": "trabajo", "n4-09": "compras", "n4-10": "trabajo", "n4-11": "trabajo", "n4-12": "amistades-y-ocio", "n4-13": "trabajo", "n4-14": "trabajo", "n4-15": "ciudad-y-transporte",
     "n3-01": "trabajo", "n3-02": "trabajo", "n3-03": "ciudad-y-transporte", "n3-04": "trabajo", "n3-05": "trabajo", "n2-01": "trabajo", "n2-02": "trabajo", "n2-03": "trabajo", "n2-04": "trabajo", "n2-05": "trabajo", "n1-01": "trabajo", "n1-02": "trabajo", "n1-03": "trabajo", "n1-04": "trabajo", "n1-05": "trabajo",
-    "shop-n5": "compras", "shop-n4": "compras", "shop-n3": "compras", "shop-n2": "compras", "shop-n1": "compras", "city-n5": "ciudad-y-transporte", "city-n4": "ciudad-y-transporte", "city-n3": "ciudad-y-transporte", "city-n2": "ciudad-y-transporte", "city-n1": "ciudad-y-transporte", "social-n5": "amistades-y-ocio", "social-n4": "amistades-y-ocio", "social-n3": "amistades-y-ocio", "social-n2": "amistades-y-ocio", "social-n1": "amistades-y-ocio"
+    "shop-n5": "compras", "shop-n4": "compras", "shop-n3": "compras", "shop-n2": "compras", "shop-n1": "compras", "city-n5": "ciudad-y-transporte", "city-n4": "ciudad-y-transporte", "city-n3": "ciudad-y-transporte", "city-n2": "ciudad-y-transporte", "city-n1": "ciudad-y-transporte", "social-n5": "amistades-y-ocio", "social-n4": "amistades-y-ocio", "social-n3": "amistades-y-ocio", "social-n2": "amistades-y-ocio", "social-n1": "amistades-y-ocio",
+    "kanji-n5": "hogar-y-estudio", "kanji-n4": "hogar-y-estudio", "kanji-n3": "trabajo", "kanji-n2": "trabajo", "kanji-n1": "trabajo", "listen-n5": "vida-diaria", "listen-n4": "trabajo", "listen-n3": "ciudad-y-transporte", "listen-n2": "trabajo", "listen-n1": "trabajo"
   };
-  const thematicExerciseIds = new Set(["shop-n5", "shop-n4", "shop-n3", "shop-n2", "shop-n1", "city-n5", "city-n4", "city-n3", "city-n2", "city-n1", "social-n5", "social-n4", "social-n3", "social-n2", "social-n1"]);
+  const thematicExerciseIds = new Set(["shop-n5", "shop-n4", "shop-n3", "shop-n2", "shop-n1", "city-n5", "city-n4", "city-n3", "city-n2", "city-n1", "social-n5", "social-n4", "social-n3", "social-n2", "social-n1", "kanji-n5", "kanji-n4", "kanji-n3", "kanji-n2", "kanji-n1", "listen-n5", "listen-n4", "listen-n3", "listen-n2", "listen-n1"]);
   const enrichedExercises = exercises.map((exercise) => {
     const theme = themeByExercise[exercise.id] || "vida-diaria";
     return { ...exercise, theme, core: !thematicExerciseIds.has(exercise.id), help: exercise.help.map((term) => ({ ...term, theme, level: exercise.level })) };

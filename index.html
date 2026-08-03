@@ -35,7 +35,10 @@
               <h2 id="todayTitle">10 minutos con intencion</h2>
               <p class="muted">Ejercicios cortos, correccion flexible y progreso ligado a JLPT y vida laboral.</p>
             </div>
-            <button class="primary-action" id="startSessionButton" data-tooltip="Abre la practica recomendada para tu sesion de hoy.">Empezar</button>
+            <div class="focus-actions">
+              <button class="primary-action" id="startSessionButton" data-tooltip="Abre la practica recomendada para tu sesion de hoy.">Empezar</button>
+              <button class="ghost-button hidden" id="installAppButton" data-tooltip="Pide al navegador instalar esta app en la pantalla de inicio. Solo aparece cuando el navegador lo permite.">Instalar</button>
+            </div>
           </div>
 
           <section class="daily-plan" aria-labelledby="dailyPlanTitle">
@@ -78,7 +81,7 @@
           </section>
 
           <div class="section-head">
-            <h3>Preparacion JLPT</h3>
+            <h3>Cobertura del plan JLPT</h3>
             <select id="jlptLevelSelect" aria-label="Nivel JLPT">
               <option value="N5">N5</option>
               <option value="N4">N4</option>
@@ -92,7 +95,7 @@
             <canvas id="jlptRadar" width="320" height="320" aria-label="Radar de preparacion JLPT"></canvas>
             <div class="readiness-score">
               <span id="readinessPercent">0%</span>
-              <small>avance registrado</small>
+              <small>contenido confirmado</small>
             </div>
           </div>
 
@@ -136,6 +139,7 @@
           <div class="exercise-card">
             <p class="tag" id="exerciseType">Traduccion JP → ES</p>
             <h3 id="exercisePrompt" class="japanese-text">今日は会社で会議があります。</h3>
+            <button class="ghost-button hidden" id="listenPromptButton" data-tooltip="Reproduce la frase japonesa con la voz disponible en tu dispositivo. Puedes escucharla varias veces.">Escuchar</button>
             <button class="help-toggle" id="helpToggle" aria-expanded="false" data-tooltip="Muestra vocabulario, lectura y una pista para este ejercicio.">Ayuda contextual</button>
             <div class="context-help hidden" id="contextHelp"></div>
             <textarea id="answerInput" lang="ja" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Escribe tu respuesta aqui..."></textarea>
@@ -252,6 +256,8 @@
               <option value="daily">Vida diaria</option>
               <option value="writing">Escritura y produccion</option>
               <option value="grammar">Gramatica y particulas</option>
+              <option value="kanji">Kanji</option>
+              <option value="listening">Escucha</option>
             </select>
           </label>
           <label class="field">
@@ -272,7 +278,12 @@
             <input id="dailyMinutes" type="number" min="3" max="90" step="1">
           </label>
           <button class="primary-action wide" id="saveSettingsButton" data-tooltip="Guarda los ajustes solo para el perfil activo.">Guardar</button>
-          <p class="muted">La clave se usa solo para leer tu perfil en Renshuu y se guarda en este navegador y dispositivo. Aun no se sincroniza entre movil y ordenador.</p>
+          <section class="settings-actions" aria-label="Copias y perfiles">
+            <button class="ghost-button wide-button" id="exportProfileButton" data-tooltip="Descarga una copia JSON del perfil activo con su progreso y ajustes. Guardala en un lugar privado.">Exportar copia</button>
+            <label class="ghost-button wide-button import-button" data-tooltip="Importa una copia JSON exportada por esta app. Reemplaza el perfil local con el mismo identificador.">Importar copia<input id="importProfileInput" type="file" accept="application/json"></label>
+            <button class="ghost-button danger wide-button" id="deleteProfileButton" data-tooltip="Pide confirmacion y elimina por completo el perfil activo de este dispositivo. Debe existir otro perfil antes de continuar.">Eliminar perfil</button>
+          </section>
+          <p class="muted">Tus perfiles y la clave read-only de Renshuu se guardan solo en este navegador. Exporta una copia antes de cambiar de dispositivo o borrar datos del navegador.</p>
           <p class="muted version-note" id="appVersion"></p>
         </section>
       </main>
@@ -297,7 +308,7 @@
     </div>
 
     <script src="secrets.local.js"></script>
-    <script src="content.js?v=0.5.5"></script>
-    <script src="app.js?v=0.5.5"></script>
+    <script src="content.js?v=0.6.0"></script>
+    <script src="app.js?v=0.6.0"></script>
   </body>
 </html>
