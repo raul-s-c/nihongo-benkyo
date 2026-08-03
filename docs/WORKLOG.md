@@ -348,3 +348,9 @@ Se actualizo la PWA a la version 0.7.6 y se renovo el cache del service worker p
 Se revisaron los controles de navegacion, plan diario, practica, entrada japonesa, perfiles, matriz y Renshuu. Las acciones que antes podian parecer inertes ahora confirman su resultado dentro de la app: guardar ajustes, crear o cargar un perfil, exportar, anadir, sustituir o saltar una propuesta, registrar una autoevaluacion y reiniciar los puntos de la matriz. Cuando no existe una alternativa compatible o falta la clave read-only de Renshuu, la app explica el motivo.
 
 Tambien se corrigio la persistencia de los textos insertados con los botones de particulas, el diccionario y las sugerencias IME: ahora disparan el mismo guardado de borrador que la escritura directa. La confirmacion de reinicio se aclaro para no sugerir que se borra el historial de intentos cuando solo se ponen a cero los puntos de la matriz.
+
+### Correccion de verbos conjugados en el puente de Renshuu
+
+Se detecto un fallo real con una frase correcta: el puente propuso `会う`, pero `僕の友達に会いました。` no se reconocia porque el comparador solo admitia la forma de diccionario. La correccion local ahora identifica las raices de conjugacion de verbos godan, `する`, `来る` y verbos terminados en `る`. Cuando reconoce el termino y una frase japonesa con contexto suficiente, muestra el termino requerido y una estimacion de comprension, dejando claro que la naturalidad fina sigue siendo una revision futura con IA o humana.
+
+Se anadio una prueba automatica que protege especificamente el caso `会う` / `会いました`.

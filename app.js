@@ -1,6 +1,6 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
-const APP_VERSION = "0.7.7";
+const APP_VERSION = "0.7.8";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -1304,22 +1304,56 @@ function speakJapanese(text) {
 function evaluateAnswer(answer, exercise) {
   const trimmed = answer.trim();
   const normalized = normalizeAnswer(trimmed);
-  const expected = exercise.target.split("|").filter(Boolean).map(normalizeAnswer);
-  const keywords = exercise.keywords.map(normalizeAnswer);
-  const checks = expected.length ? expected : keywords;
-  const matches = checks.filter((item) => normalized.includes(item)).length;
-  const objective = checks.length && matches ? Math.round((matches / checks.length) * 100) : null;
+  const expected = exercise.target.split("|").filter(Boolean);
+  const checks = expected.length ? expected : exercise.keywords;
+  const matches = checks.map((item) => ({ item, match: findReferenceMatch(normalized, item) })).filter((item) => item.match);
+  const objective = checks.length && matches.length ? Math.round((matches.length / checks.length) * 100) : null;
+  const japaneseCharacters = (trimmed.match(/[ぁ-んァ-ン一-龯]/g) || []).length;
+  const hasCompleteRequiredTerms = checks.length > 0 && matches.length === checks.length;
+  const comprehension = hasCompleteRequiredTerms && japaneseCharacters >= 4 ? 85 : null;
+  const conjugated = matches.find((item) => item.match === "conjugated");
 
   return {
     objective,
-    comprehension: null,
+    comprehension,
     feedback: trimmed
-      ? (checks.length
-        ? "La app solo ha podido comparar elementos clave con una respuesta modelo. Una alternativa correcta puede no coincidir literalmente."
-        : "Este es un ejercicio abierto: no se puntúa automáticamente para no inventar una nota.")
+      ? (conjugated
+        ? `Reconozco ${conjugated.item} en una forma conjugada. El término requerido está bien usado para este ejercicio.`
+        : hasCompleteRequiredTerms
+          ? "Reconozco los elementos requeridos. La frase transmite una idea completa para este ejercicio."
+          : checks.length
+            ? "No he reconocido todavía el término requerido o una de sus formas habituales. Puede haber una alternativa correcta que esta comprobación local no sepa interpretar."
+            : "Este es un ejercicio abierto: no se puntúa automáticamente para no inventar una nota.")
       : "Necesito una respuesta para poder corregir.",
     better: `Respuesta modelo: ${exercise.accepted}`
   };
+}
+
+function findReferenceMatch(answer, reference) {
+  const normalizedReference = normalizeAnswer(reference);
+  if (!normalizedReference) return false;
+  if (answer.includes(normalizedReference)) return "exact";
+  if (!/[ぁ-んァ-ン一-龯]/.test(reference)) return false;
+  return getJapaneseConjugationStems(reference).some((stem) => stem.length > 1 && answer.includes(stem)) ? "conjugated" : false;
+}
+
+function getJapaneseConjugationStems(term) {
+  const godan = {
+    "う": ["わ", "い", "え", "お", "っ"], "く": ["か", "き", "け", "こ", "い"],
+    "ぐ": ["が", "ぎ", "げ", "ご", "い"], "す": ["さ", "し", "せ", "そ"],
+    "つ": ["た", "ち", "て", "と", "っ"], "ぬ": ["な", "に", "ね", "の", "ん"],
+    "ぶ": ["ば", "び", "べ", "ぼ", "ん"], "む": ["ま", "み", "め", "も", "ん"],
+    "る": ["ら", "り", "れ", "ろ", "っ"]
+  };
+  if (term.endsWith("する")) {
+    const base = term.slice(0, -2);
+    return [`${base}し`, `${base}せ`, `${base}す`];
+  }
+  if (term === "来る" || term === "くる") return ["来", "き", "こ"];
+  const ending = term.at(-1);
+  const base = term.slice(0, -1);
+  if (godan[ending]) return godan[ending].map((replacement) => `${base}${replacement}`);
+  return ending === "る" ? [base] : [];
 }
 
 function normalizeAnswer(value) {
@@ -1460,12 +1494,12 @@ function bindEvents() {
     if (!exercise) return;
     const result = evaluateAnswer(document.querySelector("#answerInput").value, exercise);
     document.querySelector("#objectiveScore").textContent = result.objective === null ? "—" : result.objective + "%";
-    document.querySelector("#comprehensionScore").textContent = "—";
-    document.querySelector("#objectiveLabel").textContent = result.objective === null ? "revisión manual" : "elementos modelo";
-    document.querySelector("#comprehensionLabel").textContent = "interpretación";
-    document.querySelector("#scoreMeaning").textContent = result.objective === null
-      ? "La app no ha reconocido suficientes elementos de referencia. Esto no demuestra que tu frase sea incorrecta."
-      : "Este porcentaje indica cuántos elementos de la respuesta modelo se han reconocido; no mide por sí solo naturalidad ni comprensión.";
+    document.querySelector("#comprehensionScore").textContent = result.comprehension === null ? "—" : result.comprehension + "%";
+    document.querySelector("#objectiveLabel").textContent = result.objective === null ? "sin confirmar" : "término requerido";
+    document.querySelector("#comprehensionLabel").textContent = result.comprehension === null ? "sin estimación" : "se entiende";
+    document.querySelector("#scoreMeaning").textContent = result.comprehension !== null
+      ? "Reconocemos el término requerido y una frase japonesa con suficiente contexto. La naturalidad fina sigue necesitando revisión humana o una futura corrección con IA."
+      : "No he reconocido suficientes elementos de referencia. Esto no demuestra que tu frase sea incorrecta.";
     document.querySelector("#feedbackText").textContent = result.feedback;
     setJapaneseText(document.querySelector("#betterAnswer"), result.better);
     document.querySelector("#exerciseExplanation").textContent = exercise.explanation;
