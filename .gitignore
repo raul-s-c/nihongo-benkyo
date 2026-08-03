@@ -18,3 +18,4 @@ www/
 .env.*
 !.env.example
 secrets.local.js
+worker/.secrets.local.json

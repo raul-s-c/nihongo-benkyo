@@ -1,0 +1,7 @@
+name = "nihongo-benkyo-auth"
+main = "src/index.js"
+compatibility_date = "2026-08-03"
+
+[vars]
+GITHUB_CLIENT_ID = "Ov23liI3g6T2kLJCpYso"
+APP_ORIGIN = "https://raul-s-c.github.io"

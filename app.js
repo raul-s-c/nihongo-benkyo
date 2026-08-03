@@ -1,10 +1,10 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
 const GITHUB_SYNC_KEY = "nihongo-benkyo-github-sync-v1";
-const GITHUB_CLIENT_ID = "Ov23liI3g6T2kLJCpYso";
 const GITHUB_GIST_DESCRIPTION = "Nihongo Benkyo private progress sync";
 const GITHUB_GIST_FILE = "nihongo-benkyo-progress.json";
-const APP_VERSION = "0.8.0";
+const GITHUB_AUTH_PROXY_URL = "https://nihongo-benkyo-auth.raul-nihongo.workers.dev";
+const APP_VERSION = "0.8.1";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -125,7 +125,7 @@ let activeSkillId = "vocab";
 let deferredInstallPrompt = null;
 let noticeTimeout = null;
 let githubSyncTimeout = null;
-let githubDeviceAuthorization = null;
+let githubAuthInFlight = false;
 
 const furiganaEntries = [
   ["日本語", "にほんご"],
@@ -282,19 +282,13 @@ function renderGitHubSync() {
   const connectButton = document.querySelector("#githubConnectButton");
   const syncButton = document.querySelector("#githubSyncNowButton");
   const disconnectButton = document.querySelector("#githubDisconnectButton");
-  const codePanel = document.querySelector("#githubDeviceCodePanel");
-  const code = document.querySelector("#githubDeviceCode");
-  const link = document.querySelector("#githubDeviceLink");
   const connected = Boolean(githubSync.accessToken);
   connectButton.classList.toggle("hidden", connected);
   syncButton.classList.toggle("hidden", !connected);
   disconnectButton.classList.toggle("hidden", !connected);
   syncButton.disabled = !connected;
-  codePanel.classList.toggle("hidden", !githubDeviceAuthorization);
-  code.textContent = githubDeviceAuthorization?.user_code || "";
-  link.href = githubDeviceAuthorization?.verification_uri || "#";
-  if (githubDeviceAuthorization) {
-    status.textContent = "Autoriza este dispositivo en GitHub con el codigo mostrado. La app terminara de conectar automaticamente.";
+  if (githubAuthInFlight) {
+    status.textContent = "Completa la autorizacion de GitHub en la ventana abierta. Volveremos aqui automaticamente.";
   } else if (connected) {
     const date = githubSync.lastSyncedAt ? new Date(githubSync.lastSyncedAt).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" }) : "todavia";
     status.textContent = `Conectado como ${githubSync.login || "usuario de GitHub"}. Ultima sincronizacion: ${date}.`;
@@ -303,54 +297,37 @@ function renderGitHubSync() {
   }
 }
 
-async function startGitHubDeviceFlow() {
-  const response = await fetch("https://github.com/login/device/code", {
-    method: "POST",
-    headers: { Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ client_id: GITHUB_CLIENT_ID, scope: "gist" })
-  });
-  if (!response.ok) throw new Error("No se pudo iniciar la autorizacion con GitHub.");
-  githubDeviceAuthorization = await response.json();
+async function startGitHubLogin() {
+  const proxyOrigin = new URL(GITHUB_AUTH_PROXY_URL).origin;
+  const popup = window.open(`${GITHUB_AUTH_PROXY_URL.replace(/\/$/, "")}/auth/start`, "nihongo-github-auth", "popup,width=560,height=720");
+  if (!popup) throw new Error("El navegador ha bloqueado la ventana de GitHub. Permite las ventanas emergentes e intentalo de nuevo.");
+  githubAuthInFlight = true;
   renderGitHubSync();
-  await pollGitHubDeviceAuthorization();
+  await new Promise((resolve, reject) => {
+    const timeout = window.setTimeout(() => finish(new Error("La autorizacion de GitHub ha caducado.")), 5 * 60 * 1000);
+    const finish = (error, token) => {
+      window.clearTimeout(timeout);
+      window.removeEventListener("message", receiveToken);
+      githubAuthInFlight = false;
+      renderGitHubSync();
+      error ? reject(error) : resolve(token);
+    };
+    const receiveToken = (event) => {
+      if (event.origin !== proxyOrigin || event.data?.type !== "nihongo-github-token") return;
+      finish(null, event.data.token);
+    };
+    window.addEventListener("message", receiveToken);
+  }).then(finishGitHubAuthorization);
 }
 
-async function pollGitHubDeviceAuthorization() {
-  const authorization = githubDeviceAuthorization;
-  if (!authorization) return;
-  const expiresAt = Date.now() + (Number(authorization.expires_in) || 900) * 1000;
-  const interval = Math.max(5, Number(authorization.interval) || 5) * 1000;
-  while (githubDeviceAuthorization === authorization && Date.now() < expiresAt) {
-    await new Promise((resolve) => window.setTimeout(resolve, interval));
-    const response = await fetch("https://github.com/login/oauth/access_token", {
-      method: "POST",
-      headers: { Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        client_id: GITHUB_CLIENT_ID,
-        device_code: authorization.device_code,
-        grant_type: "urn:ietf:params:oauth:grant-type:device_code"
-      })
-    });
-    const result = await response.json();
-    if (result.access_token) {
-      githubSync.accessToken = result.access_token;
-      githubDeviceAuthorization = null;
-      const user = await fetch("https://api.github.com/user", { headers: getGitHubHeaders() }).then((item) => item.ok ? item.json() : null);
-      githubSync.login = user?.login || "";
-      saveGitHubSync();
-      renderGitHubSync();
-      await syncGitHubProgress();
-      showNotice("GitHub conectado. Tu progreso se sincronizara entre dispositivos.", "success");
-      return;
-    }
-    if (result.error && result.error !== "authorization_pending" && result.error !== "slow_down") {
-      githubDeviceAuthorization = null;
-      renderGitHubSync();
-      throw new Error("La autorizacion con GitHub ha caducado o fue rechazada.");
-    }
-  }
-  githubDeviceAuthorization = null;
+async function finishGitHubAuthorization(accessToken) {
+  githubSync.accessToken = accessToken;
+  const user = await fetch("https://api.github.com/user", { headers: getGitHubHeaders() }).then((item) => item.ok ? item.json() : null);
+  githubSync.login = user?.login || "";
+  saveGitHubSync();
   renderGitHubSync();
+  await syncGitHubProgress();
+  showNotice("GitHub conectado. Tu progreso se sincronizara entre dispositivos.", "success");
 }
 
 async function findGitHubSyncGist() {
@@ -383,11 +360,12 @@ async function syncGitHubProgress() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
         renderAll();
       } else {
-        await fetch(`https://api.github.com/gists/${gistId}`, {
+        const updateResponse = await fetch(`https://api.github.com/gists/${gistId}`, {
           method: "PATCH",
           headers: { ...getGitHubHeaders(), "Content-Type": "application/json" },
           body: JSON.stringify({ files: { [GITHUB_GIST_FILE]: { content: JSON.stringify(getSyncPayload()) } } })
         });
+        if (!updateResponse.ok) throw new Error("No se pudo actualizar la copia privada de GitHub.");
       }
     } else {
       const response = await fetch("https://api.github.com/gists", {
@@ -414,7 +392,6 @@ function queueGitHubSync() {
 }
 
 function disconnectGitHub() {
-  githubDeviceAuthorization = null;
   githubSync = { accessToken: "", gistId: "", login: "", lastSyncedAt: "" };
   saveGitHubSync();
   renderGitHubSync();
@@ -1639,24 +1616,14 @@ function bindEvents() {
   document.querySelector("#startBridgeButton").addEventListener("click", startRenshuuBridge);
   document.querySelector("#githubConnectButton").addEventListener("click", async () => {
     try {
-      await startGitHubDeviceFlow();
+      await startGitHubLogin();
     } catch (error) {
-      githubDeviceAuthorization = null;
       renderGitHubSync();
       showNotice(error.message || "No se pudo iniciar sesion con GitHub.", "warning");
     }
   });
   document.querySelector("#githubSyncNowButton").addEventListener("click", syncGitHubProgress);
   document.querySelector("#githubDisconnectButton").addEventListener("click", disconnectGitHub);
-  document.querySelector("#copyGitHubDeviceCode").addEventListener("click", async () => {
-    if (!githubDeviceAuthorization?.user_code) return;
-    try {
-      await navigator.clipboard.writeText(githubDeviceAuthorization.user_code);
-      showNotice("Codigo de GitHub copiado.", "success");
-    } catch {
-      showNotice("Copia el codigo mostrado manualmente.", "warning");
-    }
-  });
   document.querySelector("#addPlanExerciseButton").addEventListener("click", () => {
     const added = addRecommendedPlanExercise();
     renderDailyPlan();
@@ -1851,7 +1818,7 @@ function hydrateSettings() {
     "aria-label",
     state.settings.showFurigana ? "Desactivar furigana" : "Activar furigana"
   );
-  document.querySelector("#appVersion").textContent = `Version ${APP_VERSION} · progreso local`;
+  document.querySelector("#appVersion").textContent = `Version ${APP_VERSION} · progreso por perfil`;
 }
 
 function showNotice(message, tone = "success") {
@@ -2114,7 +2081,7 @@ renderAll();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js?v=0.8.0").catch(() => {
+    navigator.serviceWorker.register(`service-worker.js?v=${APP_VERSION}`).catch(() => {
       // La app sigue funcionando en navegadores que no permiten cache offline.
     });
   });

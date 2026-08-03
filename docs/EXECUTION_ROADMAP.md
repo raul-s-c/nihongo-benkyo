@@ -7,7 +7,7 @@ Este documento convierte la auditoria tecnica y de producto en trabajo verificab
 ## P0: Confianza y correccion
 
 - [ ] Evaluacion semantica flexible: requiere un evaluador remoto y una politica de privacidad antes de enviar respuestas de usuarios.
-- [ ] Cuentas, tokens de Renshuu protegidos y sincronizacion: el MVP mantiene perfiles en el navegador y copias manuales. Una sincronizacion futura debera usar GitHub OAuth Device Flow o un backend comercial, sin introducir credenciales privadas en la PWA.
+- [~] Sincronizacion: el MVP usa GitHub OAuth y un Gist privado mediante un Cloudflare Worker; el siguiente paso comercial sera sustituir el token local por cuentas propias, almacenamiento de servidor y resolucion de conflictos por evento. Las claves de Renshuu siguen siendo locales al navegador.
 
 ## P1: Utilidad diaria del MVP
 

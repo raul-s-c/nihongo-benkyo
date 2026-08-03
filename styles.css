@@ -187,26 +187,6 @@ rt {
   background: #edf6f3;
 }
 
-.github-device-code {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: white;
-}
-
-.github-device-code strong {
-  letter-spacing: 2px;
-}
-
-.github-code-actions {
-  display: flex;
-  gap: 8px;
-}
-
 .focus-actions {
   display: flex;
   flex-wrap: wrap;

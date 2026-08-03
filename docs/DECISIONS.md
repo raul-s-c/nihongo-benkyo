@@ -102,14 +102,17 @@ Motivo:
 - Una PWA estatica no puede custodiar con seguridad el secreto de una aplicacion OAuth.
 - GitHub Device Flow es una opcion futura valida para identificar usuarios con GitHub, pero requiere registrar una OAuth App y otorgar acceso explicito a un almacenamiento privado.
 
-## 2026-08-03: Sincronizacion privada con GitHub Device Flow
+## 2026-08-03: Sincronizacion privada con GitHub OAuth y Cloudflare Worker
 
-Decision: usar GitHub OAuth Device Flow con el alcance minimo `gist` para el MVP de sincronizacion entre dispositivos.
+Decision: usar GitHub OAuth con alcance minimo `gist` y un Cloudflare Worker como intermediario para el intercambio del codigo OAuth.
+
+Motivo: GitHub bloquea por CORS el intercambio directo desde una PWA estatica. El Worker conserva el Client Secret fuera del navegador y devuelve el token exclusivamente a la ventana que inicio la autorizacion.
 
 Implementacion:
 
-- La PWA solicita un codigo de dispositivo al pulsar `Conectar GitHub`.
-- El usuario autoriza el codigo en GitHub; el token queda solo en el almacenamiento local de ese navegador.
+- La PWA abre una ventana de autorizacion de GitHub mediante `https://nihongo-benkyo-auth.raul-nihongo.workers.dev/auth/start`.
+- El Worker valida un `state` protegido por cookie, intercambia el codigo OAuth y devuelve el token a la PWA mediante `postMessage` dirigido al origen de GitHub Pages.
+- El token queda solo en el almacenamiento local de ese navegador.
 - El progreso completo se guarda en un Gist privado llamado `Nihongo Benkyo private progress sync`.
 - Al conectar otro dispositivo, la app busca ese Gist, compara la fecha de actualizacion y conserva la copia mas reciente.
 
