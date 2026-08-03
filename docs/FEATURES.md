@@ -297,3 +297,9 @@ Ademas de la progresion por JLPT, cada ejercicio y cada termino de ayuda tiene u
 Las rutas iniciales con contenido propio de N5 a N1 son Compras, Ciudad y transporte, y Amistades y ocio. El diccionario muestra los niveles y tematicas en los que aparece cada entrada. Las categorias restantes, como mascotas, se incorporaran cuando tengan una ruta de contenido completa; no se ofrecen como filtros vacios.
 
 Objetivo: permitir que una situacion real se estudie en profundidad mientras la dificultad linguistica sigue una progresion verificable.
+
+### Ficha navegable por habilidad
+
+Cada eje de la radial JLPT y cada tarjeta de habilidad es interactivo. Al tocarlo se abre una ficha que muestra el avance propio para el objetivo seleccionado, intentos, ejercicios pendientes de repaso y elementos aun no iniciados.
+
+La ficha lista los terminos asociados a los ejercicios de esa habilidad junto con lectura, significado y todas las etiquetas de nivel JLPT y tematica en las que aparecen. Tambien expone la ruta de ejercicios: intentos acumulados y una explicacion de si cada pieza esta disponible, pendiente de repaso o bloqueada por el paso curricular anterior. No inventa una fecha: comunica el desbloqueo real que controla el plan.

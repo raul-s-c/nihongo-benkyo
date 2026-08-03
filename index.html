@@ -99,6 +99,29 @@
           <div class="skill-grid" id="skillGrid"></div>
         </section>
 
+        <section class="view" id="view-skill-detail" aria-labelledby="skillDetailTitle">
+          <div class="section-head">
+            <div class="practice-heading">
+              <button class="back-button" id="backFromSkillDetailButton" aria-label="Volver a Hoy" data-tooltip="Vuelve al resumen diario sin cambiar tu progreso ni el plan.">←</button>
+              <h2 id="skillDetailTitle">Detalle de habilidad</h2>
+            </div>
+          </div>
+          <p class="muted" id="skillDetailIntro"></p>
+          <div class="skill-detail-summary" id="skillDetailSummary"></div>
+          <section class="skill-detail-section" aria-labelledby="skillNextTitle">
+            <h3 id="skillNextTitle">Siguiente contenido</h3>
+            <div id="skillNextContent"></div>
+          </section>
+          <section class="skill-detail-section" aria-labelledby="skillTermsTitle">
+            <h3 id="skillTermsTitle">Terminos vinculados</h3>
+            <div class="skill-term-list" id="skillTermList"></div>
+          </section>
+          <section class="skill-detail-section" aria-labelledby="skillExerciseTitle">
+            <h3 id="skillExerciseTitle">Ruta de ejercicios</h3>
+            <div class="skill-exercise-list" id="skillExerciseList"></div>
+          </section>
+        </section>
+
         <section class="view" id="view-practice" aria-labelledby="practiceTitle">
           <div class="section-head">
             <div class="practice-heading">
@@ -274,7 +297,7 @@
     </div>
 
     <script src="secrets.local.js"></script>
-    <script src="content.js?v=0.5.2"></script>
-    <script src="app.js?v=0.5.2"></script>
+    <script src="content.js?v=0.5.3"></script>
+    <script src="app.js?v=0.5.3"></script>
   </body>
 </html>

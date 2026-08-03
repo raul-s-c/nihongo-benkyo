@@ -1,6 +1,6 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
-const APP_VERSION = "0.5.2";
+const APP_VERSION = "0.5.3";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -96,6 +96,7 @@ const defaultUserState = {
 
 let appState = loadAppState();
 let state = getActiveUserState();
+let activeSkillId = "vocab";
 
 const furiganaEntries = [
   ["日本語", "にほんご"],
@@ -298,6 +299,8 @@ function drawRadar() {
   ctx.stroke();
 
   document.querySelector("#readinessPercent").textContent = `${average}%`;
+  canvas.setAttribute("aria-label", "Radar de preparacion JLPT. Toca una arista para abrir el detalle de esa habilidad.");
+  canvas.title = "Toca una arista para ver el detalle de la habilidad";
   renderSkillGrid(level);
 }
 
@@ -317,13 +320,109 @@ function renderSkillGrid(level) {
     const percent = Math.min(100, Math.round((state.progress[skill.id] / target[skill.id]) * 100));
     const renshuuPercent = renshuu[skill.id];
     return `
-      <div class="skill-pill">
+      <button class="skill-pill" data-skill-detail="${skill.id}" data-tooltip="Abre contenidos, repasos, etiquetas y siguiente paso de ${skill.label}.">
         <strong>${skill.label} · ${percent}%</strong>
         <div class="meter"><span style="width: ${percent}%"></span></div>
         ${renshuuPercent === undefined ? "" : `<small>Renshuu: ${renshuuPercent}%</small>`}
-      </div>
+      </button>
     `;
   }).join("");
+  document.querySelectorAll("[data-skill-detail]").forEach((button) => {
+    button.addEventListener("click", () => openSkillDetail(button.dataset.skillDetail));
+  });
+}
+
+function openSkillDetail(skillId) {
+  if (!skills.some((skill) => skill.id === skillId)) return;
+  activeSkillId = skillId;
+  renderSkillDetail();
+  switchView("skill-detail");
+}
+
+function getSkillExerciseSchedule(exercise) {
+  const history = state.exerciseHistory[exercise.id] || {};
+  if (history.status === "review") return "Repaso pendiente: el plan puede priorizarlo hoy.";
+  if (history.status === "solid") return "Confirmado; vuelve a aparecer solo si lo marcas para repasar.";
+  const current = getCurrentCurriculumStage();
+  if (!exercise.core) {
+    const unlockedLevel = current?.level || state.settings.targetJlpt || "N5";
+    return levelRank(exercise.level) <= levelRank(unlockedLevel)
+      ? "Disponible al elegir esta tematica en Ajustes."
+      : `Se desbloquea al llegar al bloque ${exercise.level}.`;
+  }
+  const stageIndex = curriculumStages.findIndex((stage) => stage.exerciseIds.includes(exercise.id));
+  const currentIndex = current ? curriculumStages.findIndex((stage) => stage.id === current.id) : curriculumStages.length;
+  if (stageIndex === currentIndex) return "Disponible en el bloque actual.";
+  if (stageIndex > currentIndex) return `Se desbloquea al completar ${curriculumStages[stageIndex - 1]?.label || "el bloque anterior"}.`;
+  return "Disponible como repaso dentro de tu objetivo JLPT.";
+}
+
+function getSkillDetail(skillId) {
+  const relatedExercises = exercises.filter((exercise) => exercise.tags.includes(skillId));
+  const attempts = (state.attemptLog || []).filter((entry) => relatedExercises.some((exercise) => exercise.id === entry.exerciseId));
+  const metrics = getMetricSummary(attempts);
+  const terms = new Map();
+  relatedExercises.forEach((exercise) => {
+    exercise.help.forEach((term) => {
+      const current = terms.get(term.text) || { ...term, themes: new Set(), levels: new Set() };
+      current.themes.add(term.theme || exercise.theme);
+      current.levels.add(term.level || exercise.level);
+      terms.set(term.text, current);
+    });
+  });
+  const pending = relatedExercises.filter((exercise) => state.exerciseHistory[exercise.id]?.status === "review");
+  const newItems = relatedExercises.filter((exercise) => !state.exerciseHistory[exercise.id]?.status);
+  const next = [...relatedExercises]
+    .filter((exercise) => state.exerciseHistory[exercise.id]?.status !== "solid")
+    .sort((left, right) => scorePlanExercise(left, jlptTargets[state.settings.targetJlpt], state.settings.studyFocus) - scorePlanExercise(right, jlptTargets[state.settings.targetJlpt], state.settings.studyFocus))[0];
+  return { relatedExercises, attempts, metrics, terms: [...terms.values()], pending, newItems, next };
+}
+
+function renderSkillDetail() {
+  const skill = skills.find((item) => item.id === activeSkillId) || skills[0];
+  const detail = getSkillDetail(skill.id);
+  const level = state.settings.targetJlpt || "N4";
+  const readiness = Math.min(100, Math.round((state.progress[skill.id] / jlptTargets[level][skill.id]) * 100));
+  document.querySelector("#skillDetailTitle").textContent = skill.label;
+  document.querySelector("#skillDetailIntro").textContent = `Evidencia y contenido de ${skill.label.toLowerCase()} para tu objetivo ${level}. Las etiquetas muestran los contextos y niveles donde aparece cada termino.`;
+  document.querySelector("#skillDetailSummary").innerHTML = [
+    [readiness + "%", "avance registrado para " + level],
+    [detail.attempts.length, "intentos en esta habilidad"],
+    [detail.pending.length, "ejercicios para repasar"],
+    [detail.newItems.length, "ejercicios aun no iniciados"]
+  ].map(([value, label]) => `<div><strong>${value}</strong><small>${label}</small></div>`).join("");
+  const next = detail.next;
+  document.querySelector("#skillNextContent").innerHTML = next
+    ? `<div class="skill-next-card"><strong>${next.type}</strong><span>${next.level} · ${themes[next.theme] || "Vida diaria"}</span><p>${getSkillExerciseSchedule(next)}</p></div>`
+    : "<p>Has confirmado todo el contenido disponible de esta habilidad para tu objetivo actual.</p>";
+  document.querySelector("#skillTermList").innerHTML = detail.terms.length
+    ? detail.terms.map((term) => `<div class="skill-term-row"><strong>${term.text}</strong><span>${term.reading} · ${term.meaning}</span><div class="tag-row">${[...term.levels].map((item) => `<small>${item}</small>`).join("")}${[...term.themes].map((item) => `<small>${themes[item] || item}</small>`).join("")}</div></div>`).join("")
+    : "<p>Este contenido aun no tiene terminos de ayuda asociados.</p>";
+  document.querySelector("#skillExerciseList").innerHTML = detail.relatedExercises.length
+    ? detail.relatedExercises.map((exercise) => {
+      const history = state.exerciseHistory[exercise.id] || {};
+      const count = history.attempts || 0;
+      return `<div class="skill-exercise-row"><strong>${exercise.type}</strong><span>${exercise.level} · ${themes[exercise.theme] || "Vida diaria"} · ${count} intento${count === 1 ? "" : "s"}</span><p>${getSkillExerciseSchedule(exercise)}</p></div>`;
+    }).join("")
+    : "<p>Aun no hay ejercicios etiquetados para esta habilidad.</p>";
+}
+
+function getRadarSkillAtPosition(event) {
+  const canvas = document.querySelector("#jlptRadar");
+  const rect = canvas.getBoundingClientRect();
+  const scale = canvas.width / rect.width;
+  const x = (event.clientX - rect.left) * scale;
+  const y = (event.clientY - rect.top) * scale;
+  const center = canvas.width / 2;
+  const distance = Math.hypot(x - center, y - center);
+  if (distance < 54 || distance > 156) return null;
+  const angle = Math.atan2(y - center, x - center);
+  const closest = skills.reduce((result, skill, index) => {
+    const targetAngle = -Math.PI / 2 + (Math.PI * 2 * index / skills.length);
+    const delta = Math.abs(Math.atan2(Math.sin(angle - targetAngle), Math.cos(angle - targetAngle)));
+    return delta < result.delta ? { skill, delta } : result;
+  }, { skill: null, delta: Infinity });
+  return closest.delta <= Math.PI / skills.length / 1.5 ? closest.skill : null;
 }
 
 function getRenshuuLevelProgress(level) {
@@ -911,7 +1010,12 @@ function bindEvents() {
     switchView("today");
     renderDailyPlan();
   });
+  document.querySelector("#backFromSkillDetailButton").addEventListener("click", () => switchView("today"));
   document.querySelector("#jlptLevelSelect").addEventListener("change", drawRadar);
+  document.querySelector("#jlptRadar").addEventListener("click", (event) => {
+    const skill = getRadarSkillAtPosition(event);
+    if (skill) openSkillDetail(skill.id);
+  });
   document.querySelector("#syncRenshuuButton").addEventListener("click", syncRenshuuProgress);
   document.querySelector("#startBridgeButton").addEventListener("click", startRenshuuBridge);
   document.querySelector("#addPlanExerciseButton").addEventListener("click", () => {
@@ -1262,7 +1366,7 @@ renderAll();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js?v=0.5.2").catch(() => {
+    navigator.serviceWorker.register("service-worker.js?v=0.5.3").catch(() => {
       // La app sigue funcionando en navegadores que no permiten cache offline.
     });
   });

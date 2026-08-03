@@ -323,3 +323,7 @@ La biblioteca y el itinerario se ampliaron con bloques N3, N2 y N1 centrados en 
 ### Rutas tematicas y JLPT en paralelo
 
 Se anadio un segundo eje de contenido: tematica. Compras, Ciudad y transporte, y Amistades y ocio disponen ahora de una ruta propia desde N5 hasta N1. Cada ejercicio se etiqueta con una tematica y los terminos de ayuda reciben esa misma evidencia contextual junto con su nivel. El selector de Ajustes se persiste por perfil; el plan mantiene por lo menos una propuesta del bloque troncal y usa el resto para profundizar en la tematica elegida, sin presentar material por encima del nivel desbloqueado. El diccionario muestra esta clasificacion cuando existe.
+
+### Ficha de detalle desde la radial JLPT
+
+Se convirtieron los ejes de la radial y las tarjetas de habilidad en accesos a una ficha de detalle. La ficha agrega intentos por habilidad, contenidos pendientes, terminos deduplicados y etiquetas multiples de tema y JLPT. Para cada ejercicio explica el estado real de disponibilidad en el plan, incluido el bloque previo necesario cuando sigue bloqueado. La navegacion vuelve a Hoy sin modificar el progreso.

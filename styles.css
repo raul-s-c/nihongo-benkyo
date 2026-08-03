@@ -480,6 +480,7 @@ rt {
 #jlptRadar {
   width: min(100%, 330px);
   aspect-ratio: 1;
+  cursor: pointer;
 }
 
 .readiness-score {
@@ -516,6 +517,15 @@ rt {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.skill-pill:focus-visible,
+.skill-pill:hover {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(22, 127, 122, 0.12);
 }
 
 .skill-pill strong {
@@ -530,6 +540,93 @@ rt {
   color: var(--muted);
   font-size: 11px;
   font-weight: 700;
+}
+
+.skill-detail-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin: 14px 0;
+}
+
+.skill-detail-summary > div,
+.skill-detail-section {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.skill-detail-summary > div {
+  padding: 11px;
+}
+
+.skill-detail-summary strong,
+.skill-detail-summary small {
+  display: block;
+}
+
+.skill-detail-summary strong {
+  font-size: 20px;
+}
+
+.skill-detail-summary small,
+.skill-detail-section p {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.skill-detail-section {
+  margin-top: 12px;
+  padding: 13px;
+}
+
+.skill-detail-section h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+
+.skill-term-list,
+.skill-exercise-list {
+  display: grid;
+  gap: 8px;
+}
+
+.skill-term-row,
+.skill-exercise-row,
+.skill-next-card {
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fff;
+}
+
+.skill-term-row strong,
+.skill-exercise-row strong,
+.skill-next-card strong {
+  display: block;
+}
+
+.skill-term-row span,
+.skill-exercise-row span,
+.skill-next-card span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.tag-row small {
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: #e5f1ed;
+  color: #276259;
+  font-size: 10px;
+  font-weight: 800;
 }
 
 .meter {
