@@ -177,6 +177,17 @@ Privacidad y limites:
 - Se guarda una copia local del perfil para consulta offline.
 - Cambiar la API key elimina esa copia para no mostrar datos de otra cuenta.
 
+### Ejercicio puente tras Renshuu
+
+En la pantalla Hoy se propone un microejercicio llamado Puente con Renshuu. Se genera a partir de la categoria con mayor actividad en el perfil de Renshuu durante el dia:
+
+- Vocabulario: usar una palabra repasada en una frase personal.
+- Kanji: escribir un kanji repasado y usarlo en una frase.
+- Gramatica: aplicar una estructura repasada al propio dia.
+- Frases: reformular una idea vista en Renshuu.
+
+La API no entrega aun los terminos concretos estudiados durante el dia. Por eso la app no finge conocerlos: el usuario elige uno de los que acaba de repasar y la app aporta la segunda capa de produccion y seguimiento.
+
 ### Perfiles locales
 
 Permite crear y cambiar perfiles de usuario dentro del navegador.

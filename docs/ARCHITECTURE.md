@@ -173,6 +173,7 @@ Regla de seguridad:
 Futuro recomendado:
 
 - Mover llamadas API a backend.
+- El endpoint de perfil permite crear un ejercicio puente por categoria estudiada hoy, pero no expone aun los terminos exactos de esa actividad.
 - Guardar secretos cifrados o mediante proveedor seguro.
 - Respetar los limites y terminos de Renshuu.
 

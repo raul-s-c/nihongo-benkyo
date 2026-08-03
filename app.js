@@ -1,6 +1,6 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
-const APP_VERSION = "0.4.0";
+const APP_VERSION = "0.4.1";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -51,7 +51,8 @@ const defaultUserState = {
   },
   currentExerciseId: "n5-01",
   dailyPlan: { date: "", exerciseIds: [], completedIds: [] },
-  exerciseHistory: {}
+  exerciseHistory: {},
+  renshuuBridge: null
 };
 
 let appState = loadAppState();
@@ -165,7 +166,8 @@ function mergeUserState(userState) {
     progress: { ...defaultUserState.progress, ...(userState?.progress || {}) },
     renshuu: { ...defaultUserState.renshuu, ...(userState?.renshuu || {}) },
     dailyPlan: { ...defaultUserState.dailyPlan, ...(userState?.dailyPlan || {}) },
-    exerciseHistory: userState?.exerciseHistory || {}
+    exerciseHistory: userState?.exerciseHistory || {},
+    renshuuBridge: userState?.renshuuBridge || null
   };
 }
 
@@ -337,6 +339,86 @@ function renderRenshuuProgress() {
   levels.classList.remove("hidden");
 }
 
+function getRenshuuBridge() {
+  const studied = state.renshuu.profile?.studied;
+  if (!studied) return null;
+  const category = [
+    ["vocab", Number(studied.today_vocab) || 0],
+    ["kanji", Number(studied.today_kanji) || 0],
+    ["grammar", Number(studied.today_grammar) || 0],
+    ["reading", Number(studied.today_sent) || 0]
+  ].sort((left, right) => right[1] - left[1])[0];
+
+  if (!category || category[1] === 0) return null;
+  const prompts = {
+    vocab: {
+      prompt: "Elige una palabra que hayas repasado hoy en Renshuu y escribe una frase corta y natural con ella.",
+      accepted: "Frase personal usando vocabulario repasado hoy.",
+      explanation: "Renshuu indica que hoy has trabajado vocabulario. Esta tarea no conoce las palabras exactas: te invita a recuperar una y usarla en un contexto propio.",
+      tags: ["vocab", "writing"]
+    },
+    kanji: {
+      prompt: "Elige un kanji que hayas repasado hoy en Renshuu. Escríbelo y crea una frase breve que lo use.",
+      accepted: "Frase personal usando un kanji repasado hoy.",
+      explanation: "Renshuu indica actividad de kanji hoy. Produce una frase corta para conectar forma, lectura y significado.",
+      tags: ["kanji", "writing", "reading"]
+    },
+    grammar: {
+      prompt: "Usa una estructura gramatical que hayas repasado hoy en Renshuu en una frase sobre tu día.",
+      accepted: "Frase personal usando la gramática repasada hoy.",
+      explanation: "Renshuu indica actividad de gramática hoy. Convertir una pauta en una frase propia es una buena segunda capa de práctica.",
+      tags: ["grammar", "writing", "particles"]
+    },
+    reading: {
+      prompt: "Reescribe con tus palabras una idea de una frase que hayas visto hoy en Renshuu.",
+      accepted: "Reformulación personal de una frase repasada hoy.",
+      explanation: "Renshuu indica actividad con frases hoy. Reformular activa comprensión y producción, aunque la idea sea sencilla.",
+      tags: ["reading", "writing", "vocab"]
+    }
+  };
+  const selected = prompts[category[0]];
+  return {
+    id: "renshuu-bridge",
+    level: state.settings.targetJlpt,
+    type: "Puente con Renshuu",
+    prompt: selected.prompt,
+    accepted: selected.accepted,
+    tags: selected.tags,
+    help: [],
+    explanation: selected.explanation,
+    keywords: [],
+    target: "",
+    sourceCount: category[1]
+  };
+}
+
+function renderRenshuuBridge() {
+  const bridge = getRenshuuBridge();
+  const description = document.querySelector("#bridgeDescription");
+  const button = document.querySelector("#startBridgeButton");
+  button.disabled = !bridge;
+  if (!bridge) {
+    description.textContent = state.renshuu.profile
+      ? "Renshuu no registra actividad de vocabulario, kanji, gramática o frases para hoy todavía."
+      : "Actualiza Renshuu para proponer una práctica relacionada con tu actividad de hoy.";
+    return;
+  }
+  const label = { vocab: "vocabulario", kanji: "kanji", grammar: "gramática", reading: "frases" }[bridge.tags[0]];
+  description.textContent = "Hoy Renshuu registra " + bridge.sourceCount + " elementos de " + label + ". Te proponemos una aplicación breve y personal.";
+}
+
+function startRenshuuBridge() {
+  const bridge = getRenshuuBridge();
+  if (!bridge) return;
+  state.renshuuBridge = bridge;
+  if (!state.dailyPlan.exerciseIds.includes(bridge.id)) state.dailyPlan.exerciseIds.unshift(bridge.id);
+  state.currentExerciseId = bridge.id;
+  saveState();
+  switchView("practice");
+  renderExercise();
+  renderDailyPlan();
+}
+
 async function syncRenshuuProgress() {
   const key = state.settings.renshuuApiKey.trim();
   const status = document.querySelector("#renshuuStatus");
@@ -386,7 +468,8 @@ function renderMatrix() {
 }
 
 function getCurrentExercise() {
-  return exercises.find((exercise) => exercise.id === state.currentExerciseId)
+  return (state.currentExerciseId === "renshuu-bridge" ? state.renshuuBridge : null)
+    || exercises.find((exercise) => exercise.id === state.currentExerciseId)
     || exercises.find((exercise) => exercise.id === state.dailyPlan.exerciseIds[0])
     || exercises[0];
 }
@@ -426,7 +509,7 @@ function renderDailyPlan() {
   const focusText = { balanced: "equilibrar tus habilidades", work: "situaciones de empresa", daily: "vida diaria", writing: "producción escrita", grammar: "gramática y partículas" }[state.settings.studyFocus] || "equilibrar tus habilidades";
   document.querySelector("#planReason").textContent = "Plan para " + focusText + ", ajustado a tu objetivo " + state.settings.targetJlpt + ".";
   document.querySelector("#planSteps").innerHTML = plan.exerciseIds.map((id, index) => {
-    const item = exercises.find((exercise) => exercise.id === id);
+    const item = id === "renshuu-bridge" ? state.renshuuBridge : exercises.find((exercise) => exercise.id === id);
     const done = plan.completedIds.includes(id);
     return '<button class="plan-step ' + (done ? "done" : "") + ' ' + (id === state.currentExerciseId ? "current" : "") + '" data-plan-exercise="' + id + '"><span>' + (done ? "✓" : index + 1) + "</span><strong>" + item.type + "</strong><small>" + item.level + "</small></button>";
   }).join("");
@@ -510,6 +593,7 @@ function bindEvents() {
   document.querySelector("#startSessionButton").addEventListener("click", () => switchView("practice"));
   document.querySelector("#jlptLevelSelect").addEventListener("change", drawRadar);
   document.querySelector("#syncRenshuuButton").addEventListener("click", syncRenshuuProgress);
+  document.querySelector("#startBridgeButton").addEventListener("click", startRenshuuBridge);
   document.querySelector("#dictionarySearch").addEventListener("input", (event) => renderDictionary(event.target.value));
   document.addEventListener("click", (event) => {
     const helper = event.target.closest("[data-dictionary-term]");
@@ -665,6 +749,7 @@ function renderAll() {
   drawRadar();
   renderMatrix();
   renderRenshuuProgress();
+  renderRenshuuBridge();
   renderDictionary();
 }
 

@@ -272,3 +272,7 @@ Funcionalidades anadidas:
 - Explicacion y vocabulario para cada ejercicio.
 - Diccionario local embebido.
 - Registro de comprension por intento.
+
+### Puente con la actividad diaria de Renshuu
+
+Se anadio una propuesta breve posterior a Renshuu. La app lee que categoria tuvo actividad hoy y crea un ejercicio de transferencia activa. La propuesta se presenta claramente como relacionada con la categoria, no con palabras exactas, porque el endpoint de perfil no expone el listado diario de terminos.
