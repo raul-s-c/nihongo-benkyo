@@ -413,3 +413,9 @@ Se genero una bateria original de 1.500 frases de traduccion: 100 N5, 200 N4, 30
 - Cada correccion otorga XP segun su resultado: 20 por acierto, 16 por respuesta abierta confirmada, 12 por resultado parcial y 8 por marcar un repaso. Los intentos anteriores siguen apareciendo porque el calculo interpreta su resultado almacenado aunque no tuvieran XP explicito.
 - El calendario movil muestra los ultimos 35 dias con intensidad proporcional al objetivo diario configurado. Al mantener pulsado, pasar el cursor o enfocar un dia se indica su fecha, XP e intentos.
 - El control Continuar abre primero una ruta posterior a Renshuu pendiente; en otro caso retoma el siguiente ejercicio diario o una recomendacion de repaso. No reinicia planes ni borra progreso.
+
+# 2026-08-03 - Metas JLPT y siguiente contenido visibles
+
+- Las tarjetas de la radial muestran y explican al mantener pulsado la meta orientativa del nivel, el numero de elementos disponibles en el catalogo, cuantos han aparecido ya en ejercicios y cuantos quedan por introducir. No se confunde ese contador con dominio linguistico.
+- La ficha de cada habilidad separa ahora la practica confirmada de ejercicios, los terminos vistos y los terminos pendientes de introducir. La lista pasa a llamarse "Proximos terminos" y declara que es una muestra de 28 elementos para no sugerir que se han cargado todos en pantalla.
+- Se incorporo una seccion "Hoy en esta habilidad". Indica las tareas previstas hoy para esa arista o, si no hay ninguna, explica por que y remite de forma clara al siguiente contenido disponible.

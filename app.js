@@ -4,7 +4,7 @@ const GITHUB_SYNC_KEY = "nihongo-benkyo-github-sync-v1";
 const GITHUB_GIST_DESCRIPTION = "Nihongo Benkyo private progress sync";
 const GITHUB_GIST_FILE = "nihongo-benkyo-progress.json";
 const GITHUB_AUTH_PROXY_URL = "https://nihongo-benkyo-auth.raul-nihongo.workers.dev";
-const APP_VERSION = "0.9.1";
+const APP_VERSION = "0.9.2";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -716,10 +716,12 @@ function renderSkillGrid(level) {
   grid.innerHTML = skills.map((skill) => {
     const percent = getContentCoverage(skill.id, level);
     const renshuuPercent = renshuu[skill.id];
+    const inventory = getSkillInventory(skill.id, level);
     return `
-      <button class="skill-pill" data-skill-detail="${skill.id}" data-tooltip="Abre contenidos, repasos, etiquetas y siguiente paso de ${skill.label}.">
+      <button class="skill-pill" data-skill-detail="${skill.id}" data-tooltip="Objetivo ${level}: ${inventory.target} ${inventory.unitLabel}. Catalogo local: ${inventory.catalogCount}. Has visto ${inventory.seenCount}; quedan ${inventory.unseenCount} por introducir. Abre el detalle para ver la tarea de hoy y el siguiente contenido.">
         <strong>${skill.label} · ${percent}%</strong>
         <div class="meter"><span style="width: ${percent}%"></span></div>
+        <small>Meta ${level}: ${inventory.target} ${inventory.unitLabel} · ${inventory.catalogCount} en la app</small>
         ${renshuuPercent === undefined ? "" : `<small>Renshuu: ${renshuuPercent}%</small>`}
       </button>
     `;
@@ -756,6 +758,30 @@ function getSkillExerciseSchedule(exercise) {
   return "Disponible como repaso dentro de tu objetivo JLPT.";
 }
 
+function getSkillUnitLabel(skillId) {
+  return ({ vocab: "palabras", kanji: "kanji", grammar: "estructuras", particles: "particulas" }[skillId] || "unidades");
+}
+
+function getSkillInventory(skillId, level, suppliedCatalog = null, suppliedTerms = null) {
+  const target = jlptTargets[level]?.[skillId] || 0;
+  const targetRank = levelRank(level);
+  const catalog = suppliedCatalog || (skillId === "vocab"
+    ? jlptVocabularyDictionary.filter((entry) => entry.jlptLevels.some((item) => levelRank(item) <= targetRank))
+    : skillId === "kanji"
+      ? jlptKanjiCatalog.filter((entry) => levelRank(entry.jlpt) <= targetRank)
+      : []);
+  const terms = suppliedTerms || [];
+  const catalogCount = catalog.length || terms.length;
+  const seenCount = terms.filter((term) => term.attempts > 0).length;
+  return {
+    target,
+    unitLabel: getSkillUnitLabel(skillId),
+    catalogCount,
+    seenCount,
+    unseenCount: Math.max(0, catalogCount - seenCount)
+  };
+}
+
 function getSkillDetail(skillId) {
   const relatedExercises = exercises.filter((exercise) => exercise.tags.includes(skillId));
   const attempts = (state.attemptLog || []).filter((entry) => relatedExercises.some((exercise) => exercise.id === entry.exerciseId));
@@ -770,7 +796,8 @@ function getSkillDetail(skillId) {
       terms.set(term.text, current);
     });
   });
-  const targetRank = levelRank(state.settings.targetJlpt || "N4");
+  const level = state.settings.targetJlpt || "N4";
+  const targetRank = levelRank(level);
   const catalogEntries = skillId === "vocab"
     ? jlptVocabularyDictionary.filter((entry) => entry.jlptLevels.some((level) => levelRank(level) <= targetRank))
     : skillId === "kanji"
@@ -801,9 +828,20 @@ function getSkillDetail(skillId) {
     .sort((left, right) => scorePlanExercise(left, jlptTargets[state.settings.targetJlpt], state.settings.studyFocus) - scorePlanExercise(right, jlptTargets[state.settings.targetJlpt], state.settings.studyFocus))[0];
   const termList = [...terms.values()].map((term) => {
     const termAttempts = (state.attemptLog || []).filter((entry) => term.exerciseIds.has(entry.exerciseId));
-    return { ...term, attempts: termAttempts.length, reviews: termAttempts.filter((entry) => entry.outcome === "review").length };
-  });
-  return { relatedExercises, attempts, metrics, terms: termList, pending, newItems, next, catalogCount: catalogEntries.length };
+    const attemptsForTerm = termAttempts.length;
+    return {
+      ...term,
+      attempts: attemptsForTerm,
+      reviews: termAttempts.filter((entry) => entry.outcome === "review").length,
+      studyStatus: attemptsForTerm ? "Visto en ejercicios" : "Pendiente de introducir"
+    };
+  }).sort((left, right) => left.attempts - right.attempts || levelRank([...left.levels][0] || "N1") - levelRank([...right.levels][0] || "N1") || left.text.localeCompare(right.text, "ja"));
+  const inventory = getSkillInventory(skillId, level, catalogEntries, termList);
+  const today = state.dailyPlan.exerciseIds
+    .filter((id) => !state.dailyPlan.skippedIds.includes(id))
+    .map(getPlanItem)
+    .filter((exercise) => exercise?.tags?.includes(skillId));
+  return { relatedExercises, attempts, metrics, terms: termList, pending, newItems, next, today, inventory };
 }
 
 function renderSkillDetail() {
@@ -812,21 +850,25 @@ function renderSkillDetail() {
   const level = state.settings.targetJlpt || "N4";
   const readiness = getContentCoverage(skill.id, level);
   document.querySelector("#skillDetailTitle").textContent = skill.label;
-  document.querySelector("#skillDetailIntro").textContent = `Practica confirmada y contenido disponible de ${skill.label.toLowerCase()} para tu objetivo ${level}. Las etiquetas muestran los contextos y niveles donde aparece cada termino.`;
+  document.querySelector("#skillDetailIntro").textContent = `Meta orientativa ${level}: ${detail.inventory.target} ${detail.inventory.unitLabel}. La practica confirmada mide ejercicios de Nihongo Benkyo; los terminos vistos solo indican que ya han aparecido en tus ejercicios.`;
   document.querySelector("#skillDetailSummary").innerHTML = [
-    [readiness + "%", "practica confirmada hasta " + level],
+    [readiness + "%", "ejercicios confirmados hasta " + level],
     [detail.attempts.length, "intentos en esta habilidad"],
     [detail.pending.length, "ejercicios para repasar"],
     [detail.newItems.length, "ejercicios aun no iniciados"],
-    ...(detail.catalogCount ? [[detail.catalogCount, "elementos de catalogo hasta " + level]] : [])
+    [detail.inventory.seenCount + " / " + detail.inventory.catalogCount, "terminos vistos en ejercicios"],
+    [detail.inventory.unseenCount, "terminos por introducir"]
   ].map(([value, label]) => `<div><strong>${value}</strong><small>${label}</small></div>`).join("");
+  document.querySelector("#skillTodayContent").innerHTML = detail.today.length
+    ? detail.today.map((exercise) => `<div class="skill-exercise-row"><strong>${exercise.type}</strong><span>${exercise.level} · ${themes[exercise.theme] || "Vida diaria"}</span><p>${state.dailyPlan.completedIds.includes(exercise.id) ? "Completado hoy." : getPlanRecommendation(exercise)}</p></div>`).join("")
+    : `<p>Hoy no tienes una tarea de ${skill.label.toLowerCase()} programada. La app prioriza los repasos vencidos y tu ruta activa; abajo aparece el siguiente contenido disponible.</p>`;
   const next = detail.next;
   document.querySelector("#skillNextContent").innerHTML = next
     ? `<div class="skill-next-card"><strong>${next.type}</strong><span>${next.level} · ${themes[next.theme] || "Vida diaria"}</span><p>${getSkillExerciseSchedule(next)}</p></div>`
     : "<p>Has confirmado todo el contenido disponible de esta habilidad para tu objetivo actual.</p>";
-  document.querySelector("#skillTermsTitle").textContent = detail.catalogCount ? `Terminos vinculados (${detail.catalogCount} disponibles)` : "Terminos vinculados";
+  document.querySelector("#skillTermsTitle").textContent = detail.inventory.catalogCount ? `Proximos terminos para introducir (muestra ${Math.min(detail.terms.length, 28)} de ${detail.inventory.catalogCount})` : "Terminos vinculados";
   document.querySelector("#skillTermList").innerHTML = detail.terms.length
-    ? detail.terms.map((term) => `<button class="skill-term-row" data-dictionary-term="${term.text}"><strong>${term.text}</strong><span>${term.reading} · ${term.meaning} · ${term.attempts} intento${term.attempts === 1 ? "" : "s"}${term.reviews ? ` · ${term.reviews} repaso${term.reviews === 1 ? "" : "s"}` : ""}</span><div class="tag-row">${[...term.levels].map((item) => `<small>${item}</small>`).join("")}${[...term.themes].map((item) => `<small>${themes[item] || item}</small>`).join("")}</div></button>`).join("")
+    ? detail.terms.slice(0, 28).map((term) => `<button class="skill-term-row" data-dictionary-term="${term.text}"><strong>${term.text}</strong><span>${term.reading} · ${term.meaning} · ${term.studyStatus}${term.attempts ? ` (${term.attempts} intento${term.attempts === 1 ? "" : "s"})` : ""}${term.reviews ? ` · ${term.reviews} repaso${term.reviews === 1 ? "" : "s"}` : ""}</span><div class="tag-row">${[...term.levels].map((item) => `<small>${item}</small>`).join("")}${[...term.themes].map((item) => `<small>${themes[item] || item}</small>`).join("")}</div></button>`).join("")
     : "<p>Este contenido aun no tiene terminos de ayuda asociados.</p>";
   document.querySelector("#skillExerciseList").innerHTML = detail.relatedExercises.length
     ? detail.relatedExercises.map((exercise) => {
