@@ -65,7 +65,39 @@ window.NIHONGO_CONTENT = (() => {
     e("n1-03", "N1", "Pregunta", "Explica formalmente que debes consultar antes de tomar una decisión.", "判断する前に、関係者に確認する必要があります。", ["writing", "grammar", "work"], [t("関係者", "かんけいしゃ", "personas implicadas"), t("必要があります", "ひつようがあります", "es necesario")], "必要がある expresa obligación de forma objetiva.", [], "前に|確認|必要"),
     e("n1-04", "N1", "Traduce JP → ES", "ご期待に沿えるよう、引き続き品質の向上に取り組んでまいります。", "Seguiremos trabajando para mejorar la calidad y responder a sus expectativas.", ["reading", "vocab", "work"], [t("ご期待に沿える", "ごきたいにそえる", "responder a expectativas"), t("品質の向上", "ひんしつのこうじょう", "mejora de calidad")], "沿う expresa responder a una expectativa.", ["expectativas", "calidad", "seguiremos"]),
     e("n1-05", "N1", "Descripción", "Pide disculpas formalmente por una respuesta tardía.", "ご連絡が遅くなり、誠に申し訳ございません。", ["writing", "grammar", "work"], [t("ご連絡が遅くなり", "ごれんらくがおそくなり", "al retrasarse mi respuesta"), t("誠に申し訳ございません", "まことにもうしわけございません", "lo siento mucho, muy formal")], "Una disculpa formal que asume responsabilidad.", [], "遅く|申し訳"),
+    e("shop-n5", "N5", "Traduce ES -> JP", "Quiero comprar esta camisa.", "このシャツを買いたいです。", ["writing", "vocab"], [t("シャツ", "しゃつ", "camisa"), t("買いたい", "かいたい", "quiero comprar")], "たいです expresa un deseo de forma educada.", [], "買い|シャツ"),
+    e("shop-n4", "N4", "Pregunta", "Pregunta educadamente si puedes pagar con tarjeta.", "カードで払えますか。", ["writing", "grammar", "vocab"], [t("カード", "かーど", "tarjeta"), t("払う", "はらう", "pagar")], "La forma potencial えます pregunta por una posibilidad.", [], "カード|払"),
+    e("shop-n3", "N3", "Traduce JP -> ES", "サイズが合わなければ、交換していただけますか。", "Si la talla no me queda bien, ¿podría cambiarla?", ["reading", "grammar", "vocab"], [t("サイズ", "さいず", "talla"), t("交換", "こうかん", "cambio")], "なければ plantea una condicion; ていただけますか suaviza la peticion.", ["talla", "cambio"]),
+    e("shop-n2", "N2", "Descripcion", "Pide que te avisen cuando el producto vuelva a estar disponible.", "商品が再入荷されたら、ご連絡いただけると幸いです。", ["writing", "grammar", "vocab"], [t("再入荷", "さいにゅうか", "reponer existencias"), t("幸い", "さいわい", "me alegraria")], "いただけると幸いです formula una peticion cortes sin imponer.", [], "再入荷|連絡"),
+    e("shop-n1", "N1", "Respuesta", "Explica formalmente que deseas devolver un articulo defectuoso.", "不良品のため、返品の手続きをお願いできますでしょうか。", ["writing", "grammar", "vocab"], [t("不良品", "ふりょうひん", "producto defectuoso"), t("返品", "へんぴん", "devolucion")], "お願いできますでしょうか mantiene una peticion formal y clara.", [], "不良品|返品"),
+    e("city-n5", "N5", "Pregunta", "Pregunta donde esta la estacion.", "駅はどこですか。", ["writing", "vocab"], [t("駅", "えき", "estacion"), t("どこ", "どこ", "donde")], "Una pregunta directa y util para orientarte.", [], "駅|どこ"),
+    e("city-n4", "N4", "Traduce ES -> JP", "Toma este tren hasta Shinjuku.", "この電車で新宿まで行きます。", ["writing", "particles", "vocab"], [t("電車", "でんしゃ", "tren"), t("まで", "まで", "hasta")], "で marca el medio de transporte y まで el destino final.", [], "電車|新宿|まで"),
+    e("city-n3", "N3", "Descripcion", "Explica que llegaras tarde porque el tren se ha parado.", "電車が止まっているので、到着が遅れそうです。", ["writing", "grammar", "vocab"], [t("到着", "とうちゃく", "llegada"), t("遅れそう", "おくれそう", "parece que llegare tarde")], "そうです comunica una prevision basada en la situacion.", [], "電車|遅"),
+    e("city-n2", "N2", "Traduce JP -> ES", "迷っているようでしたら、お近くの駅員にお声がけください。", "Si parece que esta perdido, dirijase al personal de la estacion mas cercano.", ["reading", "grammar", "vocab"], [t("迷う", "まよう", "perderse"), t("駅員", "えきいん", "personal de estacion")], "ているようでしたら combina apariencia y condicion con cortesia.", ["perdido", "personal", "estacion"]),
+    e("city-n1", "N1", "Respuesta", "Solicita formalmente indicaciones para llegar a la oficina municipal.", "市役所までの道順をご教示いただけますでしょうか。", ["writing", "grammar", "vocab"], [t("市役所", "しやくしょ", "ayuntamiento"), t("道順", "みちじゅん", "indicaciones")], "ご教示いただけますでしょうか es una solicitud respetuosa y precisa.", [], "市役所|道順"),
+    e("social-n5", "N5", "Traduce ES -> JP", "El sabado quedo con un amigo.", "土曜日に友達と会います。", ["writing", "vocab", "particles"], [t("友達", "ともだち", "amigo"), t("会う", "あう", "quedar con alguien")], "と marca la persona con quien haces una actividad.", [], "友達|会"),
+    e("social-n4", "N4", "Respuesta", "Invita a un amigo a ver una pelicula este fin de semana.", "今週末、一緒に映画を見に行きませんか。", ["writing", "grammar", "vocab"], [t("一緒に", "いっしょに", "juntos"), t("行きませんか", "いきませんか", "te apetece ir?")], "ませんか es una invitacion amable.", [], "映画|行"),
+    e("social-n3", "N3", "Descripcion", "Dile a un amigo que no podras ir porque tienes otro compromiso.", "用事が入ってしまったので、今日は行けなくなりました。", ["writing", "grammar", "vocab"], [t("用事", "ようじ", "compromiso"), t("行けなくなる", "いけなくなる", "dejar de poder ir")], "てしまった expresa que algo surgio de forma no planeada.", [], "用事|行"),
+    e("social-n2", "N2", "Pregunta", "Acepta una invitacion con entusiasmo pero de manera educada.", "ぜひ参加させていただきたいと思います。", ["writing", "grammar", "vocab"], [t("参加", "さんか", "participar"), t("ぜひ", "ぜひ", "sin falta")], "させていただく expresa aceptacion respetuosa.", [], "参加|ぜひ"),
+    e("social-n1", "N1", "Traduce JP -> ES", "お招きいただいたにもかかわらず、当日は都合がつかず失礼いたしました。", "A pesar de su invitacion, ese dia no me fue posible asistir; le pido disculpas.", ["reading", "grammar", "vocab"], [t("にもかかわらず", "にもかかわらず", "a pesar de"), t("都合", "つごう", "conveniencia, disponibilidad")], "にもかかわらず introduce una concesion en registro formal.", ["a pesar", "invitacion", "disculpas"]),
   ];
 
-  return { dictionary, exercises };
+  const themeByExercise = {
+    "n5-01": "comida", "n5-02": "hogar-y-estudio", "n5-03": "hogar-y-estudio", "n5-04": "comunicacion", "n5-05": "compras", "n5-06": "ciudad-y-transporte", "n5-07": "comida", "n5-08": "vida-diaria", "n5-09": "trabajo", "n5-10": "amistades-y-ocio", "n5-11": "trabajo", "n5-12": "comunicacion",
+    "n4-01": "trabajo", "n4-02": "trabajo", "n4-03": "ciudad-y-transporte", "n4-04": "trabajo", "n4-05": "trabajo", "n4-06": "trabajo", "n4-07": "trabajo", "n4-08": "trabajo", "n4-09": "compras", "n4-10": "trabajo", "n4-11": "trabajo", "n4-12": "amistades-y-ocio", "n4-13": "trabajo", "n4-14": "trabajo", "n4-15": "ciudad-y-transporte",
+    "n3-01": "trabajo", "n3-02": "trabajo", "n3-03": "ciudad-y-transporte", "n3-04": "trabajo", "n3-05": "trabajo", "n2-01": "trabajo", "n2-02": "trabajo", "n2-03": "trabajo", "n2-04": "trabajo", "n2-05": "trabajo", "n1-01": "trabajo", "n1-02": "trabajo", "n1-03": "trabajo", "n1-04": "trabajo", "n1-05": "trabajo",
+    "shop-n5": "compras", "shop-n4": "compras", "shop-n3": "compras", "shop-n2": "compras", "shop-n1": "compras", "city-n5": "ciudad-y-transporte", "city-n4": "ciudad-y-transporte", "city-n3": "ciudad-y-transporte", "city-n2": "ciudad-y-transporte", "city-n1": "ciudad-y-transporte", "social-n5": "amistades-y-ocio", "social-n4": "amistades-y-ocio", "social-n3": "amistades-y-ocio", "social-n2": "amistades-y-ocio", "social-n1": "amistades-y-ocio"
+  };
+  const thematicExerciseIds = new Set(["shop-n5", "shop-n4", "shop-n3", "shop-n2", "shop-n1", "city-n5", "city-n4", "city-n3", "city-n2", "city-n1", "social-n5", "social-n4", "social-n3", "social-n2", "social-n1"]);
+  const enrichedExercises = exercises.map((exercise) => {
+    const theme = themeByExercise[exercise.id] || "vida-diaria";
+    return { ...exercise, theme, core: !thematicExerciseIds.has(exercise.id), help: exercise.help.map((term) => ({ ...term, theme, level: exercise.level })) };
+  });
+  const catalogTerms = [...new Map([...dictionary, ...enrichedExercises.flatMap((exercise) => exercise.help)].map((term) => [term.text, term])).values()];
+  const catalog = catalogTerms.map((term) => {
+    const uses = enrichedExercises.flatMap((exercise) => exercise.help.filter((item) => item.text === term.text));
+    return { ...term, themes: [...new Set(uses.map((item) => item.theme))], jlptLevels: [...new Set(uses.map((item) => item.level))] };
+  });
+
+  return { dictionary: catalog, exercises: enrichedExercises };
 })();

@@ -289,3 +289,11 @@ Necesario para:
 ### Sincronizacion de cuenta
 
 Necesaria para conservar el mismo perfil y progreso en movil, ordenador y futuras instalaciones.
+
+### Rutas tematicas paralelas
+
+Ademas de la progresion por JLPT, cada ejercicio y cada termino de ayuda tiene una tematica y un nivel asociados. Ajustes permite elegir una tematica para profundizar sin desactivar el avance troncal: el plan reserva contenido del bloque curricular actual y completa la sesion con una ruta contextual del nivel que ya esta desbloqueado.
+
+Las rutas iniciales con contenido propio de N5 a N1 son Compras, Ciudad y transporte, y Amistades y ocio. El diccionario muestra los niveles y tematicas en los que aparece cada entrada. Las categorias restantes, como mascotas, se incorporaran cuando tengan una ruta de contenido completa; no se ofrecen como filtros vacios.
+
+Objetivo: permitir que una situacion real se estudie en profundidad mientras la dificultad linguistica sigue una progresion verificable.

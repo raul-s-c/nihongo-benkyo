@@ -1,6 +1,6 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
-const APP_VERSION = "0.4.9";
+const APP_VERSION = "0.5.0";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -24,6 +24,17 @@ const jlptTargets = {
 
 const exercises = window.NIHONGO_CONTENT?.exercises || [];
 const embeddedDictionary = window.NIHONGO_CONTENT?.dictionary || [];
+const themes = {
+  balanced: "Todas las tematicas",
+  compras: "Compras",
+  "ciudad-y-transporte": "Ciudad y transporte",
+  "amistades-y-ocio": "Amistades y ocio",
+  trabajo: "Trabajo",
+  comida: "Comida",
+  "hogar-y-estudio": "Hogar y estudio",
+  comunicacion: "Comunicacion",
+  "vida-diaria": "Vida diaria"
+};
 const PROTOTYPE_PROGRESS_SEED = { vocab: 90, kanji: 12, grammar: 18, particles: 22, reading: 20, writing: 14, listening: 8, work: 5 };
 const exerciseTaxonomy = {
   "n5-01": ["Forma -masu", "Rutinas y tiempo"], "n5-02": ["Lugar de accion", "Estudio y hogar"], "n5-03": ["Particulas de lugar", "Estudio y lugares"], "n5-04": ["Registro cortés", "Comunicacion basica"],
@@ -57,7 +68,8 @@ const defaultUserState = {
     dailyMinutes: 10,
     showFurigana: false,
     targetJlpt: "N4",
-    studyFocus: "balanced"
+    studyFocus: "balanced",
+    themeFocus: "balanced"
   },
   progress: {
     vocab: 0,
@@ -663,11 +675,17 @@ function getCurriculumCandidates(excludedIds = []) {
   const stages = getAvailableCurriculumStages();
   const current = getCurrentCurriculumStage();
   const reviewIds = stages.flatMap((stage) => getStageEvidence(stage).pendingReviews).filter((id) => !excludedIds.includes(id));
+  const themeFocus = state.settings.themeFocus || "balanced";
+  const unlockedLevel = current?.level || state.settings.targetJlpt || "N5";
+  const thematicIds = themeFocus === "balanced" ? [] : exercises
+    .filter((exercise) => !exercise.core && exercise.theme === themeFocus && levelRank(exercise.level) <= levelRank(unlockedLevel))
+    .filter((exercise) => !excludedIds.includes(exercise.id) && state.exerciseHistory[exercise.id]?.status !== "solid")
+    .map((exercise) => exercise.id);
   if (!current) {
-    return [...new Set(reviewIds)].map((id) => exercises.find((exercise) => exercise.id === id)).filter(Boolean);
+    return [...new Set([...reviewIds, ...thematicIds])].map((id) => exercises.find((exercise) => exercise.id === id)).filter(Boolean);
   }
   const newIds = current.exerciseIds.filter((id) => !excludedIds.includes(id) && state.exerciseHistory[id]?.status !== "solid");
-  return [...new Set([...reviewIds, ...newIds])]
+  return [...new Set([...reviewIds, ...newIds, ...thematicIds])]
     .map((id) => exercises.find((exercise) => exercise.id === id))
     .filter(Boolean);
 }
@@ -689,14 +707,20 @@ function getRecommendedExercises(count = 1, excludedIds = [], preferredTags = []
     .sort((left, right) => scorePlanExercise(left, target, focus, preferredTags) - scorePlanExercise(right, target, focus, preferredTags))
   const review = candidates.filter((item) => state.exerciseHistory[item.id]?.status === "review").slice(0, 1);
   const nextBlock = candidates.filter((item) => state.exerciseHistory[item.id]?.status !== "review");
-  return [...review, ...nextBlock].slice(0, count);
+  const core = nextBlock.filter((item) => item.core);
+  const themed = nextBlock.filter((item) => !item.core);
+  const ordered = state.settings.themeFocus !== "balanced" && themed.length
+    ? [...core.slice(0, 1), ...themed, ...core.slice(1)]
+    : nextBlock;
+  return [...review, ...ordered].slice(0, count);
 }
 
 function scorePlanExercise(exercise, target, focus, preferredTags = []) {
   const history = state.exerciseHistory[exercise.id] || {};
   const weakness = exercise.tags.reduce((sum, tag) => sum + ((state.progress[tag] || 0) / (target[tag] || 1)), 0) / exercise.tags.length;
   const preferred = exercise.tags.some((tag) => preferredTags.includes(tag)) ? -1.2 : 0;
-  return weakness + preferred + (focus !== "balanced" && exercise.tags.includes(focus) ? -0.5 : 0) + (history.status === "review" ? -1 : 0) + (history.attempts || 0) * 0.08;
+  const themeBoost = state.settings.themeFocus !== "balanced" && exercise.theme === state.settings.themeFocus ? -1.5 : 0;
+  return weakness + preferred + themeBoost + (focus !== "balanced" && exercise.tags.includes(focus) ? -0.5 : 0) + (history.status === "review" ? -1 : 0) + (history.attempts || 0) * 0.08;
 }
 
 function getPlanItem(id) {
@@ -757,7 +781,8 @@ function renderDailyPlan() {
   const completedCount = plan.completedIds.filter((id) => activeIds.includes(id)).length;
   document.querySelector("#planCount").textContent = completedCount + " / " + activeIds.length;
   const focusText = { balanced: "equilibrar tus habilidades", work: "situaciones de empresa", daily: "vida diaria", writing: "producción escrita", grammar: "gramática y partículas" }[state.settings.studyFocus] || "equilibrar tus habilidades";
-  document.querySelector("#planReason").textContent = "Plan para " + focusText + ", ajustado a tu objetivo " + state.settings.targetJlpt + ".";
+  const themeText = themes[state.settings.themeFocus || "balanced"] || themes.balanced;
+  document.querySelector("#planReason").textContent = "Plan para " + focusText + ", con temática " + themeText.toLowerCase() + " y ajustado a tu objetivo " + state.settings.targetJlpt + ".";
   const currentStage = getCurrentCurriculumStage();
   const stageEvidence = currentStage ? getStageEvidence(currentStage) : null;
   document.querySelector("#curriculumStatus").textContent = currentStage
@@ -802,8 +827,9 @@ function renderExercise() {
   document.querySelector("#exerciseType").textContent = exercise.type;
   setJapaneseText(document.querySelector("#exercisePrompt"), exercise.prompt);
   document.querySelector("#answerInput").value = state.draftAnswers[exercise.id] || "";
-  document.querySelector("#practiceMeta").textContent = exercise.level + " · " + exercise.tags.map((tag) => skills.find((skill) => skill.id === tag)?.label || tag).join(" · ");
-  document.querySelector("#contextHelp").innerHTML = exercise.help.map((item) => '<button class="term-helper" data-dictionary-term="' + item.text + '"><strong>' + item.text + "</strong><span>" + item.reading + "</span><small>" + item.meaning + "</small></button>").join("") + "<p>" + exercise.explanation + "</p>";
+  const themeLabel = themes[exercise.theme] || "Vida diaria";
+  document.querySelector("#practiceMeta").textContent = [exercise.level, themeLabel, ...exercise.tags.map((tag) => skills.find((skill) => skill.id === tag)?.label || tag)].join(" · ");
+  document.querySelector("#contextHelp").innerHTML = exercise.help.map((item) => '<button class="term-helper" data-dictionary-term="' + item.text + '"><strong>' + item.text + "</strong><span>" + item.reading + "</span><small>" + item.meaning + " · " + item.level + " · " + (themes[item.theme] || "Vida diaria") + "</small></button>").join("") + "<p>" + exercise.explanation + "</p>";
   document.querySelector("#contextHelp").classList.add("hidden");
   document.querySelector("#helpToggle").setAttribute("aria-expanded", "false");
   document.querySelector("#feedbackPanel").classList.add("hidden");
@@ -976,6 +1002,7 @@ function bindEvents() {
     state.settings.dailyMinutes = Number(document.querySelector("#dailyMinutes").value || 10);
     state.settings.targetJlpt = document.querySelector("#targetJlpt").value;
     state.settings.studyFocus = document.querySelector("#studyFocus").value;
+    state.settings.themeFocus = document.querySelector("#themeFocus").value;
     state.dailyPlan = structuredClone(defaultUserState.dailyPlan);
     saveState();
     ensureDailyPlan();
@@ -1039,6 +1066,7 @@ function hydrateSettings() {
   document.querySelector("#dailyMinutes").value = state.settings.dailyMinutes || 10;
   document.querySelector("#targetJlpt").value = state.settings.targetJlpt || "N4";
   document.querySelector("#studyFocus").value = state.settings.studyFocus || "balanced";
+  document.querySelector("#themeFocus").value = state.settings.themeFocus || "balanced";
   document.querySelector("#jlptLevelSelect").value = state.settings.targetJlpt || "N4";
   document.querySelector("#furiganaToggle").classList.toggle("active", Boolean(state.settings.showFurigana));
   document.querySelector("#furiganaToggle").setAttribute(
@@ -1063,7 +1091,10 @@ function renderAll() {
 function renderDictionary(query = "") {
   const normalized = normalizeAnswer(query);
   const matches = embeddedDictionary.filter((item) => !normalized || [item.text, item.reading, item.meaning].some((value) => normalizeAnswer(value).includes(normalized))).slice(0, 10);
-  document.querySelector("#dictionaryResults").innerHTML = matches.map((item) => '<button class="dictionary-row" data-insert-dictionary="' + item.text + '"><strong>' + item.text + "</strong><span>" + item.reading + "</span><small>" + item.meaning + (item.note ? " · " + item.note : "") + "</small></button>").join("") || '<p class="muted">No hay coincidencias aún.</p>';
+  document.querySelector("#dictionaryResults").innerHTML = matches.map((item) => {
+    const metadata = [item.jlptLevels?.join("/"), item.themes?.map((theme) => themes[theme]).join(", ")].filter(Boolean).join(" · ");
+    return '<button class="dictionary-row" data-insert-dictionary="' + item.text + '"><strong>' + item.text + "</strong><span>" + item.reading + "</span><small>" + item.meaning + (metadata ? " · " + metadata : "") + (item.note ? " · " + item.note : "") + "</small></button>";
+  }).join("") || '<p class="muted">No hay coincidencias aún.</p>';
   document.querySelectorAll("[data-insert-dictionary]").forEach((button) => button.addEventListener("click", () => {
     const input = document.querySelector("#answerInput");
     input.value += (input.value ? " " : "") + button.dataset.insertDictionary;
@@ -1230,7 +1261,7 @@ renderAll();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js?v=0.4.9").catch(() => {
+    navigator.serviceWorker.register("service-worker.js?v=0.5.0").catch(() => {
       // La app sigue funcionando en navegadores que no permiten cache offline.
     });
   });

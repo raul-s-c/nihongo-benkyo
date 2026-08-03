@@ -319,3 +319,7 @@ La auditoria detecto que el algoritmo anterior elegia cualquier ejercicio igual 
 ### Extension de la ruta hasta N1
 
 La biblioteca y el itinerario se ampliaron con bloques N3, N2 y N1 centrados en coordinacion profesional, negociacion y comunicacion corporativa formal. El objetivo JLPT ahora limita una ruta real con contenido hasta N1, en vez de actuar solo como un selector visual.
+
+### Rutas tematicas y JLPT en paralelo
+
+Se anadio un segundo eje de contenido: tematica. Compras, Ciudad y transporte, y Amistades y ocio disponen ahora de una ruta propia desde N5 hasta N1. Cada ejercicio se etiqueta con una tematica y los terminos de ayuda reciben esa misma evidencia contextual junto con su nivel. El selector de Ajustes se persiste por perfil; el plan mantiene por lo menos una propuesta del bloque troncal y usa el resto para profundizar en la tematica elegida, sin presentar material por encima del nivel desbloqueado. El diccionario muestra esta clasificacion cuando existe.

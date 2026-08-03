@@ -88,7 +88,9 @@ El radar JLPT compara esos puntos contra objetivos aproximados por nivel. Es una
 
 ### Plan diario y repaso
 
-El perfil conserva un plan diario con fecha, ejercicios elegidos, ejercicios completados e historial por ejercicio. `curriculumStages` define la progresion guiada N5-N4; un bloque se completa cuando todos sus ejercicios tienen una confirmacion no marcada para repasar. Al cambiar de dia o modificar configuracion, la funcion ensureDailyPlan toma el bloque actual e intercala repasos pendientes, sin volver a abrir bloques ya completados como trabajo nuevo.
+El perfil conserva un plan diario con fecha, ejercicios elegidos, ejercicios completados e historial por ejercicio. `curriculumStages` define la progresion guiada N5-N1; un bloque se completa cuando todos sus ejercicios tienen una confirmacion no marcada para repasar. Al cambiar de dia o modificar configuracion, la funcion ensureDailyPlan toma el bloque actual e intercala repasos pendientes, sin volver a abrir bloques ya completados como trabajo nuevo.
+
+`content.js` enriquece cada ejercicio con `theme`, `level` y `core`. Los ejercicios `core` forman los bloques que desbloquean nivel; los ejercicios tematicos son rutas paralelas opcionales. `themeFocus` se guarda por perfil y `getCurriculumCandidates()` solo anade contenido tematico con un nivel igual o inferior al bloque actual. De este modo la preferencia tematica no permite saltar la progresion JLPT.
 
 El contenido vive en content.js, separado de la interfaz. Esto permite ampliar bancos de preguntas sin mezclar datos pedagogicos con logica de pantalla.
 
