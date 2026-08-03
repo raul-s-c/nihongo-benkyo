@@ -361,6 +361,27 @@ rt {
   margin: 22px 0 12px;
 }
 
+.practice-heading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.back-button {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+}
+
 .view {
   display: none;
 }

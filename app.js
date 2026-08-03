@@ -52,7 +52,8 @@ const defaultUserState = {
   currentExerciseId: "n5-01",
   dailyPlan: { date: "", exerciseIds: [], completedIds: [] },
   exerciseHistory: {},
-  renshuuBridge: null
+  renshuuBridge: null,
+  draftAnswers: {}
 };
 
 let appState = loadAppState();
@@ -167,7 +168,8 @@ function mergeUserState(userState) {
     renshuu: { ...defaultUserState.renshuu, ...(userState?.renshuu || {}) },
     dailyPlan: { ...defaultUserState.dailyPlan, ...(userState?.dailyPlan || {}) },
     exerciseHistory: userState?.exerciseHistory || {},
-    renshuuBridge: userState?.renshuuBridge || null
+    renshuuBridge: userState?.renshuuBridge || null,
+    draftAnswers: userState?.draftAnswers || {}
   };
 }
 
@@ -527,7 +529,7 @@ function renderExercise() {
   if (!exercise) return;
   document.querySelector("#exerciseType").textContent = exercise.type;
   setJapaneseText(document.querySelector("#exercisePrompt"), exercise.prompt);
-  document.querySelector("#answerInput").value = "";
+  document.querySelector("#answerInput").value = state.draftAnswers[exercise.id] || "";
   document.querySelector("#practiceMeta").textContent = exercise.level + " · " + exercise.tags.map((tag) => skills.find((skill) => skill.id === tag)?.label || tag).join(" · ");
   document.querySelector("#contextHelp").innerHTML = exercise.help.map((item) => '<button class="term-helper" data-dictionary-term="' + item.text + '"><strong>' + item.text + "</strong><span>" + item.reading + "</span><small>" + item.meaning + "</small></button>").join("") + "<p>" + exercise.explanation + "</p>";
   document.querySelector("#contextHelp").classList.add("hidden");
@@ -593,6 +595,11 @@ function bindEvents() {
 
   document.querySelector("#settingsButton").addEventListener("click", () => switchView("settings"));
   document.querySelector("#startSessionButton").addEventListener("click", () => switchView("practice"));
+  document.querySelector("#backToPlanButton").addEventListener("click", () => {
+    saveState();
+    switchView("today");
+    renderDailyPlan();
+  });
   document.querySelector("#jlptLevelSelect").addEventListener("change", drawRadar);
   document.querySelector("#syncRenshuuButton").addEventListener("click", syncRenshuuProgress);
   document.querySelector("#startBridgeButton").addEventListener("click", startRenshuuBridge);
@@ -633,7 +640,14 @@ function bindEvents() {
   });
 
   const answerInput = document.querySelector("#answerInput");
-  answerInput.addEventListener("input", updateImeSuggestions);
+  answerInput.addEventListener("input", () => {
+    const exercise = getCurrentExercise();
+    if (exercise) {
+      state.draftAnswers[exercise.id] = answerInput.value;
+      saveState();
+    }
+    updateImeSuggestions();
+  });
   answerInput.addEventListener("keyup", updateImeSuggestions);
   answerInput.addEventListener("click", updateImeSuggestions);
   answerInput.addEventListener("blur", () => {
@@ -657,6 +671,7 @@ function bindEvents() {
     document.querySelectorAll("[data-review]").forEach((button) => {
       button.onclick = () => {
         applyProgress(exercise, button.dataset.review, result);
+        delete state.draftAnswers[exercise.id];
         const plan = state.dailyPlan.exerciseIds;
         const index = plan.indexOf(exercise.id);
         state.currentExerciseId = plan[(index + 1) % plan.length];

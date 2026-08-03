@@ -29,6 +29,8 @@ La app usa una navegacion inferior con cuatro vistas:
 
 Objetivo: que la app sea comoda con una mano y parezca pensada para telefono desde el primer dia.
 
+Dentro de Practicar se muestra una flecha para volver al plan de hoy. No registra ni reinicia el ejercicio; los borradores se guardan por ejercicio y reaparecen al volver.
+
 ### Instalacion web en movil
 
 La app incluye un manifest web, un icono y cache offline mediante service worker.

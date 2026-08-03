@@ -286,3 +286,7 @@ La interfaz ahora distingue entre elementos de la respuesta modelo detectados y 
 ### Actualizacion fiable de la PWA
 
 Se detecto que la PWA podia seguir mostrando un app.js anterior pese a que GitHub Pages hubiese terminado el despliegue. Se incremento la version de cache del service worker, se fuerza una consulta de red sin cache para recursos de la propia app y se versionaron las referencias de contenido y aplicacion en HTML.
+
+### Vuelta segura desde Practicar
+
+Se anadio una flecha visible para volver al plan diario desde Practicar. Los borradores se almacenan por ejercicio en el perfil local, de modo que salir de la pantalla no borra la respuesta en curso ni modifica el progreso.
