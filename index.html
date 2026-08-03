@@ -90,7 +90,7 @@
             <canvas id="jlptRadar" width="320" height="320" aria-label="Radar de preparacion JLPT"></canvas>
             <div class="readiness-score">
               <span id="readinessPercent">0%</span>
-              <small>listo</small>
+              <small>avance registrado</small>
             </div>
           </div>
 
@@ -168,8 +168,10 @@
         <section class="view" id="view-progress" aria-labelledby="progressTitle">
           <div class="section-head">
             <h2 id="progressTitle">Matriz</h2>
-            <button class="ghost-button danger" id="resetProgressButton" data-tooltip="Pide confirmacion y restaura la matriz de este perfil a sus valores iniciales.">Reiniciar</button>
+            <button class="ghost-button danger" id="resetProgressButton" data-tooltip="Pide confirmacion y pone a cero solo los puntos propios de Nihongo Benkyo. No cambia Renshuu ni tus ajustes.">Reiniciar</button>
           </div>
+          <p class="matrix-intro">Registra evidencia de practica dentro de esta app, no una estimacion directa de tu japones. Al finalizar un ejercicio, <strong>Necesito repasarlo</strong> suma 1 punto a sus habilidades; <strong>Lo he entendido</strong> suma de 2 a 4 segun los elementos de la respuesta modelo reconocidos. Los ejercicios abiertos suman 2 al confirmarlos. Renshuu se muestra aparte y nunca se mezcla aqui.</p>
+          <p class="muted" id="matrixStatus"></p>
           <div class="matrix" id="progressMatrix"></div>
         </section>
 
@@ -237,16 +239,16 @@
     <div class="confirm-overlay hidden" id="resetConfirm" role="dialog" aria-modal="true" aria-labelledby="resetConfirmTitle">
       <div class="confirm-dialog">
         <h2 id="resetConfirmTitle">Reiniciar matriz</h2>
-        <p>Esto restaurara el progreso del perfil activo a los valores iniciales del prototipo. No elimina perfiles ni ajustes, pero si cambia tus avances guardados.</p>
+        <p>Esto pondra a cero los puntos de Nihongo Benkyo del perfil activo. No elimina perfiles, ajustes ni datos de Renshuu, pero si borra la evidencia de practica acumulada en esta app.</p>
         <div class="confirm-actions">
           <button class="ghost-button" id="cancelResetButton" data-tooltip="Cierra este aviso sin cambiar nada.">Cancelar</button>
-          <button class="primary-action danger-action" id="confirmResetButton" data-tooltip="Confirma el reinicio del progreso de este perfil.">Reiniciar</button>
+          <button class="primary-action danger-action" id="confirmResetButton" data-tooltip="Pone a cero los puntos propios de Nihongo Benkyo del perfil activo. No afecta a Renshuu.">Reiniciar</button>
         </div>
       </div>
     </div>
 
     <script src="secrets.local.js"></script>
-    <script src="content.js?v=0.4.4"></script>
-    <script src="app.js?v=0.4.4"></script>
+    <script src="content.js?v=0.4.5"></script>
+    <script src="app.js?v=0.4.5"></script>
   </body>
 </html>

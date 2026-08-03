@@ -728,6 +728,15 @@ textarea {
   gap: 10px;
 }
 
+.matrix-intro {
+  margin: 0 0 10px;
+  padding: 12px;
+  border-left: 3px solid var(--teal);
+  background: #e2f0ed;
+  font-size: 13px;
+  line-height: 1.48;
+}
+
 .matrix-row {
   display: grid;
   grid-template-columns: 112px 1fr 48px;

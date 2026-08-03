@@ -299,3 +299,7 @@ Tambien se versiona el registro del service worker para activar la renovacion en
 Se amplio el bloque de Renshuu con una lectura por categorias del perfil read-only: actividad del dia, continuidad por area, comparacion de cobertura para el JLPT seleccionado, ausencia de rachas y una prioridad sugerida. La recomendacion transforma el punto de menor cobertura en una tarea corta de produccion, sin convertir esos datos en una promesa sobre el resultado de un examen.
 
 Se incremento la version de la PWA para que el analisis aparezca tambien en instalaciones moviles que ya estaban abiertas.
+
+### Matriz basada en evidencia propia
+
+Se eliminaron los valores de demostracion con los que nacia el prototipo. Los perfiles nuevos empiezan en cero y los perfiles sin historial que conservaran exactamente aquella semilla se migran a cero. La pantalla Matriz ahora explica que solo se actualiza al finalizar un ejercicio y confirmar la autoevaluacion: repasar suma 1 punto por habilidad y entender suma de 2 a 4. Los datos de Renshuu no se incorporan a estos puntos.

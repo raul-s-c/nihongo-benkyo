@@ -84,7 +84,7 @@ Habilidades actuales:
 - `listening`
 - `work`
 
-El radar JLPT compara esos puntos contra objetivos aproximados por nivel.
+El radar JLPT compara esos puntos contra objetivos aproximados por nivel. Es una visualizacion de evidencia acumulada en la app, no una medicion clinica ni una prediccion de aprobado. Los nuevos perfiles comienzan en cero; una migracion elimina los valores de demostracion de perfiles sin historial de ejercicios.
 
 ### Plan diario y repaso
 

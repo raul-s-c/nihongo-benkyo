@@ -1,6 +1,6 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
-const APP_VERSION = "0.4.4";
+const APP_VERSION = "0.4.5";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -24,6 +24,7 @@ const jlptTargets = {
 
 const exercises = window.NIHONGO_CONTENT?.exercises || [];
 const embeddedDictionary = window.NIHONGO_CONTENT?.dictionary || [];
+const PROTOTYPE_PROGRESS_SEED = { vocab: 90, kanji: 12, grammar: 18, particles: 22, reading: 20, writing: 14, listening: 8, work: 5 };
 
 const defaultUserState = {
   settings: {
@@ -35,14 +36,14 @@ const defaultUserState = {
     studyFocus: "balanced"
   },
   progress: {
-    vocab: 90,
-    kanji: 12,
-    grammar: 18,
-    particles: 22,
-    reading: 20,
-    writing: 14,
-    listening: 8,
-    work: 5
+    vocab: 0,
+    kanji: 0,
+    grammar: 0,
+    particles: 0,
+    reading: 0,
+    writing: 0,
+    listening: 0,
+    work: 0
   },
   renshuu: {
     profile: null,
@@ -160,14 +161,18 @@ function getActiveUserState() {
 }
 
 function mergeUserState(userState) {
+  const history = userState?.exerciseHistory || {};
+  const storedProgress = userState?.progress || {};
+  const isUntouchedPrototype = !Object.keys(history).length
+    && skills.every((skill) => Number(storedProgress[skill.id]) === PROTOTYPE_PROGRESS_SEED[skill.id]);
   return {
     ...structuredClone(defaultUserState),
     ...userState,
     settings: { ...defaultUserState.settings, ...(userState?.settings || {}) },
-    progress: { ...defaultUserState.progress, ...(userState?.progress || {}) },
+    progress: isUntouchedPrototype ? structuredClone(defaultUserState.progress) : { ...defaultUserState.progress, ...storedProgress },
     renshuu: { ...defaultUserState.renshuu, ...(userState?.renshuu || {}) },
     dailyPlan: { ...defaultUserState.dailyPlan, ...(userState?.dailyPlan || {}) },
-    exerciseHistory: userState?.exerciseHistory || {},
+    exerciseHistory: history,
     renshuuBridge: userState?.renshuuBridge || null,
     draftAnswers: userState?.draftAnswers || {}
   };
@@ -505,6 +510,10 @@ async function syncRenshuuProgress() {
 
 function renderMatrix() {
   const matrix = document.querySelector("#progressMatrix");
+  const totalAttempts = Object.values(state.exerciseHistory).reduce((sum, item) => sum + (item.attempts || 0), 0);
+  document.querySelector("#matrixStatus").textContent = totalAttempts
+    ? `${totalAttempts} intento${totalAttempts === 1 ? "" : "s"} registrado${totalAttempts === 1 ? "" : "s"}. Estos puntos pertenecen solo a Nihongo Benkyo.`
+    : "Aun no hay intentos registrados. La matriz empieza en cero.";
   matrix.innerHTML = skills.map((skill) => {
     const value = state.progress[skill.id];
     const max = jlptTargets.N1[skill.id];
@@ -513,7 +522,7 @@ function renderMatrix() {
       <div class="matrix-row">
         <strong>${skill.label}</strong>
         <div class="meter"><span style="width: ${percent}%"></span></div>
-        <span>${value}</span>
+        <span>${value} pts</span>
       </div>
     `;
   }).join("");
@@ -995,7 +1004,7 @@ renderAll();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js?v=0.4.4").catch(() => {
+    navigator.serviceWorker.register("service-worker.js?v=0.4.5").catch(() => {
       // La app sigue funcionando en navegadores que no permiten cache offline.
     });
   });
