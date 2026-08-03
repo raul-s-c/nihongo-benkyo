@@ -4,7 +4,7 @@ const GITHUB_SYNC_KEY = "nihongo-benkyo-github-sync-v1";
 const GITHUB_GIST_DESCRIPTION = "Nihongo Benkyo private progress sync";
 const GITHUB_GIST_FILE = "nihongo-benkyo-progress.json";
 const GITHUB_AUTH_PROXY_URL = "https://nihongo-benkyo-auth.raul-nihongo.workers.dev";
-const APP_VERSION = "0.8.2";
+const APP_VERSION = "0.8.3";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -19,11 +19,11 @@ const skills = [
 ];
 
 const jlptTargets = {
-  N5: { vocab: 800, kanji: 100, grammar: 80, particles: 70, reading: 65, writing: 45, listening: 45, work: 10 },
-  N4: { vocab: 1500, kanji: 300, grammar: 180, particles: 150, reading: 130, writing: 90, listening: 90, work: 25 },
-  N3: { vocab: 3750, kanji: 650, grammar: 360, particles: 260, reading: 260, writing: 180, listening: 180, work: 70 },
-  N2: { vocab: 6000, kanji: 1000, grammar: 560, particles: 400, reading: 430, writing: 300, listening: 320, work: 160 },
-  N1: { vocab: 10000, kanji: 2000, grammar: 760, particles: 520, reading: 650, writing: 500, listening: 520, work: 300 }
+  N5: { vocab: 800, kanji: 100, grammar: 100, particles: 70, reading: 65, writing: 45, listening: 45, work: 10 },
+  N4: { vocab: 1500, kanji: 300, grammar: 150, particles: 150, reading: 130, writing: 90, listening: 90, work: 25 },
+  N3: { vocab: 3750, kanji: 650, grammar: 220, particles: 260, reading: 260, writing: 180, listening: 180, work: 70 },
+  N2: { vocab: 6000, kanji: 1000, grammar: 250, particles: 400, reading: 430, writing: 300, listening: 320, work: 160 },
+  N1: { vocab: 11000, kanji: 2100, grammar: 300, particles: 520, reading: 650, writing: 500, listening: 520, work: 300 }
 };
 
 const exercises = window.NIHONGO_CONTENT?.exercises || [];
