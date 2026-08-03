@@ -96,7 +96,11 @@ window.NIHONGO_CONTENT = (() => {
   const catalogTerms = [...new Map([...dictionary, ...enrichedExercises.flatMap((exercise) => exercise.help)].map((term) => [term.text, term])).values()];
   const catalog = catalogTerms.map((term) => {
     const uses = enrichedExercises.flatMap((exercise) => exercise.help.filter((item) => item.text === term.text));
-    return { ...term, themes: [...new Set(uses.map((item) => item.theme))], jlptLevels: [...new Set(uses.map((item) => item.level))] };
+    return {
+      ...term,
+      themes: [...new Set(uses.map((item) => item.theme))].length ? [...new Set(uses.map((item) => item.theme))] : ["vida-diaria"],
+      jlptLevels: [...new Set(uses.map((item) => item.level))].length ? [...new Set(uses.map((item) => item.level))] : ["N5"]
+    };
   });
 
   return { dictionary: catalog, exercises: enrichedExercises };
