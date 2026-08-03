@@ -234,3 +234,4 @@ Decision de producto:
 - El progreso y la clave siguen siendo locales a cada navegador.
 - No se presentara esta version como sincronizada entre movil y ordenador.
 - La correccion actual se documenta explicitamente como provisional: aun no analiza significado ni naturalidad.
+- El cache offline usa red primero para que el enlace publicado muestre la ultima version siempre que haya conexion.

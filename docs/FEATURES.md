@@ -21,7 +21,7 @@ Funcionamiento:
 
 - Se publica desde GitHub Pages.
 - Android permite anadirla a la pantalla de inicio desde Chrome.
-- Una nueva version publicada reemplaza la cache anterior al volver a abrir la app.
+- Con conexion, la app consulta primero la version publicada; sin conexion, usa la ultima copia disponible.
 
 Limitacion:
 

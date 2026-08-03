@@ -44,7 +44,7 @@ No hay build ni dependencias. La app incluye manifest y cache offline para poder
 
 ## Publicacion
 
-El workflow [deploy-pages.yml](.github/workflows/deploy-pages.yml) publica el contenido de `main` en GitHub Pages. La primera vez, en GitHub ve a **Settings > Pages** y selecciona **GitHub Actions** como fuente. Despues, cada push actualizara el enlace publicado.
+El workflow [deploy-pages.yml](.github/workflows/deploy-pages.yml) publica el contenido de `main` en GitHub Pages. La primera vez, en GitHub ve a **Settings > Pages** y selecciona **GitHub Actions** como fuente. Despues, cada push actualizara el enlace publicado; la app consulta la red antes que su cache para mostrar esa version cuando haya conexion.
 
 ## Documentacion
 
