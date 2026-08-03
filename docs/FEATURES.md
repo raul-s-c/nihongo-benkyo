@@ -123,7 +123,8 @@ Funcionamiento actual:
 - Muestra una barra horizontal de sugerencias.
 - Al tocar una sugerencia, sustituye el token escrito por japones.
 - Incluye conversion basica de romaji a hiragana.
-- Incluye un diccionario local inicial para kanji frecuentes del MVP.
+- Busca en el diccionario local por lectura romanizada para proponer kanji y katakana, no solo kana.
+- Ordena las propuestas usando las ayudas, la tematica y el nivel del ejercicio activo; por ejemplo, puede priorizar `会議` dentro de una actividad de empresa.
 
 Objetivo:
 

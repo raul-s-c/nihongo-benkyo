@@ -207,6 +207,11 @@ Funcionalidad:
 - Convierte romaji basico a hiragana.
 - Permite tocar una sugerencia para sustituir el token escrito.
 
+Actualizacion posterior:
+
+- Las lecturas del diccionario se romanizan localmente para poder sugerir kanji y katakana.
+- Las palabras presentes en la ayuda del ejercicio y su contexto aparecen antes que candidatos genericos.
+
 Ejemplos:
 
 - `kyo` -> `今日` o `きょ`.

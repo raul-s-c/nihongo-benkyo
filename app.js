@@ -1,6 +1,6 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
-const APP_VERSION = "0.7.2";
+const APP_VERSION = "0.7.3";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -171,6 +171,23 @@ const romajiDictionary = [
   { romaji: "ohayou", text: "おはよう", reading: "おはよう", gloss: "buenos dias" },
   { romaji: "konnichiwa", text: "こんにちは", reading: "こんにちは", gloss: "hola" },
   { romaji: "sumimasen", text: "すみません", reading: "すみません", gloss: "perdon" }
+];
+
+const kanaRomanization = [
+  ["きゃ", "kya"], ["きゅ", "kyu"], ["きょ", "kyo"], ["しゃ", "sha"], ["しゅ", "shu"], ["しょ", "sho"],
+  ["ちゃ", "cha"], ["ちゅ", "chu"], ["ちょ", "cho"], ["にゃ", "nya"], ["にゅ", "nyu"], ["にょ", "nyo"],
+  ["ひゃ", "hya"], ["ひゅ", "hyu"], ["ひょ", "hyo"], ["みゃ", "mya"], ["みゅ", "myu"], ["みょ", "myo"],
+  ["りゃ", "rya"], ["りゅ", "ryu"], ["りょ", "ryo"], ["ぎゃ", "gya"], ["ぎゅ", "gyu"], ["ぎょ", "gyo"],
+  ["じゃ", "ja"], ["じゅ", "ju"], ["じょ", "jo"], ["びゃ", "bya"], ["びゅ", "byu"], ["びょ", "byo"],
+  ["ぴゃ", "pya"], ["ぴゅ", "pyu"], ["ぴょ", "pyo"], ["ふぁ", "fa"], ["ふぃ", "fi"], ["ふぇ", "fe"], ["ふぉ", "fo"],
+  ["あ", "a"], ["い", "i"], ["う", "u"], ["え", "e"], ["お", "o"], ["か", "ka"], ["き", "ki"], ["く", "ku"], ["け", "ke"], ["こ", "ko"],
+  ["さ", "sa"], ["し", "shi"], ["す", "su"], ["せ", "se"], ["そ", "so"], ["た", "ta"], ["ち", "chi"], ["つ", "tsu"], ["て", "te"], ["と", "to"],
+  ["な", "na"], ["に", "ni"], ["ぬ", "nu"], ["ね", "ne"], ["の", "no"], ["は", "ha"], ["ひ", "hi"], ["ふ", "fu"], ["へ", "he"], ["ほ", "ho"],
+  ["ま", "ma"], ["み", "mi"], ["む", "mu"], ["め", "me"], ["も", "mo"], ["や", "ya"], ["ゆ", "yu"], ["よ", "yo"],
+  ["ら", "ra"], ["り", "ri"], ["る", "ru"], ["れ", "re"], ["ろ", "ro"], ["わ", "wa"], ["を", "wo"], ["ん", "n"],
+  ["が", "ga"], ["ぎ", "gi"], ["ぐ", "gu"], ["げ", "ge"], ["ご", "go"], ["ざ", "za"], ["じ", "ji"], ["ず", "zu"], ["ぜ", "ze"], ["ぞ", "zo"],
+  ["だ", "da"], ["で", "de"], ["ど", "do"], ["ば", "ba"], ["び", "bi"], ["ぶ", "bu"], ["べ", "be"], ["ぼ", "bo"],
+  ["ぱ", "pa"], ["ぴ", "pi"], ["ぷ", "pu"], ["ぺ", "pe"], ["ぽ", "po"]
 ];
 
 function loadAppState() {
@@ -1466,7 +1483,7 @@ function updateImeSuggestions() {
   const input = document.querySelector("#answerInput");
   const token = getCurrentRomajiToken(input);
   const panel = document.querySelector("#imePanel");
-  const suggestions = findImeSuggestions(token.value);
+  const suggestions = findImeSuggestions(token.value, getCurrentExercise());
 
   if (!token.value || suggestions.length === 0) {
     panel.classList.add("hidden");
@@ -1505,16 +1522,66 @@ function getCurrentRomajiToken(input) {
   };
 }
 
-function findImeSuggestions(query) {
+function findImeSuggestions(query, exercise) {
   if (query.length < 2) return [];
 
   const direct = romajiDictionary.filter((item) => item.romaji.startsWith(query));
+  const contextual = embeddedDictionary
+    .map((item) => ({
+      romaji: romanizeReading(item.reading),
+      text: item.text,
+      reading: item.reading,
+      gloss: `${item.meaning} · ${getImeWritingLabel(item.text, item.reading)}`,
+      priority: getImeContextPriority(item, exercise)
+    }))
+    .filter((item) => item.romaji.startsWith(query))
+    .sort((left, right) => left.priority - right.priority || left.text.length - right.text.length);
   const kana = romajiToHiragana(query);
   const kanaSuggestion = kana && kana !== query
     ? [{ romaji: query, text: kana, reading: kana, gloss: "kana" }]
     : [];
 
-  return uniqueImeSuggestions([...direct, ...kanaSuggestion]).slice(0, 8);
+  return uniqueImeSuggestions([...contextual, ...direct, ...kanaSuggestion]).slice(0, 8);
+}
+
+function getImeContextPriority(item, exercise) {
+  if (!exercise) return 10;
+  if ((exercise.help || []).some((term) => term.text === item.text)) return -20;
+  if (exercise.prompt.includes(item.text)) return -12;
+  if (item.themes?.includes(exercise.theme)) return -4;
+  if (item.jlptLevels?.includes(exercise.level)) return -2;
+  return 10;
+}
+
+function getImeWritingLabel(text, reading) {
+  if (text === reading) return "hiragana";
+  if (/[ァ-ヶー]/.test(text)) return "katakana";
+  return "kanji";
+}
+
+function romanizeReading(reading) {
+  const hiragana = reading.replace(/[ァ-ヶ]/g, (character) => String.fromCharCode(character.charCodeAt(0) - 0x60));
+  let output = "";
+  let index = 0;
+  while (index < hiragana.length) {
+    if (hiragana[index] === "ー") {
+      const vowel = output.match(/[aeiou](?!.*[aeiou])/);
+      output += vowel ? vowel[0] : "";
+      index += 1;
+      continue;
+    }
+    if (hiragana[index] === "っ") {
+      const next = kanaRomanization.find(([kana]) => hiragana.startsWith(kana, index + 1));
+      output += next ? next[1][0] : "";
+      index += 1;
+      continue;
+    }
+    const match = kanaRomanization.find(([kana]) => hiragana.startsWith(kana, index));
+    if (!match) return "";
+    output += match[1];
+    index += match[0].length;
+  }
+  return output;
 }
 
 function uniqueImeSuggestions(items) {
@@ -1590,7 +1657,7 @@ renderAll();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js?v=0.7.2").catch(() => {
+    navigator.serviceWorker.register("service-worker.js?v=0.7.3").catch(() => {
       // La app sigue funcionando en navegadores que no permiten cache offline.
     });
   });
