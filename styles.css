@@ -654,6 +654,13 @@ textarea {
   font-weight: 900;
 }
 
+.score-meaning {
+  margin: -2px 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .matrix {
   display: grid;
   gap: 10px;

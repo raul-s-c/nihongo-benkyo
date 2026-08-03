@@ -276,3 +276,9 @@ Funcionalidades anadidas:
 ### Puente con la actividad diaria de Renshuu
 
 Se anadio una propuesta breve posterior a Renshuu. La app lee que categoria tuvo actividad hoy y crea un ejercicio de transferencia activa. La propuesta se presenta claramente como relacionada con la categoria, no con palabras exactas, porque el endpoint de perfil no expone el listado diario de terminos.
+
+### Claridad en la correccion local
+
+Se elimino la presentacion ambigua de puntuaciones bajas como 15 en objetivo y comprension.
+
+La interfaz ahora distingue entre elementos de la respuesta modelo detectados y evaluacion semantica pendiente. Los ejercicios abiertos no reciben una puntuacion ficticia.

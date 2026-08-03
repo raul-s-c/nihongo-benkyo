@@ -542,14 +542,15 @@ function evaluateAnswer(answer, exercise) {
   const keywords = exercise.keywords.map(normalizeAnswer);
   const checks = expected.length ? expected : keywords;
   const matches = checks.filter((item) => normalized.includes(item)).length;
-  const objective = trimmed ? Math.max(15, Math.min(95, Math.round((matches / Math.max(1, checks.length)) * 85) + 10)) : 0;
-  const comprehension = trimmed ? Math.max(objective, Math.min(96, objective + (matches ? 10 : 0))) : 0;
+  const objective = checks.length && matches ? Math.round((matches / checks.length) * 100) : null;
 
   return {
     objective,
-    comprehension,
+    comprehension: null,
     feedback: trimmed
-      ? "Estimación local basada en elementos clave. Revisa la explicación y registra si lo has entendido: esa decisión guía tus próximos repasos."
+      ? (checks.length
+        ? "La app solo ha podido comparar elementos clave con una respuesta modelo. Una alternativa correcta puede no coincidir literalmente."
+        : "Este es un ejercicio abierto: no se puntúa automáticamente para no inventar una nota.")
       : "Necesito una respuesta para poder corregir.",
     better: `Respuesta modelo: ${exercise.accepted}`
   };
@@ -560,7 +561,8 @@ function normalizeAnswer(value) {
 }
 
 function applyProgress(exercise, confidence, result) {
-  const gain = confidence === "solid" ? Math.max(2, Math.round((result.objective + result.comprehension) / 45)) : 1;
+  const checkedScore = result.objective ?? 50;
+  const gain = confidence === "solid" ? Math.max(2, Math.round(checkedScore / 25)) : 1;
   exercise.tags.forEach((tag) => {
     state.progress[tag] = (state.progress[tag] || 0) + gain;
   });
@@ -641,8 +643,13 @@ function bindEvents() {
   document.querySelector("#checkAnswerButton").addEventListener("click", () => {
     const exercise = getCurrentExercise();
     const result = evaluateAnswer(document.querySelector("#answerInput").value, exercise);
-    document.querySelector("#objectiveScore").textContent = result.objective;
-    document.querySelector("#comprehensionScore").textContent = result.comprehension;
+    document.querySelector("#objectiveScore").textContent = result.objective === null ? "—" : result.objective + "%";
+    document.querySelector("#comprehensionScore").textContent = "—";
+    document.querySelector("#objectiveLabel").textContent = result.objective === null ? "revisión manual" : "elementos modelo";
+    document.querySelector("#comprehensionLabel").textContent = "interpretación";
+    document.querySelector("#scoreMeaning").textContent = result.objective === null
+      ? "La app no ha reconocido suficientes elementos de referencia. Esto no demuestra que tu frase sea incorrecta."
+      : "Este porcentaje indica cuántos elementos de la respuesta modelo se han reconocido; no mide por sí solo naturalidad ni comprensión.";
     document.querySelector("#feedbackText").textContent = result.feedback;
     setJapaneseText(document.querySelector("#betterAnswer"), result.better);
     document.querySelector("#exerciseExplanation").textContent = exercise.explanation;

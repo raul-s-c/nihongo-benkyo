@@ -154,6 +154,13 @@ Limitacion importante:
 - La puntuacion actual se basa en senales simples de presencia, longitud y escritura japonesa; no comprende el significado de la respuesta.
 - No debe interpretarse como una medicion real de nivel ni como una correccion linguistica definitiva.
 
+Actualizacion de experiencia:
+
+- La app ya no muestra una cifra aislada de objetivo y comprension.
+- En ejercicios con referencia indica el porcentaje de elementos modelo detectados.
+- En ejercicios abiertos, o cuando no reconoce suficientes elementos, muestra revision manual.
+- La interpretacion semantica queda marcada como pendiente hasta incorporar un evaluador linguistico real.
+
 ### Analisis de progreso Renshuu
 
 La pantalla Hoy incluye un bloque de Renshuu que se actualiza manualmente con la clave read-only configurada en Ajustes.
