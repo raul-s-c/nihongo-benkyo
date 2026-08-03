@@ -1,6 +1,6 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
-const APP_VERSION = "0.5.0";
+const APP_VERSION = "0.5.1";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -797,6 +797,7 @@ function renderDailyPlan() {
     const id = button.dataset.planExercise;
     const item = getPlanItem(id);
     button.querySelector("small").textContent = `${getPlanRecommendation(item)} · ${item.level}`;
+    button.querySelector("small").textContent += " · " + (themes[item.theme] || "Vida diaria");
     if (plan.completedIds.includes(id)) return;
     const row = document.createElement("div");
     row.className = "plan-step-row";
@@ -1261,7 +1262,7 @@ renderAll();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js?v=0.5.0").catch(() => {
+    navigator.serviceWorker.register("service-worker.js?v=0.5.1").catch(() => {
       // La app sigue funcionando en navegadores que no permiten cache offline.
     });
   });
