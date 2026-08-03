@@ -82,7 +82,7 @@
           </section>
 
           <div class="section-head">
-            <h3>Cobertura del plan JLPT</h3>
+            <h3>Preparacion JLPT</h3>
             <select id="jlptLevelSelect" aria-label="Nivel JLPT">
               <option value="N5">N5</option>
               <option value="N4">N4</option>
@@ -96,7 +96,7 @@
             <canvas id="jlptRadar" width="320" height="320" aria-label="Radar de preparacion JLPT"></canvas>
             <div class="readiness-score">
               <span id="readinessPercent">0%</span>
-              <small>contenido confirmado</small>
+              <small>practica confirmada</small>
             </div>
           </div>
 
@@ -144,7 +144,31 @@
             <div class="session-progress-track"><span id="sessionProgressBar"></span></div>
           </div>
           <section class="practice-picker hidden" id="practicePicker" aria-label="Elegir ejercicio">
-            <div class="picker-head"><strong>Ejercicios disponibles</strong><small>Tu plan diario sigue intacto</small></div>
+            <div class="picker-head"><strong>Ejercicios disponibles</strong><small id="practicePickerSummary">0 ejercicios</small></div>
+            <div class="picker-filters">
+              <input id="practiceSearch" type="search" autocomplete="off" placeholder="Buscar tipo, tema o habilidad" aria-label="Buscar ejercicios">
+              <div>
+                <select id="practiceLevelFilter" aria-label="Filtrar ejercicios por nivel JLPT">
+                  <option value="">Todos los niveles</option>
+                  <option value="N5">N5</option>
+                  <option value="N4">N4</option>
+                  <option value="N3">N3</option>
+                  <option value="N2">N2</option>
+                  <option value="N1">N1</option>
+                </select>
+                <select id="practiceThemeFilter" aria-label="Filtrar ejercicios por tematica">
+                  <option value="">Todas las tematicas</option>
+                  <option value="compras">Compras</option>
+                  <option value="ciudad-y-transporte">Ciudad y transporte</option>
+                  <option value="amistades-y-ocio">Amistades y ocio</option>
+                  <option value="trabajo">Trabajo</option>
+                  <option value="comida">Comida</option>
+                  <option value="hogar-y-estudio">Hogar y estudio</option>
+                  <option value="comunicacion">Comunicacion</option>
+                  <option value="vida-diaria">Vida diaria</option>
+                </select>
+              </div>
+            </div>
             <div class="practice-choices" id="practiceChoices"></div>
           </section>
 
@@ -307,7 +331,7 @@
             <label class="ghost-button wide-button import-button" data-tooltip="Importa una copia JSON exportada por esta app. Reemplaza el perfil local con el mismo identificador.">Importar copia<input id="importProfileInput" type="file" accept="application/json"></label>
             <button class="ghost-button danger wide-button" id="deleteProfileButton" data-tooltip="Pide confirmacion y elimina por completo el perfil activo de este dispositivo. Debe existir otro perfil antes de continuar.">Eliminar perfil</button>
           </section>
-          <p class="muted">Tus perfiles y la clave read-only de Renshuu se guardan solo en este navegador. Exporta una copia antes de cambiar de dispositivo o borrar datos del navegador.</p>
+          <p class="muted">Al conectar GitHub, los perfiles y el progreso se guardan en una copia privada para retomarlos en otro dispositivo. La clave read-only de Renshuu sigue guardada solo en este navegador; exporta una copia adicional antes de borrar sus datos.</p>
           <p class="muted version-note" id="appVersion"></p>
         </section>
       </main>
@@ -332,8 +356,8 @@
     </div>
 
     <script src="secrets.local.js"></script>
-    <script src="translation-battery.js?v=0.8.6"></script>
-    <script src="content.js?v=0.8.6"></script>
-    <script src="app.js?v=0.8.6"></script>
+    <script src="translation-battery.js?v=0.8.7"></script>
+    <script src="content.js?v=0.8.7"></script>
+    <script src="app.js?v=0.8.7"></script>
   </body>
 </html>

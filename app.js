@@ -4,7 +4,7 @@ const GITHUB_SYNC_KEY = "nihongo-benkyo-github-sync-v1";
 const GITHUB_GIST_DESCRIPTION = "Nihongo Benkyo private progress sync";
 const GITHUB_GIST_FILE = "nihongo-benkyo-progress.json";
 const GITHUB_AUTH_PROXY_URL = "https://nihongo-benkyo-auth.raul-nihongo.workers.dev";
-const APP_VERSION = "0.8.6";
+const APP_VERSION = "0.8.7";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -116,6 +116,7 @@ const defaultUserState = {
   attemptLog: [],
   renshuuBridge: null,
   renshuuBridgeHistory: [],
+  sessionLastAction: null,
   draftAnswers: {}
 };
 
@@ -449,6 +450,7 @@ function mergeUserState(userState) {
     attemptLog: userState?.attemptLog || [],
     renshuuBridge: userState?.renshuuBridge || null,
     renshuuBridgeHistory: Array.isArray(userState?.renshuuBridgeHistory) ? userState.renshuuBridgeHistory.slice(-60) : [],
+    sessionLastAction: userState?.sessionLastAction || null,
     draftAnswers: userState?.draftAnswers || {}
   };
 }
@@ -614,7 +616,7 @@ function drawRadar() {
   ctx.stroke();
 
   document.querySelector("#readinessPercent").textContent = `${average}%`;
-  canvas.setAttribute("aria-label", "Radar de cobertura del contenido para el nivel JLPT. Toca una arista para abrir el detalle de esa habilidad.");
+  canvas.setAttribute("aria-label", "Radar de practica confirmada para el nivel JLPT. Toca una arista para abrir el detalle de esa habilidad.");
   canvas.title = "Toca una arista para ver el detalle de la habilidad";
   renderSkillGrid(level);
 }
@@ -711,9 +713,9 @@ function renderSkillDetail() {
   const level = state.settings.targetJlpt || "N4";
   const readiness = getContentCoverage(skill.id, level);
   document.querySelector("#skillDetailTitle").textContent = skill.label;
-  document.querySelector("#skillDetailIntro").textContent = `Evidencia y contenido de ${skill.label.toLowerCase()} para tu objetivo ${level}. Las etiquetas muestran los contextos y niveles donde aparece cada termino.`;
+  document.querySelector("#skillDetailIntro").textContent = `Practica confirmada y contenido disponible de ${skill.label.toLowerCase()} para tu objetivo ${level}. Las etiquetas muestran los contextos y niveles donde aparece cada termino.`;
   document.querySelector("#skillDetailSummary").innerHTML = [
-    [readiness + "%", "contenido confirmado hasta " + level],
+    [readiness + "%", "practica confirmada hasta " + level],
     [detail.attempts.length, "intentos en esta habilidad"],
     [detail.pending.length, "ejercicios para repasar"],
     [detail.newItems.length, "ejercicios aun no iniciados"]
@@ -1233,6 +1235,7 @@ function ensureDailyPlan() {
   const count = state.settings.dailyMinutes <= 6 ? 2 : state.settings.dailyMinutes <= 15 ? 3 : 4;
   const ids = getRecommendedExercises(count).map((item) => item.id);
   state.dailyPlan = { date: todayKey(), exerciseIds: ids, completedIds: [], skippedIds: [] };
+  state.sessionLastAction = null;
   state.currentExerciseId = ids[0];
   saveState();
 }
@@ -1359,17 +1362,34 @@ function selectManualExercise(id) {
   return true;
 }
 
-function renderPracticePicker() {
+function getPracticePickerFilters() {
+  return {
+    query: document.querySelector("#practiceSearch").value.trim().toLocaleLowerCase("es"),
+    level: document.querySelector("#practiceLevelFilter").value,
+    theme: document.querySelector("#practiceThemeFilter").value
+  };
+}
+
+function renderPracticePicker({ open = false } = {}) {
   const picker = document.querySelector("#practicePicker");
   const choices = document.querySelector("#practiceChoices");
+  const summary = document.querySelector("#practicePickerSummary");
   const currentId = getCurrentExercise()?.id;
   const candidates = getPracticeCandidates();
-  choices.innerHTML = candidates.map((exercise) => {
+  const filters = getPracticePickerFilters();
+  const filtered = candidates.filter((exercise) => {
+    const searchable = [exercise.type, exercise.level, themes[exercise.theme], exercise.theme, ...(exercise.tags || [])].join(" ").toLocaleLowerCase("es");
+    return (!filters.level || exercise.level === filters.level)
+      && (!filters.theme || exercise.theme === filters.theme)
+      && (!filters.query || searchable.includes(filters.query));
+  });
+  summary.textContent = `${filtered.length} de ${candidates.length} ejercicios`;
+  choices.innerHTML = filtered.map((exercise) => {
     const themeLabel = themes[exercise.theme] || "Vida diaria";
     const isCurrent = exercise.id === currentId;
     return `<button class="practice-choice ${isCurrent ? "current" : ""}" data-practice-choice="${exercise.id}" aria-pressed="${isCurrent}" data-tooltip="Abre este ejercicio para practicarlo. No modifica el plan diario."><strong>${exercise.type}</strong><span>${exercise.level} · ${themeLabel}</span><small>${exercise.tags.map((tag) => skills.find((skill) => skill.id === tag)?.label || tag).join(" · ")}</small></button>`;
-  }).join("") || "<p class=\"muted\">Aun no hay contenido desbloqueado para elegir.</p>";
-  picker.classList.add("hidden");
+  }).join("") || "<p class=\"muted\">No hay ejercicios que coincidan con estos filtros.</p>";
+  picker.classList.toggle("hidden", !open);
   choices.querySelectorAll("[data-practice-choice]").forEach((button) => button.addEventListener("click", () => {
     selectManualExercise(button.dataset.practiceChoice);
     picker.classList.add("hidden");
@@ -1454,7 +1474,7 @@ function renderDailyPlan() {
     row.className = "plan-step-row";
     const actions = document.createElement("div");
     actions.className = "plan-step-actions";
-    actions.innerHTML = `<button class="plan-icon-button" data-replace-exercise="${id}" aria-label="Sustituir ejercicio" data-tooltip="Sustituye este ejercicio por otra recomendacion. No cambia tu progreso.">↻</button><button class="plan-icon-button" data-skip-exercise="${id}" aria-label="Saltar ejercicio" data-tooltip="Quita este ejercicio de la sesion de hoy. No cambia tu progreso.">↷</button>`;
+    actions.innerHTML = `<button class="plan-icon-button" data-plan-actions="${id}" aria-label="Acciones del ejercicio" aria-expanded="false" data-tooltip="Abre las acciones para sustituir o saltar este ejercicio.">•••</button><div class="plan-action-menu hidden" id="plan-actions-${id}"><button data-replace-exercise="${id}">Sustituir</button><button data-skip-exercise="${id}">Saltar</button></div>`;
     actions.querySelectorAll("[data-tooltip]").forEach((element) => element.addEventListener("touchstart", () => {
       element.classList.add("show-tooltip");
       window.setTimeout(() => element.classList.remove("show-tooltip"), 1800);
@@ -1468,6 +1488,11 @@ function renderDailyPlan() {
     saveState();
     switchView("practice");
     renderExercise();
+  }));
+  document.querySelectorAll("[data-plan-actions]").forEach((button) => button.addEventListener("click", () => {
+    const menu = document.querySelector(`#plan-actions-${button.dataset.planActions}`);
+    const expanded = menu.classList.toggle("hidden") === false;
+    button.setAttribute("aria-expanded", String(expanded));
   }));
   document.querySelectorAll("[data-replace-exercise]").forEach((button) => button.addEventListener("click", () => replacePlanExercise(button.dataset.replaceExercise)));
   document.querySelectorAll("[data-skip-exercise]").forEach((button) => button.addEventListener("click", () => skipPlanExercise(button.dataset.skipExercise)));
@@ -1511,10 +1536,13 @@ function renderSessionProgress() {
   const total = scheduledIds.length;
   const percent = total ? Math.round((completed / total) * 100) : 0;
   const isManual = Boolean(state.manualExerciseId);
+  const lastAction = state.sessionLastAction?.date === todayKey()
+    ? ` · Ultimo intento: ${state.sessionLastAction.confidence === "solid" ? "entendido" : "para repasar"}`
+    : "";
   panel.classList.toggle("hidden", !total);
   document.querySelector("#sessionProgressText").textContent = isManual
-    ? `Practica libre - plan: ${completed} de ${total}`
-    : `Sesion de hoy: ${completed} de ${total}`;
+    ? `Practica libre - plan: ${completed} de ${total}${lastAction}`
+    : `Sesion de hoy: ${completed} de ${total}${lastAction}`;
   document.querySelector("#sessionProgressPercent").textContent = `${percent}%`;
   document.querySelector("#sessionProgressBar").style.width = `${percent}%`;
 }
@@ -1667,6 +1695,7 @@ function applyProgress(exercise, confidence, result) {
     addRecommendedPlanExercise(exercise.tags);
   }
   if (!isManualPractice && !state.dailyPlan.completedIds.includes(exercise.id)) state.dailyPlan.completedIds.push(exercise.id);
+  state.sessionLastAction = { date: todayKey(), confidence };
   saveState();
   drawRadar();
   renderMatrix();
@@ -1688,7 +1717,12 @@ function bindEvents() {
 
   document.querySelector("#settingsButton").addEventListener("click", () => switchView("settings"));
   document.querySelector("#startSessionButton").addEventListener("click", () => {
+    state.manualExerciseId = "";
     ensureActivePlanExercise();
+    if (!isPlanExerciseActive(state.currentExerciseId)) {
+      state.currentExerciseId = state.dailyPlan.exerciseIds.find((id) => isPlanExerciseActive(id)) || "";
+    }
+    saveState();
     switchView("practice");
     renderExercise();
   });
@@ -1736,7 +1770,11 @@ function bindEvents() {
   });
   document.querySelector("#chooseExerciseButton").addEventListener("click", () => {
     const picker = document.querySelector("#practicePicker");
-    picker.classList.toggle("hidden");
+    renderPracticePicker({ open: picker.classList.contains("hidden") });
+  });
+  ["#practiceSearch", "#practiceLevelFilter", "#practiceThemeFilter"].forEach((selector) => {
+    document.querySelector(selector).addEventListener("input", () => renderPracticePicker({ open: true }));
+    document.querySelector(selector).addEventListener("change", () => renderPracticePicker({ open: true }));
   });
 
   document.querySelector("#helpToggle").addEventListener("click", () => {

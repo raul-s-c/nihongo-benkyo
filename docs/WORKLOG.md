@@ -375,6 +375,14 @@ El ejercicio posterior a Renshuu dejaba de cambiar porque su selector se basaba 
 
 Se corrigio un caso en el que el puente de Renshuu podia seguir mostrandose despues de pulsar `Lo he entendido`. Un ejercicio completado ya no es elegible como ejercicio actual: la practica avanza a la siguiente propuesta activa y la barra de sesion refleja el intento guardado. Se anadio una prueba de regresion para este flujo.
 
+### Auditoria de uso y claridad movil
+
+La inspeccion con una viewport de telefono detecto que el acceso `Empezar` podia conservar una eleccion manual y abrir practica libre en lugar del plan. Ahora limpia esa eleccion y recupera la primera propuesta activa. La barra de sesion conserva tambien el resultado del ultimo intento para que el registro sea visible despues de avanzar.
+
+El selector `Elegir` paso de una lista plana de mas de cien ejercicios a una superficie con busqueda, filtros de JLPT y tematica, y contador de resultados. Las acciones de sustituir y saltar se agrupan bajo un menu textual por propuesta. Se corrigieron las etiquetas del radar para que midan `practica confirmada`, no una inexistente cobertura del catalogo, y se elimino el desbordamiento horizontal de la raiz movil.
+
+En Ajustes se corrigio el mensaje de datos: GitHub sincroniza perfiles y progreso cuando se conecta; la clave read-only de Renshuu se mantiene local. Para la importacion futura se verifico una fuente JSON estructurada: `scriptin/jmdict-simplified` deriva JMdict y KANJIDIC2 bajo CC BY-SA 4.0. Puede usarse comercialmente con atribucion y ShareAlike, pero sigue pendiente elegir una fuente versionada de etiquetas JLPT y completar glosas espanolas.
+
 ### Correccion explicable y progreso de sesion
 
 Se sustituyo el renderizado iterativo de furigana por un recorrido de texto que genera cada bloque `ruby` una sola vez; asi se evita que terminos solapados vuelvan a envolver kanji ya anotados. La correccion distingue ahora entre coincidencia con la referencia y comprension probable. Cuando falta un requisito, enumera el termino ausente y detecta sustituciones sencillas de particula, por ejemplo `家に` frente a `家で` al indicar el lugar donde se estudia. La vista Practicar incorpora una barra con el avance real de la sesion diaria y conserva ese contador cuando se abre una practica libre.

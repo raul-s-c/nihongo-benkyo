@@ -12,8 +12,8 @@ Este es el registro de trabajo para el estudio personal. Cuenta elementos estruc
 
 ## Estado por familia
 
-- Vocabulario: pendiente de una importacion con lectura, significado en espanol, nivel y licencia comercial verificable.
-- Kanji: pendiente de una fuente estructurada con lecturas, significado, trazos y licencia compatible.
+- Vocabulario: fuente tecnica identificada: JMdict JSON de `scriptin/jmdict-simplified` (licencia EDRDG/CC BY-SA 4.0). Falta seleccionar una lista de etiquetas JLPT no oficial y completar glosas en espanol revisadas antes de importar.
+- Kanji: fuente tecnica identificada: KANJIDIC2 JSON de `scriptin/jmdict-simplified` (CC BY-SA 4.0), con lecturas y glosas en espanol parciales. Faltan trazos de una fuente compatible y la seleccion JLPT reproducible.
 - Gramatica: N5-N2 importada desde Hanabira con procedencia en [SOURCES.md](../data/SOURCES.md). N1 pendiente.
 - Frases: bateria completa de 1.500 frases, repartida entre traduccion espanol-japones y japones-espanol; sirve para diagnostico y repaso por ejercicio.
 

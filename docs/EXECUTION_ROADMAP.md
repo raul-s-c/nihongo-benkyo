@@ -25,11 +25,26 @@ Este documento convierte la auditoria tecnica y de producto en trabajo verificab
 - [x] Ofrecer instalacion PWA desde la propia app cuando el navegador lo permita. Verificacion: el boton solo aparece tras el evento estandar de instalacion y delega la confirmacion al navegador.
 - [x] Anadir eliminacion controlada de perfiles locales. Verificacion: requiere un segundo perfil y una confirmacion explicita; no toca Renshuu.
 
+## P1.5: Claridad y navegacion movil
+
+- [x] Distinguir practica confirmada de cobertura de catalogo. Verificacion: el radar, sus etiquetas y el detalle hablan de practica confirmada; un perfil nuevo empieza en 0% sin aparentar que la biblioteca este vacia.
+- [x] Hacer que `Empezar` vuelva siempre al plan diario. Verificacion: una seleccion manual previa se limpia al iniciar sesion y la barra deja de marcar practica libre.
+- [x] Reducir la friccion de la seleccion manual. Verificacion: `Elegir` ofrece busqueda, nivel JLPT y tematica, con contador de resultados, en lugar de una lista plana.
+- [x] Agrupar las acciones de sustituir y saltar. Verificacion: cada propuesta muestra un unico menu de acciones con etiquetas legibles.
+- [x] Aclarar que GitHub sincroniza perfiles y progreso, mientras que la clave de Renshuu sigue local. Verificacion: Ajustes explica ambas situaciones sin contradiccion.
+- [x] Eliminar desplazamiento horizontal en la superficie movil. Verificacion: la raiz limita el desbordamiento horizontal.
+
 ## Criterios de cierre
 
 - Toda tarea terminada incluye una verificacion concreta y queda marcada aqui.
 - Las tareas bloqueadas describen exactamente la dependencia externa.
 - No se afirmara que el radar predice un aprobado JLPT ni que la correccion local comprende significado.
+
+## Fuentes de contenido y licencia
+
+- [~] Vocabulario y kanji: `scriptin/jmdict-simplified` distribuye conversiones JSON de JMdict y KANJIDIC2 bajo la licencia EDRDG/CC BY-SA 4.0. Aporta lecturas y KANJIDIC2 contiene parte de las glosas en espanol. Es apta para uso comercial solo si el producto conserva atribucion y las obligaciones ShareAlike de los datos derivados.
+- [ ] Etiquetado JLPT: el JLPT no publica una lista oficial cerrada. Para N5-N2 se debe elegir y atribuir una fuente de etiquetas no oficial, guardar su version y comunicar que la etiqueta es orientativa.
+- [ ] Importacion: crear una tuberia reproducible que filtre la fuente elegida, complete glosas espanolas revisadas, deduplique formas y genere archivos ligeros por nivel para la PWA.
 
 ## Siguiente corte
 
