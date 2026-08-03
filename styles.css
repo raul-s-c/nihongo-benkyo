@@ -792,6 +792,18 @@ rt {
   background: #fff;
 }
 
+button.skill-term-row {
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+button.skill-term-row:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  outline-offset: 2px;
+}
+
 .skill-term-row strong,
 .skill-exercise-row strong,
 .skill-next-card strong {

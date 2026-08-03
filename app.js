@@ -4,7 +4,7 @@ const GITHUB_SYNC_KEY = "nihongo-benkyo-github-sync-v1";
 const GITHUB_GIST_DESCRIPTION = "Nihongo Benkyo private progress sync";
 const GITHUB_GIST_FILE = "nihongo-benkyo-progress.json";
 const GITHUB_AUTH_PROXY_URL = "https://nihongo-benkyo-auth.raul-nihongo.workers.dev";
-const APP_VERSION = "0.8.7";
+const APP_VERSION = "0.8.8";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -28,6 +28,55 @@ const jlptTargets = {
 
 const exercises = [...(window.NIHONGO_CONTENT?.exercises || []), ...(window.NIHONGO_TRANSLATION_BATTERY || [])];
 const embeddedDictionary = window.NIHONGO_CONTENT?.dictionary || [];
+const jlptVocabularyCatalog = window.NIHONGO_JLPT_VOCABULARY?.entries || [];
+const jlptKanjiCatalog = window.NIHONGO_JLPT_KANJI?.entries || [];
+
+function buildVocabularyDictionary(entries) {
+  const grouped = new Map();
+  entries.forEach((entry) => {
+    const key = `${entry.text}\u0000${entry.reading}`;
+    const current = grouped.get(key) || {
+      text: entry.text,
+      reading: entry.reading,
+      meaning: "",
+      meanings: new Set(),
+      jlptLevels: new Set(),
+      themes: new Set(),
+      sourceIds: []
+    };
+    (entry.meanings || []).forEach((meaning) => current.meanings.add(meaning));
+    current.jlptLevels.add(entry.jlpt);
+    (entry.themes || []).forEach((theme) => current.themes.add(theme));
+    current.sourceIds.push(entry.id);
+    if (!current.fallbackMeaning && entry.fallbackMeaning) current.fallbackMeaning = entry.fallbackMeaning;
+    grouped.set(key, current);
+  });
+  return [...grouped.values()].map((entry) => ({
+    ...entry,
+    meaning: [...entry.meanings].slice(0, 3).join("; ") || entry.fallbackMeaning || "Sin glosa española disponible",
+    meanings: undefined,
+    jlptLevels: [...entry.jlptLevels].sort((left, right) => levelRank(left) - levelRank(right)),
+    themes: [...entry.themes]
+  }));
+}
+
+const jlptVocabularyDictionary = buildVocabularyDictionary(jlptVocabularyCatalog);
+const jlptKanjiDictionary = jlptKanjiCatalog.map((entry) => ({
+  text: entry.literal,
+  reading: [...entry.onReadings, ...entry.kunReadings].join(" / "),
+  meaning: entry.meanings.join("; ") || "Sin glosa española disponible",
+  jlptLevels: [entry.jlpt],
+  themes: entry.themes,
+  note: `${entry.strokes || "?"} trazos · radical ${entry.radical || "?"}`,
+  isKanji: true
+}));
+const fullDictionary = [...embeddedDictionary, ...jlptVocabularyDictionary, ...jlptKanjiDictionary];
+const dictionarySearchIndex = fullDictionary.map((item) => ({
+  ...item,
+  searchText: [item.text, item.reading, item.meaning, ...(item.jlptLevels || []), ...(item.themes || [])]
+    .map(normalizeAnswer)
+    .join(" ")
+}));
 const themes = {
   balanced: "Todas las tematicas",
   compras: "Compras",
@@ -143,8 +192,12 @@ const furiganaEntries = [
   ["理由", "りゆう"],
   ["何", "なん"],
   ["資料", "しりょう"],
-  ...embeddedDictionary.map((item) => [item.text, item.reading])
-].sort((a, b) => b[0].length - a[0].length);
+  ...embeddedDictionary.map((item) => [item.text, item.reading]),
+  ...jlptVocabularyDictionary.map((item) => [item.text, item.reading])
+].reduce((entries, [text, reading]) => {
+  if (text && reading && !entries.some(([existing]) => existing === text)) entries.push([text, reading]);
+  return entries;
+}, []).sort((a, b) => b[0].length - a[0].length);
 
 const romajiDictionary = [
   { romaji: "nihongo", text: "日本語", reading: "にほんご", gloss: "japones" },
@@ -200,6 +253,14 @@ const kanaRomanization = [
   ["だ", "da"], ["で", "de"], ["ど", "do"], ["ば", "ba"], ["び", "bi"], ["ぶ", "bu"], ["べ", "be"], ["ぼ", "bo"],
   ["ぱ", "pa"], ["ぴ", "pi"], ["ぷ", "pu"], ["ぺ", "pe"], ["ぽ", "po"]
 ];
+
+const imeVocabularyDictionary = fullDictionary
+  .map((item) => ({
+    ...item,
+    romaji: romanizeReading(item.reading),
+    gloss: `${item.meaning} · ${getImeWritingLabel(item.text, item.reading)}`
+  }))
+  .filter((item) => item.romaji);
 
 function loadAppState() {
   try {
@@ -689,6 +750,24 @@ function getSkillDetail(skillId) {
       terms.set(term.text, current);
     });
   });
+  const targetRank = levelRank(state.settings.targetJlpt || "N4");
+  const catalogEntries = skillId === "vocab"
+    ? jlptVocabularyDictionary.filter((entry) => entry.jlptLevels.some((level) => levelRank(level) <= targetRank))
+    : skillId === "kanji"
+      ? jlptKanjiCatalog.filter((entry) => levelRank(entry.jlpt) <= targetRank).map((entry) => ({
+        text: entry.literal,
+        reading: [...entry.onReadings, ...entry.kunReadings].join(" / "),
+        meaning: entry.meanings.join("; ") || "Sin glosa española disponible",
+        jlptLevels: [entry.jlpt],
+        themes: entry.themes
+      }))
+      : [];
+  catalogEntries.slice(0, 28).forEach((entry) => {
+    const current = terms.get(entry.text) || { text: entry.text, reading: entry.reading, meaning: entry.meaning, themes: new Set(), levels: new Set(), exerciseIds: new Set() };
+    (entry.themes || []).forEach((theme) => current.themes.add(theme));
+    (entry.jlptLevels || []).forEach((level) => current.levels.add(level));
+    terms.set(entry.text, current);
+  });
   const pending = relatedExercises.filter((exercise) => {
     const history = state.exerciseHistory[exercise.id];
     return history?.status === "review" || isReviewDue(history);
@@ -704,7 +783,7 @@ function getSkillDetail(skillId) {
     const termAttempts = (state.attemptLog || []).filter((entry) => term.exerciseIds.has(entry.exerciseId));
     return { ...term, attempts: termAttempts.length, reviews: termAttempts.filter((entry) => entry.outcome === "review").length };
   });
-  return { relatedExercises, attempts, metrics, terms: termList, pending, newItems, next };
+  return { relatedExercises, attempts, metrics, terms: termList, pending, newItems, next, catalogCount: catalogEntries.length };
 }
 
 function renderSkillDetail() {
@@ -718,14 +797,16 @@ function renderSkillDetail() {
     [readiness + "%", "practica confirmada hasta " + level],
     [detail.attempts.length, "intentos en esta habilidad"],
     [detail.pending.length, "ejercicios para repasar"],
-    [detail.newItems.length, "ejercicios aun no iniciados"]
+    [detail.newItems.length, "ejercicios aun no iniciados"],
+    ...(detail.catalogCount ? [[detail.catalogCount, "elementos de catalogo hasta " + level]] : [])
   ].map(([value, label]) => `<div><strong>${value}</strong><small>${label}</small></div>`).join("");
   const next = detail.next;
   document.querySelector("#skillNextContent").innerHTML = next
     ? `<div class="skill-next-card"><strong>${next.type}</strong><span>${next.level} · ${themes[next.theme] || "Vida diaria"}</span><p>${getSkillExerciseSchedule(next)}</p></div>`
     : "<p>Has confirmado todo el contenido disponible de esta habilidad para tu objetivo actual.</p>";
+  document.querySelector("#skillTermsTitle").textContent = detail.catalogCount ? `Terminos vinculados (${detail.catalogCount} disponibles)` : "Terminos vinculados";
   document.querySelector("#skillTermList").innerHTML = detail.terms.length
-    ? detail.terms.map((term) => `<div class="skill-term-row"><strong>${term.text}</strong><span>${term.reading} · ${term.meaning} · ${term.attempts} intento${term.attempts === 1 ? "" : "s"}${term.reviews ? ` · ${term.reviews} repaso${term.reviews === 1 ? "" : "s"}` : ""}</span><div class="tag-row">${[...term.levels].map((item) => `<small>${item}</small>`).join("")}${[...term.themes].map((item) => `<small>${themes[item] || item}</small>`).join("")}</div></div>`).join("")
+    ? detail.terms.map((term) => `<button class="skill-term-row" data-dictionary-term="${term.text}"><strong>${term.text}</strong><span>${term.reading} · ${term.meaning} · ${term.attempts} intento${term.attempts === 1 ? "" : "s"}${term.reviews ? ` · ${term.reviews} repaso${term.reviews === 1 ? "" : "s"}` : ""}</span><div class="tag-row">${[...term.levels].map((item) => `<small>${item}</small>`).join("")}${[...term.themes].map((item) => `<small>${themes[item] || item}</small>`).join("")}</div></button>`).join("")
     : "<p>Este contenido aun no tiene terminos de ayuda asociados.</p>";
   document.querySelector("#skillExerciseList").innerHTML = detail.relatedExercises.length
     ? detail.relatedExercises.map((exercise) => {
@@ -1759,6 +1840,7 @@ function bindEvents() {
     const helper = event.target.closest("[data-dictionary-term]");
     if (!helper) return;
     const query = helper.dataset.dictionaryTerm;
+    switchView("practice");
     document.querySelector("#dictionarySearch").value = query;
     renderDictionary(query);
   });
@@ -1997,7 +2079,7 @@ window.addEventListener("appinstalled", () => {
 
 function renderDictionary(query = "") {
   const normalized = normalizeAnswer(query);
-  const matches = embeddedDictionary.filter((item) => !normalized || [item.text, item.reading, item.meaning].some((value) => normalizeAnswer(value).includes(normalized))).slice(0, 10);
+  const matches = dictionarySearchIndex.filter((item) => !normalized || item.searchText.includes(normalized)).slice(0, 12);
   document.querySelector("#dictionaryResults").innerHTML = matches.map((item) => {
     const metadata = [item.jlptLevels?.join("/"), item.themes?.map((theme) => themes[theme]).join(", ")].filter(Boolean).join(" · ");
     return '<button class="dictionary-row" data-insert-dictionary="' + item.text + '"><strong>' + item.text + "</strong><span>" + item.reading + "</span><small>" + item.meaning + (metadata ? " · " + metadata : "") + (item.note ? " · " + item.note : "") + "</small></button>";
@@ -2020,18 +2102,9 @@ function setJapaneseText(element, text) {
 }
 
 function addFurigana(text, entries = furiganaEntries) {
-  const uniqueEntries = [];
-  const seen = new Set();
-  entries.forEach(([kanji, reading]) => {
-    if (kanji && reading && !seen.has(kanji)) {
-      seen.add(kanji);
-      uniqueEntries.push([kanji, reading]);
-    }
-  });
-  uniqueEntries.sort((a, b) => b[0].length - a[0].length);
   let output = "";
   for (let index = 0; index < text.length;) {
-    const entry = uniqueEntries.find(([kanji]) => text.startsWith(kanji, index));
+    const entry = entries.find(([kanji]) => text.startsWith(kanji, index));
     if (entry) {
       output += `<ruby>${escapeHtml(entry[0])}<rt>${escapeHtml(entry[1])}</rt></ruby>`;
       index += entry[0].length;
@@ -2103,14 +2176,8 @@ function findImeSuggestions(query, exercise) {
   if (query.length < 2) return [];
 
   const direct = romajiDictionary.filter((item) => item.romaji.startsWith(query));
-  const contextual = embeddedDictionary
-    .map((item) => ({
-      romaji: romanizeReading(item.reading),
-      text: item.text,
-      reading: item.reading,
-      gloss: `${item.meaning} · ${getImeWritingLabel(item.text, item.reading)}`,
-      priority: getImeContextPriority(item, exercise)
-    }))
+  const contextual = imeVocabularyDictionary
+    .map((item) => ({ ...item, priority: getImeContextPriority(item, exercise) }))
     .filter((item) => item.romaji.startsWith(query))
     .sort((left, right) => left.priority - right.priority || left.text.length - right.text.length);
   const kana = romajiToHiragana(query);

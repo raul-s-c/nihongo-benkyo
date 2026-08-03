@@ -390,3 +390,10 @@ Se sustituyo el renderizado iterativo de furigana por un recorrido de texto que 
 ### Bateria de traduccion N5-N1
 
 Se genero una bateria original de 1.500 frases de traduccion: 100 N5, 200 N4, 300 N3, 400 N2 y 500 N1. Cada nivel reparte por igual traducciones espanol-japones y japones-espanol. Cada entrada incorpora tema, patron gramatical, terminos requeridos y una indicacion de repaso; el catalogo se valida para impedir frases duplicadas y se publica como contenido suplementario de practica libre.
+# 2026-08-03 - Catalogos de vocabulario y kanji para estudio real
+
+- Se incorporo un catalogo reproducible de 8.293 entradas de vocabulario N5-N1: termino, lectura, glosas espanolas, nivel y etiquetas tematicas.
+- Se incorporo un catalogo reproducible de 2.222 kanji N5-N1: lecturas on/kun, significados en espanol, trazos, radical, frecuencia y nivel.
+- El diccionario rapido ahora busca tanto el contenido de ejercicios como los catalogos; los terminos del detalle de Vocabulario y Kanji se pueden abrir desde esa referencia.
+- El IME de romaji aprovecha el catalogo para sugerir kana, katakana o kanji segun la lectura y el contexto del ejercicio.
+- Se documento la procedencia, licencia y limitacion de las etiquetas JLPT en `data/SOURCES.md`. Los conteos se recalculan con `scripts/report-content-completeness.mjs`.

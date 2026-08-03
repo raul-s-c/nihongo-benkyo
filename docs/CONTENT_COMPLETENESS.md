@@ -4,17 +4,17 @@ Este es el registro de trabajo para el estudio personal. Cuenta elementos estruc
 
 | Nivel | Vocabulario | Kanji | Gramatica | Frases de traduccion |
 | --- | --- | --- | --- | --- |
-| N5 | 0 / 800 (0%) | 0 / 100 (0%) | 136 / 100 (100% del objetivo) | 100 / 100 (100%) |
-| N4 | 0 / 1.500 (0%) | 0 / 300 (0%) | 124 / 150 (83%) | 200 / 200 (100%) |
-| N3 | 0 / 3.750 (0%) | 0 / 650 (0%) | 132 / 220 (60%) | 300 / 300 (100%) |
-| N2 | 0 / 6.000 (0%) | 0 / 1.000 (0%) | 191 / 250 (76%) | 400 / 400 (100%) |
-| N1 | 0 / 11.000 (0%) | 0 / 2.100 (0%) | 0 / 300 (0%) | 500 / 500 (100%) |
+| N5 | 684 / 800 (86%) | 103 / 100 (100% del objetivo) | 136 / 100 (100% del objetivo) | 100 / 100 (100%) |
+| N4 | 1.324 / 1.500 (88%) | 284 / 300 (95%) | 124 / 150 (83%) | 200 / 200 (100%) |
+| N3 | 3.054 / 3.750 (81%) | 645 / 650 (99%) | 132 / 220 (60%) | 300 / 300 (100%) |
+| N2 | 4.866 / 6.000 (81%) | 1.060 / 1.000 (100% del objetivo) | 191 / 250 (76%) | 400 / 400 (100%) |
+| N1 | 8.289 / 11.000 (75%) | 2.222 / 2.100 (100% del objetivo) | 0 / 300 (0%) | 500 / 500 (100%) |
 
 ## Estado por familia
 
-- Vocabulario: fuente tecnica identificada: JMdict JSON de `scriptin/jmdict-simplified` (licencia EDRDG/CC BY-SA 4.0). Falta seleccionar una lista de etiquetas JLPT no oficial y completar glosas en espanol revisadas antes de importar.
-- Kanji: fuente tecnica identificada: KANJIDIC2 JSON de `scriptin/jmdict-simplified` (CC BY-SA 4.0), con lecturas y glosas en espanol parciales. Faltan trazos de una fuente compatible y la seleccion JLPT reproducible.
+- Vocabulario: catalogo importado de 8.293 entradas etiquetadas (8.289 terminos distintos acumulados) con lecturas y hasta tres glosas espanolas de JMDict. N5-N2 ya se puede estudiar y buscar; falta curacion editorial de acepciones, ejemplos y etiquetas tematicas para los casos complejos.
+- Kanji: catalogo completo de 2.222 kanji N5-N1, con lecturas on/kun, glosas en espanol, trazos, radical y frecuencia. Las etiquetas tematicas se heredan del vocabulario que contiene el kanji; falta crear tarjetas y ejercicios de escritura dedicados para todo el catalogo.
 - Gramatica: N5-N2 importada desde Hanabira con procedencia en [SOURCES.md](../data/SOURCES.md). N1 pendiente.
 - Frases: bateria completa de 1.500 frases, repartida entre traduccion espanol-japones y japones-espanol; sirve para diagnostico y repaso por ejercicio.
 
-Los porcentajes de gramatica se limitan al 100% aunque una fuente tenga mas entradas que el objetivo orientativo. El JLPT no publica una lista oficial cerrada; estos objetivos son metas de cobertura pedagogica.
+Los conteos de vocabulario y kanji son acumulados: N4 incluye N5, N3 incluye N4 y N5, etc. Los porcentajes se limitan al 100% aunque una fuente tenga mas entradas que el objetivo orientativo. El JLPT no publica una lista oficial cerrada; estos objetivos son metas de cobertura pedagogica.

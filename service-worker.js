@@ -1,5 +1,5 @@
-const CACHE_NAME = "nihongo-benkyo-v34";
-const APP_FILES = ["./", "index.html", "styles.css", "translation-battery.js", "content.js", "app.js", "manifest.webmanifest", "assets/app-icon.svg"];
+const CACHE_NAME = "nihongo-benkyo-v35";
+const APP_FILES = ["./", "index.html", "styles.css", "translation-battery.js", "content.js", "data/jlpt-vocabulary.js", "data/jlpt-kanji.js", "app.js", "manifest.webmanifest", "assets/app-icon.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

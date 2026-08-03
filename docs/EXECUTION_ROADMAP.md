@@ -42,9 +42,9 @@ Este documento convierte la auditoria tecnica y de producto en trabajo verificab
 
 ## Fuentes de contenido y licencia
 
-- [~] Vocabulario y kanji: `scriptin/jmdict-simplified` distribuye conversiones JSON de JMdict y KANJIDIC2 bajo la licencia EDRDG/CC BY-SA 4.0. Aporta lecturas y KANJIDIC2 contiene parte de las glosas en espanol. Es apta para uso comercial solo si el producto conserva atribucion y las obligaciones ShareAlike de los datos derivados.
-- [ ] Etiquetado JLPT: el JLPT no publica una lista oficial cerrada. Para N5-N2 se debe elegir y atribuir una fuente de etiquetas no oficial, guardar su version y comunicar que la etiqueta es orientativa.
-- [ ] Importacion: crear una tuberia reproducible que filtre la fuente elegida, complete glosas espanolas revisadas, deduplique formas y genere archivos ligeros por nivel para la PWA.
+- [x] Vocabulario y kanji: `scriptin/jmdict-simplified` distribuye conversiones JSON de JMdict y KANJIDIC2 bajo CC BY-SA 4.0. Los catalogos generados conservan lecturas, glosas, atribucion y licencia en `data/SOURCES.md`.
+- [x] Etiquetado JLPT: se incorporaron etiquetas pedagogicas versionadas de `stephenmk/yomitan-jlpt-vocab` para vocabulario y de `anzumura/kanji-tools` para kanji. La interfaz y la documentacion indican que no son listas oficiales cerradas.
+- [x] Importacion: `scripts/import-jlpt-vocabulary.mjs` y `scripts/import-jlpt-kanji.mjs` generan catalogos consultables por la PWA; las pruebas validan cobertura, metadatos e identificadores.
 
 ## Siguiente corte
 
@@ -55,6 +55,6 @@ Consulta el progreso cuantitativo en [CONTENT_COMPLETENESS.md](CONTENT_COMPLETEN
 
 - [x] Fijar objetivos acumulados de cobertura: N5 `800/100/100`, N4 `1500/300/150`, N3 `3750/650/220`, N2 `6000/1000/250`, N1 `11000/2100/300` para vocabulario, kanji y gramatica respectivamente.
 - [x] Importar y atribuir gramática N5-N2: 583 puntos en JSON, procedentes de Hanabira.
-- [ ] Importar vocabulario N5-N2 con lectura y significado en español; se necesita una fuente estructurada que no pierda lecturas ni derechos de distribución comercial.
-- [ ] Importar kanji N5-N2 con lecturas, significado y trazos desde fuente MIT/CC BY-SA compatible.
+- [x] Importar vocabulario N5-N2 con lectura y significado en espanol; el catalogo actual se extiende hasta N1 y se documenta con CC BY-SA 4.0.
+- [x] Importar kanji N5-N2 con lecturas, significado y trazos desde fuente MIT/CC BY-SA compatible; el catalogo actual se extiende hasta N1.
 - [ ] Sustituir los puntos agregados actuales por progreso por elemento individual con repetición espaciada.
