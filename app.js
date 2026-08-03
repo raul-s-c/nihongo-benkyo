@@ -1,6 +1,6 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
-const APP_VERSION = "0.4.3";
+const APP_VERSION = "0.4.4";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -995,7 +995,7 @@ renderAll();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js?v=0.4.3").catch(() => {
+    navigator.serviceWorker.register("service-worker.js?v=0.4.4").catch(() => {
       // La app sigue funcionando en navegadores que no permiten cache offline.
     });
   });

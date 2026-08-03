@@ -297,3 +297,5 @@ Tambien se versiona el registro del service worker para activar la renovacion en
 ### Analisis detallado de Renshuu
 
 Se amplio el bloque de Renshuu con una lectura por categorias del perfil read-only: actividad del dia, continuidad por area, comparacion de cobertura para el JLPT seleccionado, ausencia de rachas y una prioridad sugerida. La recomendacion transforma el punto de menor cobertura en una tarea corta de produccion, sin convertir esos datos en una promesa sobre el resultado de un examen.
+
+Se incremento la version de la PWA para que el analisis aparezca tambien en instalaciones moviles que ya estaban abiertas.
