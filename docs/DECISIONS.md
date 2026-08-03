@@ -91,3 +91,13 @@ Decision: no convertir la estimacion local de una respuesta en una nota definiti
 Motivo: el MVP aun no tiene un evaluador semantico capaz de juzgar respuestas libres, y la longitud de una frase no equivale a dominio real.
 
 Implementado: cada intento se registra como solido o repaso; el plan siguiente prioriza los ejercicios pendientes de repaso y el avance crece mas cuando el usuario indica comprension solida.
+
+## 2026-08-03: Mantener el MVP sin servicio externo de cuentas
+
+Decision: los perfiles continuan siendo locales y se conservan las copias manuales de exportacion e importacion.
+
+Motivo:
+
+- El MVP debe funcionar sin crear ni administrar cuentas en una plataforma adicional.
+- Una PWA estatica no puede custodiar con seguridad el secreto de una aplicacion OAuth.
+- GitHub Device Flow es una opcion futura valida para identificar usuarios con GitHub, pero requiere registrar una OAuth App y otorgar acceso explicito a un almacenamiento privado.

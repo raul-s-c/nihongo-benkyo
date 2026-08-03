@@ -445,27 +445,6 @@ rt {
   margin-top: 12px;
 }
 
-.cloud-panel {
-  margin-top: 18px;
-  padding: 16px;
-  border-top: 3px solid var(--coral);
-  background: #fff1ed;
-}
-
-.cloud-panel h3 {
-  margin: 4px 0 10px;
-}
-
-.cloud-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.cloud-actions > * {
-  flex: 1;
-}
-
 .import-button {
   display: grid;
   place-items: center;

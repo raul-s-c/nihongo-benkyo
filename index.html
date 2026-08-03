@@ -226,26 +226,6 @@
             <input id="newProfileName" type="text" autocomplete="off" placeholder="Nombre del estudiante">
           </label>
           <button class="ghost-button wide-button" id="createProfileButton" data-tooltip="Crea un perfil local separado, con su propio progreso y ajustes.">Crear perfil</button>
-          <section class="cloud-panel" aria-labelledby="cloudTitle">
-            <p class="eyebrow">Continuar en cualquier dispositivo</p>
-            <h3 id="cloudTitle">Cuenta y sincronizacion</h3>
-            <div id="cloudAccount">
-              <label class="field">
-                <span>Email</span>
-                <input id="cloudEmail" type="email" autocomplete="email" placeholder="tu@email.com">
-              </label>
-              <label class="field">
-                <span>Contrasena</span>
-                <input id="cloudPassword" type="password" autocomplete="current-password" minlength="8" placeholder="Minimo 8 caracteres">
-              </label>
-              <div class="cloud-actions">
-                <button class="ghost-button" id="cloudSignInButton" data-tooltip="Inicia sesion y recupera el progreso que guardaste con esta cuenta.">Entrar</button>
-                <button class="primary-action" id="cloudSignUpButton" data-tooltip="Crea una cuenta para sincronizar tu progreso entre movil y ordenador.">Crear cuenta</button>
-              </div>
-            </div>
-            <button class="ghost-button danger hidden" id="cloudSignOutButton" data-tooltip="Cierra la sesion en este dispositivo. El progreso local y la copia remota no se eliminan.">Cerrar sesion</button>
-            <p class="muted" id="cloudStatus"></p>
-          </section>
           <label class="field">
             <span>API key read-only de Renshuu</span>
             <input id="renshuuApiKey" type="password" autocomplete="off" placeholder="Pega tu clave aqui">
@@ -303,7 +283,7 @@
             <label class="ghost-button wide-button import-button" data-tooltip="Importa una copia JSON exportada por esta app. Reemplaza el perfil local con el mismo identificador.">Importar copia<input id="importProfileInput" type="file" accept="application/json"></label>
             <button class="ghost-button danger wide-button" id="deleteProfileButton" data-tooltip="Pide confirmacion y elimina por completo el perfil activo de este dispositivo. Debe existir otro perfil antes de continuar.">Eliminar perfil</button>
           </section>
-          <p class="muted">La cuenta sincroniza progreso, planes y ajustes. La clave read-only de Renshuu nunca se sube: anadela una vez en cada dispositivo.</p>
+          <p class="muted">Tus perfiles y la clave read-only de Renshuu se guardan solo en este navegador. Exporta una copia antes de cambiar de dispositivo o borrar datos del navegador.</p>
           <p class="muted version-note" id="appVersion"></p>
         </section>
       </main>
@@ -327,10 +307,8 @@
       </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="cloud-config.js?v=0.7.1"></script>
     <script src="secrets.local.js"></script>
-    <script src="content.js?v=0.7.1"></script>
-    <script src="app.js?v=0.7.1"></script>
+    <script src="content.js?v=0.7.2"></script>
+    <script src="app.js?v=0.7.2"></script>
   </body>
 </html>
