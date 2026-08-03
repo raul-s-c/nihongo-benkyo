@@ -167,6 +167,8 @@ Actualizacion de experiencia:
 
 La pantalla Hoy incluye un bloque de Renshuu que se actualiza manualmente con la clave read-only configurada en Ajustes.
 
+Ademas de nivel, actividad total, racha maxima y cobertura del nivel JLPT seleccionado, la aplicacion genera una lectura explicable de los datos: actividad de hoy por categoria, rachas activas, equilibrio entre vocabulario, kanji, gramatica y frases, areas sin racha y una prioridad concreta de produccion. Esta lectura no se presenta como prediccion de aprobado del JLPT.
+
 Datos mostrados:
 
 - Nivel de aventura.

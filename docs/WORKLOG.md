@@ -293,3 +293,7 @@ Se anadio una flecha visible para volver al plan diario desde Practicar. Los bor
 
 La cache y las referencias de scripts se han versionado de nuevo para que las instalaciones moviles reciban esta actualizacion tras el despliegue.
 Tambien se versiona el registro del service worker para activar la renovacion en instalaciones que estuvieran abiertas durante la publicacion.
+
+### Analisis detallado de Renshuu
+
+Se amplio el bloque de Renshuu con una lectura por categorias del perfil read-only: actividad del dia, continuidad por area, comparacion de cobertura para el JLPT seleccionado, ausencia de rachas y una prioridad sugerida. La recomendacion transforma el punto de menor cobertura en una tarea corta de produccion, sin convertir esos datos en una promesa sobre el resultado de un examen.

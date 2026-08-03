@@ -298,11 +298,38 @@ function readRenshuuPercent(category, level) {
   return Number.isFinite(Number(value)) ? Number(value) : undefined;
 }
 
+function getRenshuuAnalysis(profile, level) {
+  const studied = profile.studied || {};
+  const streaks = profile.streaks || {};
+  const progress = getRenshuuLevelProgress(level);
+  const areas = [
+    { id: "vocab", label: "vocabulario", value: progress.vocab, today: Number(studied.today_vocab) || 0 },
+    { id: "kanji", label: "kanji", value: progress.kanji, today: Number(studied.today_kanji) || 0 },
+    { id: "grammar", label: "gramatica", value: progress.grammar, today: Number(studied.today_grammar) || 0 },
+    { id: "sent", label: "frases", value: progress.reading, today: Number(studied.today_sent) || 0 }
+  ].filter((area) => area.value !== undefined);
+  const activeStreaks = [
+    ["vocab", "vocabulario"], ["kanji", "kanji"], ["grammar", "gramatica"], ["sent", "frases"]
+  ].map(([id, label]) => ({ id, label, days: Number(streaks[id]?.days_studied_in_a_row) || 0 }))
+    .filter((item) => item.days > 0);
+  const weakest = [...areas].sort((left, right) => left.value - right.value)[0];
+  const strongest = [...areas].sort((left, right) => right.value - left.value)[0];
+  const range = weakest && strongest ? strongest.value - weakest.value : 0;
+  const todayAreas = areas.filter((area) => area.today > 0);
+  const inactive = ["vocabulario", "kanji", "gramatica", "frases"].filter((label) => !activeStreaks.some((item) => item.label === label));
+  const recommendation = weakest
+    ? `Prioridad sugerida: ${weakest.label}. Renshuu registra ${weakest.value}% de cobertura para ${level}; completa una frase propia o una mini respuesta usando ese material.`
+    : "Actualiza Renshuu para recibir una recomendacion basada en cobertura.";
+
+  return { areas, activeStreaks, weakest, strongest, range, todayAreas, inactive, recommendation };
+}
+
 function renderRenshuuProgress() {
   const profile = state.renshuu.profile;
   const status = document.querySelector("#renshuuStatus");
   const summary = document.querySelector("#renshuuSummary");
   const levels = document.querySelector("#renshuuLevels");
+  const analysis = document.querySelector("#renshuuAnalysis");
   const syncButton = document.querySelector("#syncRenshuuButton");
   const level = document.querySelector("#jlptLevelSelect").value;
 
@@ -313,6 +340,7 @@ function renderRenshuuProgress() {
       : "Anade tu clave de Renshuu en Ajustes para leer tu progreso.");
     summary.classList.add("hidden");
     levels.classList.add("hidden");
+    analysis.classList.add("hidden");
     return;
   }
 
@@ -337,8 +365,30 @@ function renderRenshuuProgress() {
   levels.innerHTML = `<p class="renshuu-level-title">Cobertura Renshuu para ${level}</p>${items.map(([label, value]) => `
     <div class="renshuu-level-row"><span>${label}</span><div class="meter"><span style="width: ${value}%"></span></div><strong>${value}%</strong></div>
   `).join("")}`;
+  const detail = getRenshuuAnalysis(profile, level);
+  const activityText = detail.todayAreas.length
+    ? detail.todayAreas.map((area) => `${area.today} ${area.label}`).join(" · ")
+    : "Sin actividad registrada hoy en estas cuatro areas.";
+  const streakText = detail.activeStreaks.length
+    ? detail.activeStreaks.map((item) => `${item.label}: ${item.days} dias`).join(" · ")
+    : "No hay rachas activas en las areas leidas por la API.";
+  const balanceText = detail.weakest && detail.strongest
+    ? detail.range <= 15
+      ? `Cobertura bastante equilibrada: la diferencia entre ${detail.strongest.label} y ${detail.weakest.label} es de ${detail.range} puntos.`
+      : `Principal desequilibrio: ${detail.weakest.label} (${detail.weakest.value}%) queda ${detail.range} puntos por debajo de ${detail.strongest.label} (${detail.strongest.value}%).`
+    : "Renshuu no ha devuelto cobertura suficiente para comparar areas.";
+  analysis.innerHTML = `
+    <div class="renshuu-analysis-head"><p class="renshuu-level-title">Lectura de tu avance</p><span class="analysis-level">${level}</span></div>
+    <p><strong>Hoy:</strong> ${activityText}</p>
+    <p><strong>Continuidad:</strong> ${streakText}</p>
+    <p><strong>Balance:</strong> ${balanceText}</p>
+    ${detail.inactive.length ? `<p class="analysis-muted">Sin racha activa: ${detail.inactive.join(", ")}.</p>` : ""}
+    <p class="renshuu-recommendation">${detail.recommendation}</p>
+    <p class="analysis-note">Es una lectura de cobertura y actividad de Renshuu, no una prediccion de aprobado del JLPT.</p>
+  `;
   summary.classList.remove("hidden");
   levels.classList.remove("hidden");
+  analysis.classList.remove("hidden");
 }
 
 function getRenshuuBridge() {
