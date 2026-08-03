@@ -1,6 +1,6 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
-const APP_VERSION = "0.5.3";
+const APP_VERSION = "0.5.4";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -364,9 +364,10 @@ function getSkillDetail(skillId) {
   const terms = new Map();
   relatedExercises.forEach((exercise) => {
     exercise.help.forEach((term) => {
-      const current = terms.get(term.text) || { ...term, themes: new Set(), levels: new Set() };
+      const current = terms.get(term.text) || { ...term, themes: new Set(), levels: new Set(), exerciseIds: new Set() };
       current.themes.add(term.theme || exercise.theme);
       current.levels.add(term.level || exercise.level);
+      current.exerciseIds.add(exercise.id);
       terms.set(term.text, current);
     });
   });
@@ -375,7 +376,11 @@ function getSkillDetail(skillId) {
   const next = [...relatedExercises]
     .filter((exercise) => state.exerciseHistory[exercise.id]?.status !== "solid")
     .sort((left, right) => scorePlanExercise(left, jlptTargets[state.settings.targetJlpt], state.settings.studyFocus) - scorePlanExercise(right, jlptTargets[state.settings.targetJlpt], state.settings.studyFocus))[0];
-  return { relatedExercises, attempts, metrics, terms: [...terms.values()], pending, newItems, next };
+  const termList = [...terms.values()].map((term) => {
+    const termAttempts = (state.attemptLog || []).filter((entry) => term.exerciseIds.has(entry.exerciseId));
+    return { ...term, attempts: termAttempts.length, reviews: termAttempts.filter((entry) => entry.outcome === "review").length };
+  });
+  return { relatedExercises, attempts, metrics, terms: termList, pending, newItems, next };
 }
 
 function renderSkillDetail() {
@@ -396,7 +401,7 @@ function renderSkillDetail() {
     ? `<div class="skill-next-card"><strong>${next.type}</strong><span>${next.level} · ${themes[next.theme] || "Vida diaria"}</span><p>${getSkillExerciseSchedule(next)}</p></div>`
     : "<p>Has confirmado todo el contenido disponible de esta habilidad para tu objetivo actual.</p>";
   document.querySelector("#skillTermList").innerHTML = detail.terms.length
-    ? detail.terms.map((term) => `<div class="skill-term-row"><strong>${term.text}</strong><span>${term.reading} · ${term.meaning}</span><div class="tag-row">${[...term.levels].map((item) => `<small>${item}</small>`).join("")}${[...term.themes].map((item) => `<small>${themes[item] || item}</small>`).join("")}</div></div>`).join("")
+    ? detail.terms.map((term) => `<div class="skill-term-row"><strong>${term.text}</strong><span>${term.reading} · ${term.meaning} · ${term.attempts} intento${term.attempts === 1 ? "" : "s"}${term.reviews ? ` · ${term.reviews} repaso${term.reviews === 1 ? "" : "s"}` : ""}</span><div class="tag-row">${[...term.levels].map((item) => `<small>${item}</small>`).join("")}${[...term.themes].map((item) => `<small>${themes[item] || item}</small>`).join("")}</div></div>`).join("")
     : "<p>Este contenido aun no tiene terminos de ayuda asociados.</p>";
   document.querySelector("#skillExerciseList").innerHTML = detail.relatedExercises.length
     ? detail.relatedExercises.map((exercise) => {
@@ -1366,7 +1371,7 @@ renderAll();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js?v=0.5.3").catch(() => {
+    navigator.serviceWorker.register("service-worker.js?v=0.5.4").catch(() => {
       // La app sigue funcionando en navegadores que no permiten cache offline.
     });
   });
