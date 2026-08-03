@@ -1421,6 +1421,7 @@ textarea {
 .daily-plan .section-head { margin-bottom: 6px; }
 #planReason { display: none; }
 .curriculum-status { margin-top: 8px; padding: 7px 0 7px 10px; background: transparent; color: var(--muted); }
+.plan-timing { margin: 12px 0 2px; color: var(--teal); font-size: 12px; font-weight: 750; line-height: 1.35; }
 .plan-count { border: 0; border-radius: 0; background: transparent; color: var(--teal); font-size: 14px; }
 .plan-steps { gap: 0; margin-top: 12px; border-top: 1px solid var(--line); }
 .plan-step-row { min-height: 70px; border-bottom: 1px solid var(--line); }

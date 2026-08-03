@@ -426,3 +426,7 @@ Se genero una bateria original de 1.500 frases de traduccion: 100 N5, 200 N4, 30
 - `Progreso` concentra el esfuerzo y XP, el calendario desplegable de los ultimos 35 dias, la integracion de Renshuu, la ruta posterior, la preparacion JLPT, la matriz y las estadisticas. Cada dato mantiene su funcionalidad anterior, pero ya no compite con la accion principal.
 - El plan diario pasa de tarjetas pesadas a filas de lista. Resume el bloque actual y conserva acciones para abrir, sustituir o saltar una tarea sin aumentar el ruido visual.
 - Se adopto una base visual mas neutra y legible: fondo gris claro, superficies blancas, bordes finos, acento teal y navegacion inferior con seleccion discreta. Se redujeron sombras, marcos y textos explicativos repetidos.
+
+# 2026-08-03 - Renovacion visible del plan diario
+
+- El plan de Hoy indica ahora la siguiente renovacion en hora local del dispositivo y una cuenta atras. Los ejercicios actuales permanecen disponibles hasta las 00:00; al comenzar el nuevo dia local se reconstruye el plan sin necesitar recargar la app.

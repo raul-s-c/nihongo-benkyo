@@ -4,7 +4,7 @@ const GITHUB_SYNC_KEY = "nihongo-benkyo-github-sync-v1";
 const GITHUB_GIST_DESCRIPTION = "Nihongo Benkyo private progress sync";
 const GITHUB_GIST_FILE = "nihongo-benkyo-progress.json";
 const GITHUB_AUTH_PROXY_URL = "https://nihongo-benkyo-auth.raul-nihongo.workers.dev";
-const APP_VERSION = "0.10.0";
+const APP_VERSION = "0.10.1";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -179,6 +179,7 @@ let deferredInstallPrompt = null;
 let noticeTimeout = null;
 let githubSyncTimeout = null;
 let githubAuthInFlight = false;
+let dailyPlanTimingInterval = null;
 
 const furiganaEntries = [
   ["日本語", "にほんご"],
@@ -1405,6 +1406,39 @@ function todayKey() {
   return new Date().toLocaleDateString("en-CA");
 }
 
+function getNextDailyPlanBoundary() {
+  const next = new Date();
+  next.setHours(24, 0, 0, 0);
+  return next;
+}
+
+function formatTimeRemaining(milliseconds) {
+  const totalMinutes = Math.max(0, Math.ceil(milliseconds / 60000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours) return `${hours} h ${minutes} min`;
+  return `${minutes} min`;
+}
+
+function renderDailyPlanTiming() {
+  const timing = document.querySelector("#planTiming");
+  const next = getNextDailyPlanBoundary();
+  const time = next.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+  timing.textContent = `Nuevos ejercicios: ${time} (hora local) · faltan ${formatTimeRemaining(next.getTime() - Date.now())}.`;
+}
+
+function scheduleDailyPlanTiming() {
+  window.clearInterval(dailyPlanTimingInterval);
+  dailyPlanTimingInterval = window.setInterval(() => {
+    if (state.dailyPlan.date !== todayKey()) {
+      ensureDailyPlan();
+      renderAll();
+      return;
+    }
+    renderDailyPlanTiming();
+  }, 30000);
+}
+
 function levelRank(level) {
   return ["N5", "N4", "N3", "N2", "N1"].indexOf(level);
 }
@@ -1771,6 +1805,8 @@ function renderDailyPlan() {
   }));
   document.querySelectorAll("[data-replace-exercise]").forEach((button) => button.addEventListener("click", () => replacePlanExercise(button.dataset.replaceExercise)));
   document.querySelectorAll("[data-skip-exercise]").forEach((button) => button.addEventListener("click", () => skipPlanExercise(button.dataset.skipExercise)));
+  renderDailyPlanTiming();
+  scheduleDailyPlanTiming();
   renderTodayFocus();
 }
 
