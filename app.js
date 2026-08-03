@@ -1,6 +1,6 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
-const APP_VERSION = "0.7.8";
+const APP_VERSION = "0.7.9";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -1305,19 +1305,26 @@ function evaluateAnswer(answer, exercise) {
   const trimmed = answer.trim();
   const normalized = normalizeAnswer(trimmed);
   const expected = exercise.target.split("|").filter(Boolean);
-  const checks = expected.length ? expected : exercise.keywords;
+  const usesKeywords = exercise.type === "Escucha" && exercise.keywords.length;
+  const checks = usesKeywords ? exercise.keywords : (expected.length ? expected : exercise.keywords);
   const matches = checks.map((item) => ({ item, match: findReferenceMatch(normalized, item) })).filter((item) => item.match);
-  const objective = checks.length && matches.length ? Math.round((matches.length / checks.length) * 100) : null;
+  const requiresAnyMatch = exercise.matchMode === "any";
+  const hasCompleteRequiredTerms = checks.length > 0 && (requiresAnyMatch ? matches.length > 0 : matches.length === checks.length);
+  const objective = checks.length && matches.length
+    ? (requiresAnyMatch ? 100 : Math.round((matches.length / checks.length) * 100))
+    : null;
   const japaneseCharacters = (trimmed.match(/[ぁ-んァ-ン一-龯]/g) || []).length;
-  const hasCompleteRequiredTerms = checks.length > 0 && matches.length === checks.length;
-  const comprehension = hasCompleteRequiredTerms && japaneseCharacters >= 4 ? 85 : null;
+  const grammar = evaluateBasicGrammar(trimmed, exercise, japaneseCharacters);
+  const comprehension = hasCompleteRequiredTerms ? (grammar.valid === false ? 55 : 85) : null;
   const conjugated = matches.find((item) => item.match === "conjugated");
 
   return {
     objective,
     comprehension,
     feedback: trimmed
-      ? (conjugated
+      ? (grammar.valid === false
+        ? grammar.message
+        : conjugated
         ? `Reconozco ${conjugated.item} en una forma conjugada. El término requerido está bien usado para este ejercicio.`
         : hasCompleteRequiredTerms
           ? "Reconozco los elementos requeridos. La frase transmite una idea completa para este ejercicio."
@@ -1327,6 +1334,22 @@ function evaluateAnswer(answer, exercise) {
       : "Necesito una respuesta para poder corregir.",
     better: `Respuesta modelo: ${exercise.accepted}`
   };
+}
+
+function evaluateBasicGrammar(answer, exercise, japaneseCharacters) {
+  const tags = exercise.tags || [];
+  const isJapaneseProduction = tags.includes("grammar")
+    && tags.includes("writing")
+    && /[ぁ-んァ-ン一-龯]/.test(exercise.accepted || "");
+  if (!isJapaneseProduction) return { valid: null, message: "" };
+  if (japaneseCharacters < 4) {
+    return { valid: false, message: "Reconozco el término, pero falta una frase japonesa suficiente para valorar la gramática básica." };
+  }
+  const sentence = answer.trim().replace(/[。！？!?]+$/, "");
+  const hasFiniteEnding = /(です|ます|ました|ません|でした|ください|たい|ない|なかった|だ|でしょうか|ますか|ですか|います|あります|できます|します|いたします|まいります|ございます|と思います|なりました|そうです)$/.test(sentence);
+  return hasFiniteEnding
+    ? { valid: true, message: "" }
+    : { valid: false, message: "Reconozco el término, pero no detecto un final verbal o cortés completo. Revisa la conjugación de la frase." };
 }
 
 function findReferenceMatch(answer, reference) {
@@ -1882,7 +1905,7 @@ renderAll();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js?v=0.7.7").catch(() => {
+    navigator.serviceWorker.register("service-worker.js?v=0.7.9").catch(() => {
       // La app sigue funcionando en navegadores que no permiten cache offline.
     });
   });

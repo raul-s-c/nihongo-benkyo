@@ -354,3 +354,9 @@ Tambien se corrigio la persistencia de los textos insertados con los botones de 
 Se detecto un fallo real con una frase correcta: el puente propuso `会う`, pero `僕の友達に会いました。` no se reconocia porque el comparador solo admitia la forma de diccionario. La correccion local ahora identifica las raices de conjugacion de verbos godan, `する`, `来る` y verbos terminados en `る`. Cuando reconoce el termino y una frase japonesa con contexto suficiente, muestra el termino requerido y una estimacion de comprension, dejando claro que la naturalidad fina sigue siendo una revision futura con IA o humana.
 
 Se anadio una prueba automatica que protege especificamente el caso `会う` / `会いました`.
+
+### Pruebas de correccion y gramatica
+
+La suite ahora ejecuta las 67 respuestas modelo del catalogo contra el evaluador. Esta auditoria revelo y corrigio alias de lectura de kanji, alternativas validas de particula (`へ` o `に`) y ejercicios de escucha que estaban comparando por error la frase japonesa reproducida en vez de la respuesta española.
+
+Para la produccion japonesa etiquetada como gramatica, la correccion local verifica que haya suficiente japones y detecta un final verbal o cortés. Si falta, reduce la estimacion y explica que debe revisarse la conjugacion; no se presenta esta comprobacion basica como un analisis linguistico completo. La validacion semantica y de naturalidad fina requerira la futura correccion con IA o revision humana.
