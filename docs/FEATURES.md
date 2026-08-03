@@ -205,12 +205,12 @@ Privacidad y limites:
 
 En la pantalla Hoy se propone un microejercicio llamado Puente con Renshuu. Se genera a partir de la categoria con mayor actividad en el perfil de Renshuu durante el dia:
 
-- Vocabulario: usar una palabra repasada en una frase personal.
-- Kanji: escribir un kanji repasado y usarlo en una frase.
-- Gramatica: aplicar una estructura repasada al propio dia.
-- Frases: reformular una idea vista en Renshuu.
+- Vocabulario: usar una palabra propuesta en una frase personal.
+- Kanji: usar un termino con kanji propuesto en una frase.
+- Gramatica: aplicar una estructura concreta propuesta al propio dia.
+- Frases: usar una palabra propuesta para trasladar la comprension a produccion.
 
-La API no entrega aun los terminos concretos estudiados durante el dia. Por eso la app no finge conocerlos: el usuario elige uno de los que acaba de repasar y la app aporta la segunda capa de produccion y seguimiento.
+La API de perfil no entrega aun los terminos concretos estudiados durante el dia. Por eso Nihongo Benkyo no afirma que la propuesta sea una palabra exacta de Renshuu: toma la categoria con actividad y selecciona automaticamente un termino del catalogo interno compatible con el nivel configurado. El usuario recibe la palabra, lectura, significado y ayuda antes de empezar, sin tener que elegirla por su cuenta.
 
 ### Perfiles locales
 

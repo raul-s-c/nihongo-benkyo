@@ -1,6 +1,6 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
-const APP_VERSION = "0.7.4";
+const APP_VERSION = "0.7.5";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -690,6 +690,12 @@ function getRenshuuBridge() {
     }
   };
   const selected = prompts[category[0]];
+  const term = getRenshuuBridgeTerm(category[0], category[1]);
+  selected.prompt = category[0] === "grammar"
+    ? `Escribe una frase sobre tu dia usando ${term.text} (${term.meaning}).`
+    : `Escribe una frase corta y natural con ${term.text} (${term.reading}: ${term.meaning}).`;
+  selected.accepted = `Una frase personal que use ${term.text}.`;
+  selected.explanation = "Renshuu indica actividad hoy en esta categoria. Nihongo Benkyo ha elegido un termino concreto de tu nivel para que puedas empezar directamente.";
   return {
     id: "renshuu-bridge",
     level: state.settings.targetJlpt,
@@ -697,12 +703,33 @@ function getRenshuuBridge() {
     prompt: selected.prompt,
     accepted: selected.accepted,
     tags: selected.tags,
-    help: [],
+    help: [{ ...term, theme: term.theme || "vida-diaria", level: term.level || state.settings.targetJlpt }],
     explanation: selected.explanation,
-    keywords: [],
-    target: "",
-    sourceCount: category[1]
+    keywords: [term.text, term.reading],
+    target: term.text,
+    sourceCount: category[1],
+    suggestedTerm: term
   };
+}
+
+function getRenshuuBridgeTerm(category, sourceCount) {
+  const targetLevel = state.settings.targetJlpt || "N4";
+  const grammarTerms = [
+    { text: "から", reading: "から", meaning: "porque", level: "N5", theme: "vida-diaria" },
+    { text: "なら", reading: "なら", meaning: "si es el caso", level: "N4", theme: "trabajo" },
+    { text: "ので", reading: "ので", meaning: "por lo tanto / porque", level: "N3", theme: "comunicacion" },
+    { text: "次第", reading: "しだい", meaning: "en cuanto", level: "N2", theme: "trabajo" },
+    { text: "上で", reading: "うえで", meaning: "despues de / al hacer", level: "N1", theme: "trabajo" }
+  ];
+  const candidates = category === "grammar"
+    ? grammarTerms.filter((item) => levelRank(item.level) <= levelRank(targetLevel))
+    : exercises
+      .filter((exercise) => levelRank(exercise.level) <= levelRank(targetLevel))
+      .filter((exercise) => category === "reading" ? exercise.tags.includes("reading") : exercise.tags.includes(category))
+      .flatMap((exercise) => exercise.help.map((item) => ({ ...item, level: exercise.level, theme: exercise.theme })));
+  const unique = [...new Map(candidates.map((item) => [item.text, item])).values()];
+  const seed = `${todayKey()}-${category}-${sourceCount}`.split("").reduce((sum, character) => sum + character.charCodeAt(0), 0);
+  return unique[seed % unique.length] || { text: "日本語", reading: "にほんご", meaning: "japones", level: "N5", theme: "hogar-y-estudio" };
 }
 
 function renderRenshuuBridge() {
@@ -718,6 +745,7 @@ function renderRenshuuBridge() {
   }
   const label = { vocab: "vocabulario", kanji: "kanji", grammar: "gramática", reading: "frases" }[bridge.tags[0]];
   description.textContent = "Hoy Renshuu registra " + bridge.sourceCount + " elementos de " + label + ". Te proponemos una aplicación breve y personal.";
+  description.textContent = "Hoy Renshuu registra " + bridge.sourceCount + " elementos de " + label + ". Propuesta lista: " + bridge.suggestedTerm.text + " (" + bridge.suggestedTerm.reading + ", " + bridge.suggestedTerm.meaning + ").";
 }
 
 function startRenshuuBridge() {
@@ -1710,7 +1738,7 @@ renderAll();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js?v=0.7.4").catch(() => {
+    navigator.serviceWorker.register("service-worker.js?v=0.7.5").catch(() => {
       // La app sigue funcionando en navegadores que no permiten cache offline.
     });
   });
