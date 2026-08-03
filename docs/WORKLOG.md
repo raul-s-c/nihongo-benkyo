@@ -311,3 +311,7 @@ El plan usa la evidencia de la app, el foco configurado y los repasos pendientes
 ### Estadisticas y familias de aprendizaje
 
 Se anadio un registro persistente por intento. La pantalla Matriz muestra aciertos automaticos, parciales, ejercicios abiertos confirmados y contenidos marcados para repasar. Cada ejercicio se clasifica en una familia gramatical y una familia lexica, con los terminos de ayuda asociados. La evidencia se expresa como contextual al ejercicio, no como dominio absoluto de una palabra individual.
+
+### Auditoria y progresion curricular
+
+La auditoria detecto que el algoritmo anterior elegia cualquier ejercicio igual o inferior al objetivo JLPT y, con empates iniciales, podia repetir los primeros ejercicios N5 sin una puerta de avance. Se introdujo una ruta por bloques N5-N4 con requisitos de confirmacion, repasos acotados y navegacion que respeta los ejercicios saltados. La interfaz declara que aun no hay contenido guiado N3-N1.

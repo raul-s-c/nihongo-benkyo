@@ -192,6 +192,17 @@ rt {
   font-weight: 900;
 }
 
+.curriculum-status {
+  margin: 0;
+  padding: 9px 10px;
+  border-left: 3px solid var(--teal);
+  background: #e2f0ed;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
 .plan-steps {
   display: grid;
   gap: 7px;
