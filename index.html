@@ -286,6 +286,25 @@
             <input id="dailyMinutes" type="number" min="3" max="90" step="1">
           </label>
           <button class="primary-action wide" id="saveSettingsButton" data-tooltip="Guarda los ajustes solo para el perfil activo.">Guardar</button>
+          <section class="github-sync-panel" aria-labelledby="githubSyncTitle">
+            <div>
+              <p class="eyebrow">Entre dispositivos</p>
+              <h3 id="githubSyncTitle">Sincronizacion con GitHub</h3>
+            </div>
+            <p class="muted" id="githubSyncStatus"></p>
+            <div class="github-device-code hidden" id="githubDeviceCodePanel">
+              <strong id="githubDeviceCode"></strong>
+              <div class="github-code-actions">
+                <a class="ghost-button" id="githubDeviceLink" target="_blank" rel="noopener" data-tooltip="Abre GitHub para introducir este codigo y autorizar la sincronizacion.">Abrir GitHub</a>
+                <button class="ghost-button" id="copyGitHubDeviceCode" data-tooltip="Copia el codigo para autorizar este dispositivo en GitHub.">Copiar codigo</button>
+              </div>
+            </div>
+            <div class="settings-actions">
+              <button class="primary-action wide-button" id="githubConnectButton" data-tooltip="Inicia sesion de forma segura mediante GitHub. El acceso solo permite guardar tu copia privada de progreso.">Conectar GitHub</button>
+              <button class="ghost-button wide-button hidden" id="githubSyncNowButton" data-tooltip="Sincroniza ahora el progreso con tu copia privada de GitHub.">Sincronizar ahora</button>
+              <button class="ghost-button danger wide-button hidden" id="githubDisconnectButton" data-tooltip="Elimina la sesion de GitHub solo de este dispositivo. No borra la copia privada ni tu progreso local.">Desconectar</button>
+            </div>
+          </section>
           <section class="settings-actions" aria-label="Copias y perfiles">
             <button class="ghost-button wide-button" id="exportProfileButton" data-tooltip="Descarga una copia JSON del perfil activo con su progreso y ajustes. Guardala en un lugar privado.">Exportar copia</button>
             <label class="ghost-button wide-button import-button" data-tooltip="Importa una copia JSON exportada por esta app. Reemplaza el perfil local con el mismo identificador.">Importar copia<input id="importProfileInput" type="file" accept="application/json"></label>
@@ -316,7 +335,7 @@
     </div>
 
     <script src="secrets.local.js"></script>
-    <script src="content.js?v=0.7.9"></script>
-    <script src="app.js?v=0.7.9"></script>
+    <script src="content.js?v=0.8.0"></script>
+    <script src="app.js?v=0.8.0"></script>
   </body>
 </html>

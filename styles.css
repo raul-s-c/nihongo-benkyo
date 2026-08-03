@@ -177,6 +177,36 @@ rt {
   box-shadow: var(--shadow);
 }
 
+.github-sync-panel {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid #cde2dd;
+  border-radius: 8px;
+  background: #edf6f3;
+}
+
+.github-device-code {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+}
+
+.github-device-code strong {
+  letter-spacing: 2px;
+}
+
+.github-code-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .focus-actions {
   display: flex;
   flex-wrap: wrap;

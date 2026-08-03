@@ -360,3 +360,7 @@ Se anadio una prueba automatica que protege especificamente el caso `会う` / `
 La suite ahora ejecuta las 67 respuestas modelo del catalogo contra el evaluador. Esta auditoria revelo y corrigio alias de lectura de kanji, alternativas validas de particula (`へ` o `に`) y ejercicios de escucha que estaban comparando por error la frase japonesa reproducida en vez de la respuesta española.
 
 Para la produccion japonesa etiquetada como gramatica, la correccion local verifica que haya suficiente japones y detecta un final verbal o cortés. Si falta, reduce la estimacion y explica que debe revisarse la conjugacion; no se presenta esta comprobacion basica como un analisis linguistico completo. La validacion semantica y de naturalidad fina requerira la futura correccion con IA o revision humana.
+
+### Inicio de sesion y sincronizacion con GitHub
+
+Se registro una OAuth App propia y se integro GitHub Device Flow. Desde Ajustes se puede iniciar sesion con GitHub, copiar el codigo de dispositivo y abrir la pagina de autorizacion. Tras autorizar, el progreso se conserva en un Gist privado con el alcance minimo `gist`, se descubre automaticamente desde otro movil u ordenador y se sincroniza despues de cada cambio local. El Client ID es publico; ningun Client Secret ni token se incluye en GitHub, exportaciones de perfil o documentacion.

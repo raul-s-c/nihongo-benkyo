@@ -101,3 +101,20 @@ Motivo:
 - El MVP debe funcionar sin crear ni administrar cuentas en una plataforma adicional.
 - Una PWA estatica no puede custodiar con seguridad el secreto de una aplicacion OAuth.
 - GitHub Device Flow es una opcion futura valida para identificar usuarios con GitHub, pero requiere registrar una OAuth App y otorgar acceso explicito a un almacenamiento privado.
+
+## 2026-08-03: Sincronizacion privada con GitHub Device Flow
+
+Decision: usar GitHub OAuth Device Flow con el alcance minimo `gist` para el MVP de sincronizacion entre dispositivos.
+
+Implementacion:
+
+- La PWA solicita un codigo de dispositivo al pulsar `Conectar GitHub`.
+- El usuario autoriza el codigo en GitHub; el token queda solo en el almacenamiento local de ese navegador.
+- El progreso completo se guarda en un Gist privado llamado `Nihongo Benkyo private progress sync`.
+- Al conectar otro dispositivo, la app busca ese Gist, compara la fecha de actualizacion y conserva la copia mas reciente.
+
+Limites aceptados del MVP:
+
+- Dos cambios simultaneos en distintos dispositivos se resuelven por la copia mas reciente.
+- La revision semantica avanzada no se delega en GitHub; esta integracion solo identifica al usuario y guarda progreso.
+- Una version comercial debera migrar a un backend propio con resolucion de conflictos por evento.
