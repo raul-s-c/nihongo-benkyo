@@ -1,6 +1,6 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
-const APP_VERSION = "0.4.8";
+const APP_VERSION = "0.4.9";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -33,6 +33,9 @@ const exerciseTaxonomy = {
   "n4-05": ["Secuencia temporal", "Reuniones y documentos"], "n4-06": ["Contraste con ga", "Incidencias laborales"], "n4-07": ["Condicion con nara", "Reuniones y horarios"], "n4-08": ["Categorias", "Vocabulario de oficina"],
   "n4-09": ["Pregunta cortés", "Reservas y atencion"], "n4-10": ["Secuencia te kara", "Documentos y preguntas"], "n4-11": ["Intervalo kara made", "Horarios de trabajo"], "n4-12": ["Planes con yotei", "Tiempo libre"],
   "n4-13": ["Forma potencial", "Conversacion laboral"], "n4-14": ["Condicional nakereba", "Ayuda y comunicacion"], "n4-15": ["Tiempo relativo", "Desplazamientos"],
+  "n3-01": ["Contraste con temo", "Correo y plazos"], "n3-02": ["Preparacion te oku", "Reuniones y documentos"], "n3-03": ["Razon con node", "Incidencias laborales"], "n3-04": ["Registro profesional", "Seguimiento de asuntos"], "n3-05": ["Fecha limite made ni", "Gestion de tareas"],
+  "n2-01": ["Peticion honorifica", "Contratos y clientes"], "n2-02": ["Inmediatez shidai", "Cambios de plan"], "n2-03": ["Rechazo atenuado", "Negociacion"], "n2-04": ["Particula ni", "Solicitudes y gestion"], "n2-05": ["Registro formal", "Prioridades de proyecto"],
+  "n1-01": ["Secuencia uede", "Decision corporativa"], "n1-02": ["Compromiso formal", "Calidad y procesos"], "n1-03": ["Necesidad objetiva", "Toma de decisiones"], "n1-04": ["Keigo corporativo", "Expectativas de clientes"], "n1-05": ["Disculpa formal", "Atencion al cliente"],
   "renshuu-bridge": ["Produccion libre", "Transferencia de Renshuu"]
 };
 const curriculumStages = [
@@ -41,7 +44,10 @@ const curriculumStages = [
   { id: "n5-interaction", level: "N5", label: "Interaccion N5", exerciseIds: ["n5-09", "n5-10", "n5-11", "n5-12"] },
   { id: "n4-work-basics", level: "N4", label: "Empresa N4: base", exerciseIds: ["n4-01", "n4-02", "n4-03", "n4-04", "n4-05"] },
   { id: "n4-work-scenarios", level: "N4", label: "Empresa N4: situaciones", exerciseIds: ["n4-06", "n4-07", "n4-08", "n4-09", "n4-10"] },
-  { id: "n4-work-applied", level: "N4", label: "Empresa N4: aplicacion", exerciseIds: ["n4-11", "n4-12", "n4-13", "n4-14", "n4-15"] }
+  { id: "n4-work-applied", level: "N4", label: "Empresa N4: aplicacion", exerciseIds: ["n4-11", "n4-12", "n4-13", "n4-14", "n4-15"] },
+  { id: "n3-professional", level: "N3", label: "Empresa N3: coordinacion", exerciseIds: ["n3-01", "n3-02", "n3-03", "n3-04", "n3-05"] },
+  { id: "n2-professional", level: "N2", label: "Empresa N2: negociacion", exerciseIds: ["n2-01", "n2-02", "n2-03", "n2-04", "n2-05"] },
+  { id: "n1-professional", level: "N1", label: "Empresa N1: comunicacion formal", exerciseIds: ["n1-01", "n1-02", "n1-03", "n1-04", "n1-05"] }
 ];
 
 const defaultUserState = {
@@ -756,7 +762,7 @@ function renderDailyPlan() {
   const stageEvidence = currentStage ? getStageEvidence(currentStage) : null;
   document.querySelector("#curriculumStatus").textContent = currentStage
     ? `Bloque actual: ${currentStage.label} (${stageEvidence.confirmedCount}/${currentStage.exerciseIds.length} confirmados). ${stageEvidence.pendingReviews.length ? `${stageEvidence.pendingReviews.length} repaso${stageEvidence.pendingReviews.length === 1 ? "" : "s"} pendiente${stageEvidence.pendingReviews.length === 1 ? "" : "s"}.` : "Al completar el bloque, se desbloquea el siguiente."}`
-    : "La biblioteca guiada actual llega hasta N4. Los niveles N3-N1 se habilitaran al anadir contenido correspondiente.";
+    : "Has terminado los bloques disponibles para tu objetivo. Sube el objetivo JLPT para continuar con el siguiente nivel o usa los repasos pendientes.";
   document.querySelector("#planSteps").innerHTML = activeIds.map((id, index) => {
     const item = getPlanItem(id);
     const done = plan.completedIds.includes(id);
@@ -1224,7 +1230,7 @@ renderAll();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js?v=0.4.8").catch(() => {
+    navigator.serviceWorker.register("service-worker.js?v=0.4.9").catch(() => {
       // La app sigue funcionando en navegadores que no permiten cache offline.
     });
   });

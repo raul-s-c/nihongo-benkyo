@@ -6,9 +6,9 @@
 
 El plan diario es dinamico: ordena ejercicios por las habilidades con menos evidencia, el foco elegido en Ajustes y los contenidos marcados como pendientes de repaso. Al indicar "Necesito repasarlo", la app puede incorporar un refuerzo de habilidades relacionadas. Cada propuesta explica su motivo y dispone de controles para sustituirla o saltarla; tambien se puede anadir una recomendacion extra. Estas acciones reorganizan la sesion, pero no modifican el progreso.
 
-La ruta guiada sigue bloques con orden real: Fundamentos N5, Vida diaria N5, Interaccion N5 y tres bloques de Empresa N4. Para abrir el siguiente bloque hay que confirmar los ejercicios del bloque actual; los repasos pendientes se intercalan como refuerzo, pero no sustituyen el avance. La biblioteca guiada actual llega hasta N4; seleccionar N3-N1 no inventa preguntas de esos niveles.
+La ruta guiada sigue bloques con orden real desde Fundamentos N5 hasta Comunicacion formal N1. Para abrir el siguiente bloque hay que confirmar los ejercicios del bloque actual; los repasos pendientes se intercalan como refuerzo, pero no sustituyen el avance. Cada nivel incorpora contenido propio de dificultad creciente y situaciones de empresa.
 
-La app incluye un primer paquete de 27 ejercicios originales N5-N4 para practicar desde el movil: traducciones, particulas, respuestas utiles, descripciones, preguntas abiertas, vocabulario por categoria y situaciones de vida diaria y empresa.
+La app incluye una primera biblioteca de ejercicios originales N5-N1 para practicar desde el movil: traducciones, particulas, respuestas utiles, descripciones, preguntas abiertas, vocabulario por categoria y situaciones de vida diaria y empresa.
 
 Cada ejercicio aporta nivel, habilidades relacionadas, vocabulario con lectura, significado y explicacion gramatical o comunicativa.
 

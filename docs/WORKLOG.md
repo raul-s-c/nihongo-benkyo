@@ -314,4 +314,8 @@ Se anadio un registro persistente por intento. La pantalla Matriz muestra aciert
 
 ### Auditoria y progresion curricular
 
-La auditoria detecto que el algoritmo anterior elegia cualquier ejercicio igual o inferior al objetivo JLPT y, con empates iniciales, podia repetir los primeros ejercicios N5 sin una puerta de avance. Se introdujo una ruta por bloques N5-N4 con requisitos de confirmacion, repasos acotados y navegacion que respeta los ejercicios saltados. La interfaz declara que aun no hay contenido guiado N3-N1.
+La auditoria detecto que el algoritmo anterior elegia cualquier ejercicio igual o inferior al objetivo JLPT y, con empates iniciales, podia repetir los primeros ejercicios N5 sin una puerta de avance. Se introdujo una ruta por bloques N5-N4 con requisitos de confirmacion, repasos acotados y navegacion que respeta los ejercicios saltados.
+
+### Extension de la ruta hasta N1
+
+La biblioteca y el itinerario se ampliaron con bloques N3, N2 y N1 centrados en coordinacion profesional, negociacion y comunicacion corporativa formal. El objetivo JLPT ahora limita una ruta real con contenido hasta N1, en vez de actuar solo como un selector visual.
