@@ -1,0 +1,68 @@
+{
+  "updatedAt": "2026-08-03",
+  "scope": "Catalogos estructurados de Nihongo Benkyo; no cuenta puntos de ejercicios ni estimaciones de Renshuu.",
+  "targets": {
+    "N5": {
+      "vocab": 800,
+      "kanji": 100,
+      "grammar": 100,
+      "translations": 100
+    },
+    "N4": {
+      "vocab": 1500,
+      "kanji": 300,
+      "grammar": 150,
+      "translations": 200
+    },
+    "N3": {
+      "vocab": 3750,
+      "kanji": 650,
+      "grammar": 220,
+      "translations": 300
+    },
+    "N2": {
+      "vocab": 6000,
+      "kanji": 1000,
+      "grammar": 250,
+      "translations": 400
+    },
+    "N1": {
+      "vocab": 11000,
+      "kanji": 2100,
+      "grammar": 300,
+      "translations": 500
+    }
+  },
+  "actual": {
+    "N5": {
+      "vocab": 0,
+      "kanji": 0,
+      "grammar": 136,
+      "translations": 100
+    },
+    "N4": {
+      "vocab": 0,
+      "kanji": 0,
+      "grammar": 124,
+      "translations": 200
+    },
+    "N3": {
+      "vocab": 0,
+      "kanji": 0,
+      "grammar": 132,
+      "translations": 300
+    },
+    "N2": {
+      "vocab": 0,
+      "kanji": 0,
+      "grammar": 191,
+      "translations": 400
+    },
+    "N1": {
+      "vocab": 0,
+      "kanji": 0,
+      "grammar": 0,
+      "translations": 500
+    }
+  }
+}

@@ -36,6 +36,8 @@ Este documento convierte la auditoria tecnica y de producto en trabajo verificab
 Las dos tareas P0 son el limite intencional del MVP estatico. El siguiente desarrollo comercial debe empezar por autenticacion, una base de datos por usuario y un servicio de evaluacion semantica con consentimiento, limites de coste y borrado de datos. Solo entonces tiene sentido sincronizar dispositivos o valorar equivalencias de traduccion con criterio de significado.
 # Base de datos JLPT
 
+Consulta el progreso cuantitativo en [CONTENT_COMPLETENESS.md](CONTENT_COMPLETENESS.md). El inventario se recalcula con `scripts/report-content-completeness.mjs` tras cada importacion.
+
 - [x] Fijar objetivos acumulados de cobertura: N5 `800/100/100`, N4 `1500/300/150`, N3 `3750/650/220`, N2 `6000/1000/250`, N1 `11000/2100/300` para vocabulario, kanji y gramatica respectivamente.
 - [x] Importar y atribuir gramática N5-N2: 583 puntos en JSON, procedentes de Hanabira.
 - [ ] Importar vocabulario N5-N2 con lectura y significado en español; se necesita una fuente estructurada que no pierda lecturas ni derechos de distribución comercial.
