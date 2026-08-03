@@ -4,7 +4,7 @@ const GITHUB_SYNC_KEY = "nihongo-benkyo-github-sync-v1";
 const GITHUB_GIST_DESCRIPTION = "Nihongo Benkyo private progress sync";
 const GITHUB_GIST_FILE = "nihongo-benkyo-progress.json";
 const GITHUB_AUTH_PROXY_URL = "https://nihongo-benkyo-auth.raul-nihongo.workers.dev";
-const APP_VERSION = "0.9.0";
+const APP_VERSION = "0.9.1";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -1223,6 +1223,72 @@ function getAttemptOutcome(result, confidence) {
   return result.objective >= 80 ? "correct" : "partial";
 }
 
+function getAttemptXp(outcome) {
+  return { correct: 20, partial: 12, manual: 16, review: 8 }[outcome] || 0;
+}
+
+function getDateKey(value = new Date()) {
+  return new Date(value).toLocaleDateString("en-CA");
+}
+
+function getStudyActivity() {
+  const byDay = new Map();
+  (state.attemptLog || []).forEach((entry) => {
+    const key = getDateKey(entry.at);
+    const current = byDay.get(key) || { attempts: 0, xp: 0 };
+    current.attempts += 1;
+    current.xp += Number(entry.xp) || getAttemptXp(entry.outcome);
+    byDay.set(key, current);
+  });
+  const dailyPending = state.dailyPlan.exerciseIds.filter((id) => !state.dailyPlan.completedIds.includes(id) && !(state.dailyPlan.skippedIds || []).includes(id)).length;
+  const bridgePlan = getActiveRenshuuBridgePlan();
+  const bridgePending = bridgePlan ? bridgePlan.items.filter((item) => !bridgePlan.completedIds.includes(item.id)).length : 0;
+  const reviewPending = Object.values(state.exerciseHistory).filter((history) => history.status === "review" || isReviewDue(history)).length;
+  return { byDay, dailyPending, bridgePending, reviewPending };
+}
+
+function renderStudyActivity() {
+  const summary = document.querySelector("#activitySummary");
+  const status = document.querySelector("#activityStatus");
+  const calendar = document.querySelector("#activityCalendar");
+  const title = document.querySelector("#activityCalendarTitle");
+  const continueButton = document.querySelector("#continueStudyButton");
+  const activity = getStudyActivity();
+  const today = getDateKey();
+  const todayStats = activity.byDay.get(today) || { attempts: 0, xp: 0 };
+  const targetXp = Math.max(30, Number(state.settings.dailyMinutes || 10) * 5);
+  const totalPending = activity.dailyPending + activity.bridgePending + activity.reviewPending;
+  summary.innerHTML = [
+    [`${todayStats.xp} XP`, `hoy de ${targetXp} XP`],
+    [todayStats.attempts, "intentos hoy"],
+    [activity.dailyPending + activity.bridgePending, "ejercicios por continuar"],
+    [activity.reviewPending, "repasos pendientes"]
+  ].map(([value, label]) => `<div><strong>${value}</strong><small>${label}</small></div>`).join("");
+  status.textContent = totalPending
+    ? `${totalPending} pendiente${totalPending === 1 ? "" : "s"}: priorizaremos primero los repasos vencidos y despues la ruta que tengas abierta.`
+    : "No hay pendientes inmediatos. Puedes anadir una recomendacion o continuar explorando contenido.";
+  continueButton.disabled = !totalPending;
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - 34);
+  const monthFormatter = new Intl.DateTimeFormat("es-ES", { month: "long", year: "numeric" });
+  title.textContent = monthFormatter.format(start) === monthFormatter.format(new Date())
+    ? monthFormatter.format(new Date())
+    : `${monthFormatter.format(start)} - ${monthFormatter.format(new Date())}`;
+  calendar.innerHTML = ["L", "M", "X", "J", "V", "S", "D"].map((day) => `<span class="calendar-weekday">${day}</span>`).join("");
+  const leading = (start.getDay() + 6) % 7;
+  calendar.innerHTML += Array.from({ length: leading }, () => '<span class="calendar-empty"></span>').join("");
+  for (let offset = 0; offset < 35; offset += 1) {
+    const date = new Date(start);
+    date.setDate(start.getDate() + offset);
+    const key = getDateKey(date);
+    const stats = activity.byDay.get(key) || { attempts: 0, xp: 0 };
+    const intensity = stats.xp >= targetXp ? "high" : stats.xp >= Math.ceil(targetXp / 2) ? "medium" : stats.xp ? "low" : "none";
+    const isToday = key === today;
+    calendar.innerHTML += `<span class="calendar-day ${intensity} ${isToday ? "today" : ""}" tabindex="0" data-tooltip="${date.toLocaleDateString("es-ES")}: ${stats.xp} XP en ${stats.attempts} intento${stats.attempts === 1 ? "" : "s"}." aria-label="${date.toLocaleDateString("es-ES")}: ${stats.xp} XP, ${stats.attempts} intentos">${date.getDate()}</span>`;
+  }
+}
+
 function getMetricSummary(entries) {
   return entries.reduce((summary, entry) => {
     summary[entry.outcome] = (summary[entry.outcome] || 0) + 1;
@@ -1867,10 +1933,12 @@ function applyProgress(exercise, confidence, result) {
     lastAttempted: new Date().toISOString(),
     ...schedule
   };
+  const outcome = getAttemptOutcome(result, confidence);
   state.attemptLog.push({
     exerciseId: exercise.id,
     at: new Date().toISOString(),
-    outcome: getAttemptOutcome(result, confidence),
+    outcome,
+    xp: getAttemptXp(outcome),
     objective: result.objective,
     domains
   });
@@ -1889,6 +1957,7 @@ function applyProgress(exercise, confidence, result) {
   drawRadar();
   renderMatrix();
   renderDailyPlan();
+  renderStudyActivity();
 }
 
 function switchView(view) {
@@ -1912,6 +1981,20 @@ function bindEvents() {
     if (!isPlanExerciseActive(state.currentExerciseId)) {
       state.currentExerciseId = state.dailyPlan.exerciseIds.find((id) => isPlanExerciseActive(id)) || "";
     }
+    saveState();
+    switchView("practice");
+    renderExercise();
+  });
+  document.querySelector("#continueStudyButton").addEventListener("click", () => {
+    const bridgePlan = getActiveRenshuuBridgePlan();
+    if (bridgePlan?.items.some((item) => !bridgePlan.completedIds.includes(item.id))) {
+      startRenshuuBridge();
+      return;
+    }
+    state.activePracticeMode = "daily";
+    state.manualExerciseId = "";
+    state.currentExerciseId = state.dailyPlan.exerciseIds.find((id) => isPlanExerciseActive(id)) || "";
+    ensureActivePlanExercise();
     saveState();
     switchView("practice");
     renderExercise();
@@ -2170,6 +2253,7 @@ function renderAll() {
   ensureDailyPlan();
   renderExercise();
   renderDailyPlan();
+  renderStudyActivity();
   drawRadar();
   renderMatrix();
   renderRenshuuProgress();

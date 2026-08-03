@@ -406,3 +406,10 @@ Se genero una bateria original de 1.500 frases de traduccion: 100 N5, 200 N4, 30
 - El bloque "Despues de Renshuu" ahora resume la actividad registrada por area y presenta una ruta separada con ejercicios vinculados a vocabulario, kanji, gramatica y frases.
 - La ruta tiene su propia barra de avance y no se mezcla con la sesion diaria; completarla no deja el mensaje erroneo de que no hay mas ejercicios disponibles.
 - La API read-only actual solo aporta contadores diarios, no los nombres de cada termino. La interfaz lo declara y no presenta las propuestas de Nihongo Benkyo como si fueran exactamente las palabras que Renshuu ha mostrado.
+
+# 2026-08-03 - Calendario de esfuerzo, XP y cola de estudio
+
+- La pantalla Hoy incorpora un resumen de actividad basado en los intentos realmente guardados: XP de hoy, intentos, ejercicios por continuar y repasos pendientes.
+- Cada correccion otorga XP segun su resultado: 20 por acierto, 16 por respuesta abierta confirmada, 12 por resultado parcial y 8 por marcar un repaso. Los intentos anteriores siguen apareciendo porque el calculo interpreta su resultado almacenado aunque no tuvieran XP explicito.
+- El calendario movil muestra los ultimos 35 dias con intensidad proporcional al objetivo diario configurado. Al mantener pulsado, pasar el cursor o enfocar un dia se indica su fecha, XP e intentos.
+- El control Continuar abre primero una ruta posterior a Renshuu pendiente; en otro caso retoma el siguiente ejercicio diario o una recomendacion de repaso. No reinicia planes ni borra progreso.

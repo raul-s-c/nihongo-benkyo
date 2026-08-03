@@ -56,6 +56,20 @@
             <button class="ghost-button plan-add-button" id="addPlanExerciseButton" data-tooltip="Anade una recomendacion extra basada en tus puntos debiles, repasos pendientes y objetivo. No cambia tu progreso.">+ Anadir recomendacion</button>
           </section>
 
+          <section class="activity-panel" aria-labelledby="activityTitle">
+            <div class="section-head compact-head">
+              <div>
+                <p class="eyebrow">Ritmo de estudio</p>
+                <h3 id="activityTitle">Actividad y XP</h3>
+              </div>
+              <button class="ghost-button" id="continueStudyButton" data-tooltip="Continua el siguiente ejercicio pendiente de tu sesion diaria o de tu ruta de Renshuu. No borra ni reinicia nada.">Continuar</button>
+            </div>
+            <div class="activity-summary" id="activitySummary"></div>
+            <p class="muted" id="activityStatus"></p>
+            <div class="calendar-head"><strong id="activityCalendarTitle"></strong><small>XP por dia</small></div>
+            <div class="activity-calendar" id="activityCalendar" aria-label="Calendario de actividad de estudio"></div>
+          </section>
+
           <section class="renshuu-panel" aria-labelledby="renshuuTitle">
             <div class="section-head compact-head">
               <div>
@@ -358,10 +372,10 @@
     </div>
 
     <script src="secrets.local.js"></script>
-    <script src="translation-battery.js?v=0.9.0"></script>
-    <script src="content.js?v=0.9.0"></script>
-    <script src="data/jlpt-vocabulary.js?v=0.9.0"></script>
-    <script src="data/jlpt-kanji.js?v=0.9.0"></script>
-    <script src="app.js?v=0.9.0"></script>
+    <script src="translation-battery.js?v=0.9.1"></script>
+    <script src="content.js?v=0.9.1"></script>
+    <script src="data/jlpt-vocabulary.js?v=0.9.1"></script>
+    <script src="data/jlpt-kanji.js?v=0.9.1"></script>
+    <script src="app.js?v=0.9.1"></script>
   </body>
 </html>
