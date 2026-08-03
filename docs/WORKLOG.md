@@ -365,6 +365,12 @@ Para la produccion japonesa etiquetada como gramatica, la correccion local verif
 
 Se registro una OAuth App propia y se desplego un Cloudflare Worker para completar OAuth sin incluir el Client Secret en la PWA. Desde Ajustes, `Conectar GitHub` abre la autorizacion; el Worker valida el estado de la sesion y devuelve el token solo a la pestaña de GitHub Pages que la inicio. Tras autorizar, el progreso se conserva en un Gist privado con el alcance minimo `gist`, se descubre automaticamente desde otro movil u ordenador y se sincroniza despues de cada cambio local. El token sigue siendo local a cada navegador; no forma parte de exportaciones de perfil ni del repositorio.
 
+### Diagnostico de sincronizacion y rotacion del puente Renshuu
+
+Se sustituyo el mensaje generico de fallo al actualizar el Gist privado por diagnosticos que incluyen la respuesta util de GitHub. Las sesiones caducadas y los permisos insuficientes indican una accion concreta; si el Gist fue eliminado, la app olvida su identificador local, busca una copia existente y crea otra si hace falta.
+
+El ejercicio posterior a Renshuu dejaba de cambiar porque su selector se basaba solo en fecha, categoria y cantidad de actividad. Ahora cada perfil conserva las propuestas del dia, evita los terminos ya ofrecidos mientras existan alternativas y permite solicitar `Otra propuesta`. Al hacerlo, reactiva el puente incluso si la propuesta anterior se completo o se salto.
+
 ### Correccion explicable y progreso de sesion
 
 Se sustituyo el renderizado iterativo de furigana por un recorrido de texto que genera cada bloque `ruby` una sola vez; asi se evita que terminos solapados vuelvan a envolver kanji ya anotados. La correccion distingue ahora entre coincidencia con la referencia y comprension probable. Cuando falta un requisito, enumera el termino ausente y detecta sustituciones sencillas de particula, por ejemplo `家に` frente a `家で` al indicar el lugar donde se estudia. La vista Practicar incorpora una barra con el avance real de la sesion diaria y conserva ese contador cuando se abre una practica libre.

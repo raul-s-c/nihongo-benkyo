@@ -4,7 +4,7 @@ const GITHUB_SYNC_KEY = "nihongo-benkyo-github-sync-v1";
 const GITHUB_GIST_DESCRIPTION = "Nihongo Benkyo private progress sync";
 const GITHUB_GIST_FILE = "nihongo-benkyo-progress.json";
 const GITHUB_AUTH_PROXY_URL = "https://nihongo-benkyo-auth.raul-nihongo.workers.dev";
-const APP_VERSION = "0.8.4";
+const APP_VERSION = "0.8.5";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -115,6 +115,7 @@ const defaultUserState = {
   exerciseHistory: {},
   attemptLog: [],
   renshuuBridge: null,
+  renshuuBridgeHistory: [],
   draftAnswers: {}
 };
 
@@ -326,32 +327,60 @@ async function finishGitHubAuthorization(accessToken) {
   githubSync.login = user?.login || "";
   saveGitHubSync();
   renderGitHubSync();
-  await syncGitHubProgress();
-  showNotice("GitHub conectado. Tu progreso se sincronizara entre dispositivos.", "success");
+  const synced = await syncGitHubProgress();
+  if (synced) showNotice("GitHub conectado. Tu progreso se sincronizara entre dispositivos.", "success");
+}
+
+async function getGitHubError(response, fallback) {
+  let detail = "";
+  try {
+    const body = await response.json();
+    detail = body?.message || body?.error_description || "";
+  } catch {
+    // GitHub can answer with an empty or non-JSON response when a proxy intervenes.
+  }
+  if (response.status === 401) return "La sesion de GitHub ha caducado. Desconecta GitHub y vuelve a conectarlo.";
+  if (response.status === 403) return "GitHub ha rechazado el permiso para guardar el Gist privado. Desconecta GitHub y vuelve a conectarlo aceptando el permiso de Gists.";
+  return `${fallback} GitHub respondio ${response.status}${detail ? `: ${detail}` : "."}`;
 }
 
 async function findGitHubSyncGist() {
   const response = await fetch("https://api.github.com/gists?per_page=100", { headers: getGitHubHeaders() });
-  if (!response.ok) throw new Error("No se pudieron consultar tus copias de GitHub.");
+  if (!response.ok) throw new Error(await getGitHubError(response, "No se pudieron consultar tus copias privadas."));
   const gists = await response.json();
   return gists.find((gist) => gist.description === GITHUB_GIST_DESCRIPTION && gist.files?.[GITHUB_GIST_FILE]) || null;
 }
 
 async function syncGitHubProgress() {
-  if (!githubSync.accessToken) return;
+  if (!githubSync.accessToken) return false;
   const status = document.querySelector("#githubSyncStatus");
   status.textContent = "Sincronizando progreso privado con GitHub...";
   try {
     let gistId = githubSync.gistId;
+    let gist = null;
+    if (gistId) {
+      const response = await fetch(`https://api.github.com/gists/${gistId}`, { headers: getGitHubHeaders() });
+      if (response.status === 404) {
+        // A Gist can be deleted manually. Forget the stale id and discover or recreate it.
+        gistId = "";
+        githubSync.gistId = "";
+      } else if (!response.ok) {
+        throw new Error(await getGitHubError(response, "No se pudo leer la copia privada."));
+      } else {
+        gist = await response.json();
+      }
+    }
     if (!gistId) {
       const existing = await findGitHubSyncGist();
       gistId = existing?.id || "";
       githubSync.gistId = gistId;
     }
     if (gistId) {
-      const response = await fetch(`https://api.github.com/gists/${gistId}`, { headers: getGitHubHeaders() });
-      if (!response.ok) throw new Error("No se pudo leer la copia privada de GitHub.");
-      const gist = await response.json();
+      if (!gist) {
+        const response = await fetch(`https://api.github.com/gists/${gistId}`, { headers: getGitHubHeaders() });
+        if (!response.ok) throw new Error(await getGitHubError(response, "No se pudo leer la copia privada."));
+        gist = await response.json();
+      }
       const file = gist.files?.[GITHUB_GIST_FILE];
       const remote = file?.content ? JSON.parse(file.content) : null;
       if (remote?.format === "nihongo-benkyo-sync" && new Date(remote.updatedAt || 0) > new Date(appState.updatedAt || 0)) {
@@ -365,7 +394,7 @@ async function syncGitHubProgress() {
           headers: { ...getGitHubHeaders(), "Content-Type": "application/json" },
           body: JSON.stringify({ files: { [GITHUB_GIST_FILE]: { content: JSON.stringify(getSyncPayload()) } } })
         });
-        if (!updateResponse.ok) throw new Error("No se pudo actualizar la copia privada de GitHub.");
+        if (!updateResponse.ok) throw new Error(await getGitHubError(updateResponse, "No se pudo actualizar la copia privada."));
       }
     } else {
       const response = await fetch("https://api.github.com/gists", {
@@ -373,15 +402,17 @@ async function syncGitHubProgress() {
         headers: { ...getGitHubHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify({ description: GITHUB_GIST_DESCRIPTION, public: false, files: { [GITHUB_GIST_FILE]: { content: JSON.stringify(getSyncPayload()) } } })
       });
-      if (!response.ok) throw new Error("No se pudo crear la copia privada de GitHub.");
+      if (!response.ok) throw new Error(await getGitHubError(response, "No se pudo crear la copia privada."));
       githubSync.gistId = (await response.json()).id;
     }
     githubSync.lastSyncedAt = new Date().toISOString();
     saveGitHubSync();
     renderGitHubSync();
+    return true;
   } catch (error) {
     renderGitHubSync();
     showNotice(error.message || "No se pudo sincronizar con GitHub.", "warning");
+    return false;
   }
 }
 
@@ -417,6 +448,7 @@ function mergeUserState(userState) {
     exerciseHistory: history,
     attemptLog: userState?.attemptLog || [],
     renshuuBridge: userState?.renshuuBridge || null,
+    renshuuBridgeHistory: Array.isArray(userState?.renshuuBridgeHistory) ? userState.renshuuBridgeHistory.slice(-60) : [],
     draftAnswers: userState?.draftAnswers || {}
   };
 }
@@ -828,7 +860,7 @@ function renderRenshuuProgress() {
   analysis.classList.remove("hidden");
 }
 
-function getRenshuuBridge() {
+function getRenshuuBridge(rotation = 0) {
   const studied = state.renshuu.profile?.studied;
   if (!studied) return null;
   const category = [
@@ -866,7 +898,7 @@ function getRenshuuBridge() {
     }
   };
   const selected = prompts[category[0]];
-  const term = getRenshuuBridgeTerm(category[0], category[1]);
+  const term = getRenshuuBridgeTerm(category[0], category[1], rotation);
   selected.prompt = category[0] === "grammar"
     ? `Escribe una frase sobre tu dia usando ${term.text} (${term.meaning}).`
     : `Escribe una frase corta y natural con ${term.text} (${term.reading}: ${term.meaning}).`;
@@ -884,11 +916,13 @@ function getRenshuuBridge() {
     keywords: [term.text, term.reading],
     target: term.text,
     sourceCount: category[1],
-    suggestedTerm: term
+    suggestedTerm: term,
+    category: category[0],
+    sourceDate: todayKey()
   };
 }
 
-function getRenshuuBridgeTerm(category, sourceCount) {
+function getRenshuuBridgeTerm(category, sourceCount, rotation = 0) {
   const targetLevel = state.settings.targetJlpt || "N4";
   const grammarTerms = [
     { text: "から", reading: "から", meaning: "porque", level: "N5", theme: "vida-diaria" },
@@ -904,15 +938,22 @@ function getRenshuuBridgeTerm(category, sourceCount) {
       .filter((exercise) => category === "reading" ? exercise.tags.includes("reading") : exercise.tags.includes(category))
       .flatMap((exercise) => exercise.help.map((item) => ({ ...item, level: exercise.level, theme: exercise.theme })));
   const unique = [...new Map(candidates.map((item) => [item.text, item])).values()];
+  const recentTerms = new Set((state.renshuuBridgeHistory || [])
+    .filter((item) => item.category === category && item.date === todayKey())
+    .map((item) => item.term));
+  const fresh = unique.filter((item) => !recentTerms.has(item.text));
+  const pool = fresh.length ? fresh : unique;
   const seed = `${todayKey()}-${category}-${sourceCount}`.split("").reduce((sum, character) => sum + character.charCodeAt(0), 0);
-  return unique[seed % unique.length] || { text: "日本語", reading: "にほんご", meaning: "japones", level: "N5", theme: "hogar-y-estudio" };
+  return pool[(seed + rotation) % pool.length] || { text: "日本語", reading: "にほんご", meaning: "japones", level: "N5", theme: "hogar-y-estudio" };
 }
 
 function renderRenshuuBridge() {
-  const bridge = getRenshuuBridge();
+  const activeBridge = state.renshuuBridge?.sourceDate === todayKey() ? state.renshuuBridge : null;
+  const bridge = activeBridge || getRenshuuBridge();
   const description = document.querySelector("#bridgeDescription");
   const button = document.querySelector("#startBridgeButton");
   button.disabled = !bridge;
+  button.textContent = activeBridge ? "Otra propuesta" : "Practicar";
   if (!bridge) {
     description.textContent = state.renshuu.profile
       ? "Renshuu no registra actividad de vocabulario, kanji, gramática o frases para hoy todavía."
@@ -925,10 +966,18 @@ function renderRenshuuBridge() {
 }
 
 function startRenshuuBridge() {
-  const bridge = getRenshuuBridge();
+  const rotation = (state.renshuuBridgeHistory || []).filter((item) => item.date === todayKey()).length;
+  const bridge = getRenshuuBridge(rotation);
   if (!bridge) return;
   state.renshuuBridge = bridge;
+  state.renshuuBridgeHistory = [...(state.renshuuBridgeHistory || []), {
+    date: todayKey(),
+    category: bridge.category,
+    term: bridge.suggestedTerm.text
+  }].slice(-60);
   if (!state.dailyPlan.exerciseIds.includes(bridge.id)) state.dailyPlan.exerciseIds.unshift(bridge.id);
+  state.dailyPlan.completedIds = state.dailyPlan.completedIds.filter((id) => id !== bridge.id);
+  state.dailyPlan.skippedIds = (state.dailyPlan.skippedIds || []).filter((id) => id !== bridge.id);
   state.manualExerciseId = "";
   state.currentExerciseId = bridge.id;
   saveState();
