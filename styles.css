@@ -50,6 +50,22 @@ textarea {
   gap: 8px;
 }
 
+.app-notice {
+  margin: 4px 0 12px;
+  padding: 10px 12px;
+  border-left: 4px solid var(--teal);
+  border-radius: 8px;
+  background: #e2f0ed;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.app-notice.warning {
+  border-left-color: var(--gold);
+  background: #fff1cf;
+}
+
 h1,
 h2,
 h3,

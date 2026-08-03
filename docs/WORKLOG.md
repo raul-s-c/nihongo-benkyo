@@ -342,3 +342,9 @@ Se revisaron los 57 ejercicios y se anadieron validaciones para impedir IDs o ej
 Se separo la recomendacion diaria de la navegacion de practica. `Elegir` muestra el contenido desbloqueado de la ruta actual y los ejercicios tematicos o suplementarios del nivel disponible; seleccionar uno no altera las tareas del dia. `Nuevo` busca otra tarea activa y, si la cola no puede ampliarse, rota por ese mismo catalogo disponible. Los intentos de practica libre se guardan en las estadisticas y el repaso espaciado, sin marcar una tarea diaria ajena como completada.
 
 Se actualizo la PWA a la version 0.7.6 y se renovo el cache del service worker para que el cambio llegue tambien a instalaciones moviles existentes.
+
+### Auditoria de controles y respuestas visibles
+
+Se revisaron los controles de navegacion, plan diario, practica, entrada japonesa, perfiles, matriz y Renshuu. Las acciones que antes podian parecer inertes ahora confirman su resultado dentro de la app: guardar ajustes, crear o cargar un perfil, exportar, anadir, sustituir o saltar una propuesta, registrar una autoevaluacion y reiniciar los puntos de la matriz. Cuando no existe una alternativa compatible o falta la clave read-only de Renshuu, la app explica el motivo.
+
+Tambien se corrigio la persistencia de los textos insertados con los botones de particulas, el diccionario y las sugerencias IME: ahora disparan el mismo guardado de borrador que la escritura directa. La confirmacion de reinicio se aclaro para no sugerir que se borra el historial de intentos cuando solo se ponen a cero los puntos de la matriz.

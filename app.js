@@ -1,6 +1,6 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
-const APP_VERSION = "0.7.6";
+const APP_VERSION = "0.7.7";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -118,6 +118,7 @@ let appState = loadAppState();
 let state = getActiveUserState();
 let activeSkillId = "vocab";
 let deferredInstallPrompt = null;
+let noticeTimeout = null;
 
 const furiganaEntries = [
   ["日本語", "にほんご"],
@@ -257,7 +258,10 @@ function mergeUserState(userState) {
 
 function createProfile(name) {
   const cleanName = name.trim();
-  if (!cleanName) return;
+  if (!cleanName) {
+    showNotice("Escribe un nombre antes de crear el perfil.", "warning");
+    return false;
+  }
 
   const id = `user-${Date.now()}`;
   appState.users[id] = {
@@ -269,15 +273,19 @@ function createProfile(name) {
   state = getActiveUserState();
   saveState();
   renderAll();
+  showNotice(`Perfil ${cleanName} creado y activado.`, "success");
+  return true;
 }
 
 function switchProfile(userId) {
-  if (!appState.users[userId]) return;
+  if (!appState.users[userId]) return false;
   saveState();
   appState.activeUserId = userId;
   state = getActiveUserState();
   saveState();
   renderAll();
+  showNotice(`Perfil ${state.name || "activo"} cargado.`, "success");
+  return true;
 }
 
 function exportActiveProfile() {
@@ -294,6 +302,7 @@ function exportActiveProfile() {
   link.download = `nihongo-benkyo-${state.name || "perfil"}-${todayKey()}.json`;
   link.click();
   URL.revokeObjectURL(url);
+  showNotice("Copia del perfil preparada para descargar.", "success");
 }
 
 function importProfile(file) {
@@ -337,6 +346,7 @@ function deleteActiveProfile() {
   saveState();
   renderAll();
   switchView("settings");
+  showNotice("Perfil eliminado de este dispositivo.", "success");
 }
 
 function getContentCoverage(skillId, level) {
@@ -772,6 +782,7 @@ async function syncRenshuuProgress() {
     saveState();
     renderRenshuuProgress();
     switchView("settings");
+    showNotice("Anade la clave read-only de Renshuu antes de actualizar.", "warning");
     return;
   }
 
@@ -791,6 +802,7 @@ async function syncRenshuuProgress() {
     state.renshuu.error = "No se pudo actualizar Renshuu. Comprueba la clave y tu conexion.";
     saveState();
     renderRenshuuProgress();
+    showNotice("No se pudo actualizar Renshuu. Revisa la clave y la conexion.", "warning");
   }
 }
 
@@ -1103,7 +1115,7 @@ function moveToNextPlanExercise() {
     state.manualExerciseId = "";
     state.currentExerciseId = nextPlanId;
     saveState();
-    return;
+    return true;
   }
   const extra = getRecommendedExercises(1, [...state.dailyPlan.exerciseIds, ...(state.dailyPlan.skippedIds || [])]);
   if (extra.length) {
@@ -1111,7 +1123,7 @@ function moveToNextPlanExercise() {
     state.manualExerciseId = "";
     state.currentExerciseId = extra[0].id;
     saveState();
-    return;
+    return true;
   }
   const candidates = getPracticeCandidates();
   const currentIndex = candidates.findIndex((exercise) => exercise.id === currentId);
@@ -1121,13 +1133,16 @@ function moveToNextPlanExercise() {
   if (next && next.id !== currentId) {
     state.manualExerciseId = next.id;
     saveState();
+    return true;
   }
+  return false;
 }
 
 function selectManualExercise(id) {
-  if (!getPracticeCandidates().some((exercise) => exercise.id === id)) return;
+  if (!getPracticeCandidates().some((exercise) => exercise.id === id)) return false;
   state.manualExerciseId = id;
   saveState();
+  return true;
 }
 
 function renderPracticePicker() {
@@ -1138,7 +1153,7 @@ function renderPracticePicker() {
   choices.innerHTML = candidates.map((exercise) => {
     const themeLabel = themes[exercise.theme] || "Vida diaria";
     const isCurrent = exercise.id === currentId;
-    return `<button class="practice-choice ${isCurrent ? "current" : ""}" data-practice-choice="${exercise.id}" aria-pressed="${isCurrent}"><strong>${exercise.type}</strong><span>${exercise.level} · ${themeLabel}</span><small>${exercise.tags.map((tag) => skills.find((skill) => skill.id === tag)?.label || tag).join(" · ")}</small></button>`;
+    return `<button class="practice-choice ${isCurrent ? "current" : ""}" data-practice-choice="${exercise.id}" aria-pressed="${isCurrent}" data-tooltip="Abre este ejercicio para practicarlo. No modifica el plan diario."><strong>${exercise.type}</strong><span>${exercise.level} · ${themeLabel}</span><small>${exercise.tags.map((tag) => skills.find((skill) => skill.id === tag)?.label || tag).join(" · ")}</small></button>`;
   }).join("") || "<p class=\"muted\">Aun no hay contenido desbloqueado para elegir.</p>";
   picker.classList.add("hidden");
   choices.querySelectorAll("[data-practice-choice]").forEach((button) => button.addEventListener("click", () => {
@@ -1161,19 +1176,21 @@ function getPlanRecommendation(item) {
 
 function replacePlanExercise(id) {
   const plan = state.dailyPlan;
-  if (plan.completedIds.includes(id)) return;
+  if (plan.completedIds.includes(id)) return false;
   const replacement = getRecommendedExercises(1, plan.exerciseIds.concat(plan.skippedIds || []));
-  if (!replacement.length) return;
+  if (!replacement.length) return false;
   plan.exerciseIds[plan.exerciseIds.indexOf(id)] = replacement[0].id;
   if (state.currentExerciseId === id) state.currentExerciseId = replacement[0].id;
   saveState();
   renderDailyPlan();
   renderExercise();
+  showNotice("Ejercicio sustituido por otra recomendacion.", "success");
+  return true;
 }
 
 function skipPlanExercise(id) {
   const plan = state.dailyPlan;
-  if (plan.completedIds.includes(id)) return;
+  if (plan.completedIds.includes(id)) return false;
   if (!plan.skippedIds.includes(id)) plan.skippedIds.push(id);
   if (state.currentExerciseId === id) {
     state.currentExerciseId = plan.exerciseIds.find((itemId) => !plan.skippedIds.includes(itemId) && !plan.completedIds.includes(itemId)) || "";
@@ -1181,14 +1198,17 @@ function skipPlanExercise(id) {
   saveState();
   renderDailyPlan();
   if (state.currentExerciseId) renderExercise();
+  showNotice("Ejercicio retirado solo del plan de hoy.", "success");
+  return true;
 }
 
 function addRecommendedPlanExercise(preferredTags = []) {
   const plan = state.dailyPlan;
   const extra = getRecommendedExercises(1, plan.exerciseIds.concat(plan.skippedIds || []), preferredTags);
-  if (!extra.length) return;
+  if (!extra.length) return false;
   plan.exerciseIds.push(extra[0].id);
   saveState();
+  return true;
 }
 
 function renderDailyPlan() {
@@ -1373,8 +1393,9 @@ function bindEvents() {
   document.querySelector("#syncRenshuuButton").addEventListener("click", syncRenshuuProgress);
   document.querySelector("#startBridgeButton").addEventListener("click", startRenshuuBridge);
   document.querySelector("#addPlanExerciseButton").addEventListener("click", () => {
-    addRecommendedPlanExercise();
+    const added = addRecommendedPlanExercise();
     renderDailyPlan();
+    showNotice(added ? "Recomendacion anadida al plan de hoy." : "No hay otra recomendacion compatible disponible ahora mismo.", added ? "success" : "warning");
   });
   document.querySelector("#dictionarySearch").addEventListener("input", (event) => renderDictionary(event.target.value));
   document.addEventListener("click", (event) => {
@@ -1386,8 +1407,9 @@ function bindEvents() {
   });
 
   document.querySelector("#newExerciseButton").addEventListener("click", () => {
-    moveToNextPlanExercise();
+    const moved = moveToNextPlanExercise();
     renderExercise();
+    if (!moved) showNotice("No hay otro ejercicio disponible para tu nivel en este momento.", "warning");
   });
   document.querySelector("#chooseExerciseButton").addEventListener("click", () => {
     const picker = document.querySelector("#practicePicker");
@@ -1414,7 +1436,7 @@ function bindEvents() {
       input.value = `${input.value.slice(0, start)}${insert}${input.value.slice(end)}`;
       input.focus();
       input.selectionStart = input.selectionEnd = start + insert.length;
-      updateImeSuggestions();
+      input.dispatchEvent(new Event("input", { bubbles: true }));
     });
   });
 
@@ -1461,6 +1483,7 @@ function bindEvents() {
           ensureActivePlanExercise();
         }
         renderExercise();
+        showNotice(button.dataset.review === "solid" ? "Intento guardado. Pasamos al siguiente ejercicio." : "Intento guardado. Lo priorizaremos para repasar.", "success");
       };
     });
   });
@@ -1481,6 +1504,7 @@ function bindEvents() {
     ensureDailyPlan();
     renderAll();
     switchView("today");
+    showNotice("Ajustes guardados y plan actualizado.", "success");
   });
 
   document.querySelector("#activeProfile").addEventListener("change", (event) => {
@@ -1527,6 +1551,7 @@ function bindEvents() {
     drawRadar();
     renderMatrix();
     document.querySelector("#resetConfirm").classList.add("hidden");
+    showNotice("Los puntos de la matriz se han puesto a cero.", "success");
   });
 
   document.querySelector("#furiganaToggle").addEventListener("click", () => {
@@ -1564,6 +1589,17 @@ function hydrateSettings() {
   document.querySelector("#appVersion").textContent = `Version ${APP_VERSION} · progreso local`;
 }
 
+function showNotice(message, tone = "success") {
+  const notice = document.querySelector("#appNotice");
+  notice.textContent = message;
+  notice.className = `app-notice ${tone}`;
+  notice.hidden = false;
+  window.clearTimeout(noticeTimeout);
+  noticeTimeout = window.setTimeout(() => {
+    notice.hidden = true;
+  }, 4200);
+}
+
 function renderAll() {
   hydrateSettings();
   ensureDailyPlan();
@@ -1598,6 +1634,7 @@ function renderDictionary(query = "") {
     const input = document.querySelector("#answerInput");
     input.value += (input.value ? " " : "") + button.dataset.insertDictionary;
     input.focus();
+    input.dispatchEvent(new Event("input", { bubbles: true }));
   }));
 }
 
@@ -1754,6 +1791,7 @@ function insertImeSuggestion(token, replacement) {
   input.focus();
   input.selectionStart = input.selectionEnd = cursor;
   document.querySelector("#imePanel").classList.add("hidden");
+  input.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
 function romajiToHiragana(input) {
@@ -1810,7 +1848,7 @@ renderAll();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js?v=0.7.6").catch(() => {
+    navigator.serviceWorker.register("service-worker.js?v=0.7.7").catch(() => {
       // La app sigue funcionando en navegadores que no permiten cache offline.
     });
   });

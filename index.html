@@ -26,6 +26,7 @@
           <button class="icon-button" id="settingsButton" aria-label="Ajustes" data-tooltip="Abre perfiles, objetivo diario y conexion con Renshuu.">⚙</button>
         </div>
       </header>
+      <p class="app-notice" id="appNotice" role="status" aria-live="polite" hidden></p>
 
       <main>
         <section class="view active" id="view-today" aria-labelledby="todayTitle">
@@ -158,12 +159,12 @@
               <div class="ime-suggestions" id="imeSuggestions"></div>
             </div>
             <div class="keyboard-row">
-              <button data-insert="は">は</button>
-              <button data-insert="が">が</button>
-              <button data-insert="を">を</button>
-              <button data-insert="に">に</button>
-              <button data-insert="で">で</button>
-              <button data-insert="ます">ます</button>
+              <button data-insert="は" data-tooltip="Inserta は en la respuesta.">は</button>
+              <button data-insert="が" data-tooltip="Inserta が en la respuesta.">が</button>
+              <button data-insert="を" data-tooltip="Inserta を en la respuesta.">を</button>
+              <button data-insert="に" data-tooltip="Inserta に en la respuesta.">に</button>
+              <button data-insert="で" data-tooltip="Inserta で en la respuesta.">で</button>
+              <button data-insert="ます" data-tooltip="Inserta ます en la respuesta.">ます</button>
             </div>
             <button class="primary-action wide" id="checkAnswerButton" data-tooltip="Evalua tu respuesta y actualiza las habilidades relacionadas.">Corregir</button>
           </div>
@@ -306,7 +307,7 @@
     <div class="confirm-overlay hidden" id="resetConfirm" role="dialog" aria-modal="true" aria-labelledby="resetConfirmTitle">
       <div class="confirm-dialog">
         <h2 id="resetConfirmTitle">Reiniciar matriz</h2>
-        <p>Esto pondra a cero los puntos de Nihongo Benkyo del perfil activo. No elimina perfiles, ajustes ni datos de Renshuu, pero si borra la evidencia de practica acumulada en esta app.</p>
+            <p>Esto pondra a cero los puntos de Nihongo Benkyo del perfil activo. No elimina perfiles, ajustes, datos de Renshuu ni el historial de intentos.</p>
         <div class="confirm-actions">
           <button class="ghost-button" id="cancelResetButton" data-tooltip="Cierra este aviso sin cambiar nada.">Cancelar</button>
           <button class="primary-action danger-action" id="confirmResetButton" data-tooltip="Pone a cero los puntos propios de Nihongo Benkyo del perfil activo. No afecta a Renshuu.">Reiniciar</button>
@@ -315,7 +316,7 @@
     </div>
 
     <script src="secrets.local.js"></script>
-    <script src="content.js?v=0.7.6"></script>
-    <script src="app.js?v=0.7.6"></script>
+    <script src="content.js?v=0.7.7"></script>
+    <script src="app.js?v=0.7.7"></script>
   </body>
 </html>
