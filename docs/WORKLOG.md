@@ -253,3 +253,22 @@ Implementado:
 Decision:
 
 - Renshuu y Nihongo Benkyo se muestran como fuentes separadas; no se mezclan para fabricar una unica puntuacion.
+
+### Contenido utilizable y plan diario
+
+Se inicio la primera biblioteca de aprendizaje real con ejercicios originales N5-N4, centrados en produccion, lectura, vida diaria y japones de empresa.
+
+Archivos modificados:
+
+- content.js: contenido, vocabulario y metadatos pedagogicos.
+- app.js: plan diario, historial por ejercicio, repaso y diccionario.
+- index.html y styles.css: ayudas contextuales, controles de repaso y configuracion personalizada.
+
+Funcionalidades anadidas:
+
+- Plan de 2 a 4 ejercicios segun minutos diarios.
+- Objetivo JLPT y foco de estudio configurables.
+- Priorizacion de puntos debiles y repasos.
+- Explicacion y vocabulario para cada ejercicio.
+- Diccionario local embebido.
+- Registro de comprension por intento.

@@ -83,3 +83,11 @@ Motivo:
 - JLPT da una escala objetiva.
 - El objetivo laboral exige mas que aprobar tests.
 - El radar permite ver desequilibrios, por ejemplo vocabulario alto pero produccion baja.
+
+## 2026-08-03: Progreso guiado por autovaloracion
+
+Decision: no convertir la estimacion local de una respuesta en una nota definitiva.
+
+Motivo: el MVP aun no tiene un evaluador semantico capaz de juzgar respuestas libres, y la longitud de una frase no equivale a dominio real.
+
+Implementado: cada intento se registra como solido o repaso; el plan siguiente prioriza los ejercicios pendientes de repaso y el avance crece mas cuando el usuario indica comprension solida.

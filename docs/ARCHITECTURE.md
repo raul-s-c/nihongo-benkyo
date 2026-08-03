@@ -86,6 +86,12 @@ Habilidades actuales:
 
 El radar JLPT compara esos puntos contra objetivos aproximados por nivel.
 
+### Plan diario y repaso
+
+El perfil conserva un plan diario con fecha, ejercicios elegidos, ejercicios completados e historial por ejercicio. Al cambiar de dia o modificar configuracion, la funcion ensureDailyPlan ordena ejercicios compatibles con el objetivo JLPT y da prioridad a habilidades bajas y ejercicios marcados para repaso.
+
+El contenido vive en content.js, separado de la interfaz. Esto permite ampliar bancos de preguntas sin mezclar datos pedagogicos con logica de pantalla.
+
 ## Furigana
 
 El toggle de furigana usa:

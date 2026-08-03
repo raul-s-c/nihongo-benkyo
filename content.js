@@ -1,0 +1,55 @@
+window.NIHONGO_CONTENT = (() => {
+  const t = (text, reading, meaning, note = "") => ({ text, reading, meaning, note });
+  const e = (id, level, type, prompt, accepted, tags, help, explanation, keywords = [], target = "") => ({
+    id, level, type, prompt, accepted, tags, help, explanation, keywords, target
+  });
+
+  const dictionary = [
+    t("私", "わたし", "yo"), t("今日", "きょう", "hoy"), t("明日", "あした", "mañana"), t("毎朝", "まいあさ", "cada mañana"),
+    t("会社", "かいしゃ", "empresa"), t("会議", "かいぎ", "reunión"), t("資料", "しりょう", "documentación"), t("電話", "でんわ", "teléfono / llamar"),
+    t("メール", "メール", "correo electrónico"), t("お客様", "おきゃくさま", "cliente (respetuoso)"), t("上司", "じょうし", "superior / jefe"), t("同僚", "どうりょう", "compañero"),
+    t("駅", "えき", "estación"), t("図書館", "としょかん", "biblioteca"), t("家", "いえ", "casa"), t("学校", "がっこう", "escuela"),
+    t("勉強", "べんきょう", "estudiar"), t("働く", "はたらく", "trabajar"), t("行く", "いく", "ir"), t("来る", "くる", "venir"),
+    t("食べる", "たべる", "comer"), t("飲む", "のむ", "beber"), t("買う", "かう", "comprar"), t("見る", "みる", "ver"),
+    t("話す", "はなす", "hablar"), t("聞く", "きく", "escuchar / preguntar"), t("読む", "よむ", "leer"), t("書く", "かく", "escribir"),
+    t("できます", "できます", "puedo / es posible"), t("お願いします", "おねがいします", "por favor"), t("すみません", "すみません", "disculpa / perdón"),
+    t("大丈夫", "だいじょうぶ", "bien / no hay problema"), t("時間", "じかん", "tiempo / hora"), t("前", "まえ", "antes / delante"),
+    t("後", "あと", "después"), t("一緒に", "いっしょに", "juntos"), t("少し", "すこし", "un poco"), t("もう一度", "もういちど", "una vez más"),
+    t("分かりません", "わかりません", "no entiendo"), t("予約", "よやく", "reserva / cita"), t("出張", "しゅっちょう", "viaje de trabajo"),
+    t("締め切り", "しめきり", "fecha límite"), t("確認", "かくにん", "confirmación / comprobar"), t("は", "は", "tema de la frase", "Se lee wa como partícula."),
+    t("が", "が", "sujeto / información nueva"), t("を", "を", "objeto directo"), t("に", "に", "destino, hora o receptor"),
+    t("で", "で", "lugar donde ocurre una acción"), t("から", "から", "desde / porque"), t("まで", "まで", "hasta")
+  ];
+
+  const exercises = [
+    e("n5-01", "N5", "Traduce JP → ES", "私は毎朝コーヒーを飲みます。", "Bebo café cada mañana.", ["vocab", "reading"], [t("毎朝", "まいあさ", "cada mañana"), t("飲みます", "のみます", "bebo")], "La frecuencia suele aparecer antes del verbo. La forma ます es educada.", ["bebo", "cafe", "manana"]),
+    e("n5-02", "N5", "Traduce ES → JP", "Hoy estudio japonés en casa.", "今日は家で日本語を勉強します。", ["writing", "grammar", "particles"], [t("今日", "きょう", "hoy"), t("家", "いえ", "casa"), t("勉強します", "べんきょうします", "estudio")], "Usa で para el lugar en el que realizas la acción de estudiar.", [], "今日|家で|日本語|勉強します"),
+    e("n5-03", "N5", "Partícula", "Completa: 図書館___日本語を勉強します。", "図書館で日本語を勉強します。", ["particles", "grammar"], [t("図書館", "としょかん", "biblioteca"), t("で", "で", "lugar de acción")], "で marca el escenario de una acción.", [], "で"),
+    e("n5-04", "N5", "Respuesta", "¿Cómo dices de manera educada: 'No entiendo'?", "分かりません。", ["writing", "vocab"], [t("分かりません", "わかりません", "no entiendo")], "Una frase muy útil y natural cuando necesitas que repitan algo.", [], "分かりません|わかりません"),
+    e("n5-05", "N5", "Traduce JP → ES", "これは私のかばんです。", "Esta es mi bolsa.", ["vocab", "reading"], [t("これ", "これ", "esto"), t("かばん", "かばん", "bolsa")], "の une dos nombres: 私のかばん significa 'mi bolsa'.", ["esta", "bolsa"]),
+    e("n5-06", "N5", "Traduce ES → JP", "El lunes voy a la biblioteca.", "月曜日に図書館へ行きます。", ["writing", "grammar", "particles"], [t("月曜日", "げつようび", "lunes"), t("図書館", "としょかん", "biblioteca"), t("行きます", "いきます", "voy")], "に puede marcar el momento; へ señala la dirección.", [], "月曜日|図書館|行きます"),
+    e("n5-07", "N5", "Categoría", "Escribe tres bebidas en japonés.", "水、お茶、コーヒー", ["vocab", "writing"], [t("水", "みず", "agua"), t("お茶", "おちゃ", "té"), t("コーヒー", "コーヒー", "café")], "Para una categoría, escribe varios elementos separados por 、.", [], "水|お茶|コーヒー"),
+    e("n5-08", "N5", "Descripción", "Describe una rutina: 'Me levanto a las siete y desayuno.'", "七時に起きて、朝ご飯を食べます。", ["writing", "grammar", "vocab"], [t("七時", "しちじ", "siete"), t("起きて", "おきて", "levantarse y..."), t("朝ご飯", "あさごはん", "desayuno")], "La forma て une acciones en orden.", [], "時|起き|食べます"),
+    e("n5-09", "N5", "Pregunta", "日本語を勉強する理由は何ですか。", "日本で働きたいからです。", ["writing", "grammar", "work"], [t("理由", "りゆう", "motivo"), t("働きたい", "はたらきたい", "quiero trabajar"), t("から", "から", "porque")], "Responde con una razón usando からです.", [], "から"),
+    e("n5-10", "N5", "Traduce JP → ES", "駅の前で友達に会います。", "Quedo con un amigo delante de la estación.", ["vocab", "reading", "particles"], [t("駅", "えき", "estación"), t("前", "まえ", "delante"), t("会います", "あいます", "quedo / me encuentro")], "に marca a la persona con quien te encuentras.", ["estacion", "amigo"]),
+    e("n5-11", "N5", "Partícula", "Completa: 田中さん___メールを書きます。", "田中さんにメールを書きます。", ["particles", "work", "writing"], [t("メール", "メール", "correo"), t("に", "に", "receptor")], "に marca el destinatario de un correo.", [], "に"),
+    e("n5-12", "N5", "Respuesta", "Pide que repitan algo: 'Por favor, otra vez.'", "もう一度お願いします。", ["writing", "vocab"], [t("もう一度", "もういちど", "una vez más"), t("お願いします", "おねがいします", "por favor")], "Es una petición breve, amable y frecuente.", [], "もう一度|お願いします"),
+    e("n4-01", "N4", "Traduce ES → JP", "Mañana llamaré al cliente.", "明日、お客様に電話します。", ["writing", "grammar", "work", "particles"], [t("明日", "あした", "mañana"), t("お客様", "おきゃくさま", "cliente"), t("電話します", "でんわします", "llamaré")], "に indica el receptor. お客様 es más respetuoso que お客さん.", [], "明日|電話|ます"),
+    e("n4-02", "N4", "Traduce JP → ES", "会議は三時から始まります。", "La reunión empieza a las tres.", ["vocab", "reading", "work"], [t("会議", "かいぎ", "reunión"), t("三時", "さんじ", "tres"), t("始まります", "はじまります", "empieza")], "から marca el punto de inicio en el tiempo.", ["reunion", "tres", "empieza"]),
+    e("n4-03", "N4", "Partícula", "Completa: 来週、東京___出張します。", "来週、東京へ出張します。", ["particles", "work", "grammar"], [t("来週", "らいしゅう", "la semana que viene"), t("出張します", "しゅっちょうします", "viajo por trabajo")], "へ o に pueden marcar destino.", [], "へ|に"),
+    e("n4-04", "N4", "Pregunta", "上司に何を確認しますか。", "締め切りを確認します。", ["writing", "work", "grammar"], [t("上司", "じょうし", "jefe"), t("締め切り", "しめきり", "fecha límite"), t("確認します", "かくにんします", "confirmo")], "Cualquier cosa razonable que confirmarías con tu superior es válida.", [], "確認|ます"),
+    e("n4-05", "N4", "Traduce ES → JP", "Después de la reunión enviaré los documentos.", "会議の後で資料を送ります。", ["writing", "work", "grammar", "particles"], [t("会議の後", "かいぎのあと", "después de la reunión"), t("資料", "しりょう", "documentos"), t("送ります", "おくります", "enviar")], "後で sitúa una acción posterior.", [], "会議|後|資料|送ります"),
+    e("n4-06", "N4", "Traduce JP → ES", "少し遅れますが、先に始めてください。", "Llegaré un poco tarde, pero por favor empiecen antes.", ["reading", "work", "grammar"], [t("少し", "すこし", "un poco"), t("遅れます", "おくれます", "llego tarde"), t("先に", "さきに", "antes")], "が conecta dos ideas con contraste suave.", ["tarde", "empiecen"]),
+    e("n4-07", "N4", "Descripción", "Escribe una frase para decir que puedes tener una reunión por la tarde.", "午後なら会議ができます。", ["writing", "work", "grammar"], [t("午後", "ごご", "por la tarde"), t("なら", "なら", "si es..."), t("できます", "できます", "puedo")], "なら presenta una condición útil al proponer horarios.", [], "できます"),
+    e("n4-08", "N4", "Categoría", "Escribe cuatro palabras japonesas de oficina.", "会社、会議、資料、メール", ["vocab", "work", "writing"], [t("会社", "かいしゃ", "empresa"), t("会議", "かいぎ", "reunión"), t("資料", "しりょう", "documentación"), t("メール", "メール", "correo")], "Busca variedad: lugar, personas, documentos y acciones.", [], "会社|会議|資料|メール"),
+    e("n4-09", "N4", "Respuesta", "Pide confirmación de una reserva: '¿La reserva está bien?'", "予約は大丈夫ですか。", ["writing", "vocab", "grammar"], [t("予約", "よやく", "reserva"), t("大丈夫", "だいじょうぶ", "bien / sin problema")], "大丈夫ですか es una pregunta amable para comprobar si todo está correcto.", [], "予約|大丈夫"),
+    e("n4-10", "N4", "Traduce JP → ES", "この資料を読んでから、質問してください。", "Después de leer este documento, haz preguntas.", ["reading", "work", "grammar"], [t("資料", "しりょう", "documento"), t("読んでから", "よんでから", "después de leer"), t("質問", "しつもん", "pregunta")], "てから expresa que la segunda acción ocurre después de la primera.", ["documento", "preguntas"]),
+    e("n4-11", "N4", "Partícula", "Completa: 九時___十時まで仕事をします。", "九時から十時まで仕事をします。", ["particles", "work", "grammar"], [t("から", "から", "desde"), t("まで", "まで", "hasta"), t("仕事", "しごと", "trabajo")], "から…まで marca un intervalo de tiempo.", [], "から|まで"),
+    e("n4-12", "N4", "Pregunta", "週末は何をする予定ですか。", "友達と映画を見る予定です。", ["writing", "vocab", "grammar"], [t("週末", "しゅうまつ", "fin de semana"), t("予定", "よてい", "plan"), t("映画", "えいが", "película")], "予定です expresa un plan. Cambia el contenido por tu plan real.", [], "予定"),
+    e("n4-13", "N4", "Traduce ES → JP", "¿Podemos hablar cinco minutos?", "五分だけ話せますか。", ["writing", "work", "grammar"], [t("五分", "ごふん", "cinco minutos"), t("だけ", "だけ", "solo"), t("話せますか", "はなせますか", "¿podemos hablar?")], "La forma potencial expresa posibilidad; だけ limita el tiempo.", [], "分|話せますか"),
+    e("n4-14", "N4", "Traduce JP → ES", "もし分からなければ、私に聞いてください。", "Si no entiendes, pregúntame.", ["reading", "grammar", "work"], [t("もし", "もし", "si"), t("分からなければ", "わからなければ", "si no entiendes"), t("聞いてください", "きいてください", "pregunta, por favor")], "〜なければ crea una condición.", ["entiendes", "preguntame"]),
+    e("n4-15", "N4", "Descripción", "Escribe: 'Estoy en la estación; llegaré en diez minutos.'", "駅にいます。十分後に着きます。", ["writing", "vocab", "grammar"], [t("駅", "えき", "estación"), t("十分後", "じゅっぷんご", "dentro de diez minutos"), t("着きます", "つきます", "llegaré")], "En mensajes reales, claridad vale más que una frase larga.", [], "駅|分|着きます")
+  ];
+
+  return { dictionary, exercises };
+})();

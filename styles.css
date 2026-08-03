@@ -161,6 +161,86 @@ rt {
   box-shadow: var(--shadow);
 }
 
+.daily-plan,
+.dictionary-panel {
+  margin-top: 16px;
+  padding: 16px;
+  border-top: 3px solid var(--teal);
+}
+
+.daily-plan {
+  background: #e2f0ed;
+}
+
+.dictionary-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.plan-count {
+  color: var(--teal);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.plan-steps {
+  display: grid;
+  gap: 7px;
+  margin-top: 14px;
+}
+
+.plan-step {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: 9px;
+  min-height: 46px;
+  padding: 6px 8px;
+  border: 1px solid rgba(22, 127, 122, 0.22);
+  border-radius: 8px;
+  background: rgba(255, 253, 247, 0.74);
+  color: var(--ink);
+  text-align: left;
+}
+
+.plan-step span {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 50%;
+  background: white;
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.plan-step strong,
+.plan-step small {
+  font-size: 13px;
+}
+
+.plan-step small {
+  color: var(--muted);
+}
+
+.plan-step.current {
+  border-color: var(--teal);
+  box-shadow: inset 3px 0 0 var(--teal);
+}
+
+.plan-step.done {
+  opacity: 0.66;
+}
+
+.practice-meta {
+  margin: -4px 0 12px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .focus-panel {
   display: grid;
   gap: 18px;
@@ -361,6 +441,97 @@ rt {
 .exercise-card h3 {
   font-size: 24px;
   line-height: 1.35;
+}
+
+.help-toggle {
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--teal);
+  font-weight: 900;
+  text-align: left;
+}
+
+.context-help {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #cde2dd;
+  border-radius: 8px;
+  background: #edf6f3;
+}
+
+.context-help p,
+.explanation {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.term-helper,
+.dictionary-row {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: 3px 10px;
+  width: 100%;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--ink);
+  text-align: left;
+}
+
+.term-helper strong,
+.dictionary-row strong {
+  grid-row: span 2;
+  align-self: center;
+  font-size: 18px;
+}
+
+.term-helper span,
+.dictionary-row span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.term-helper small,
+.dictionary-row small {
+  font-size: 12px;
+}
+
+.review-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.review-actions button {
+  min-width: 0;
+  padding: 0 9px;
+  font-size: 13px;
+}
+
+#dictionarySearch {
+  width: 100%;
+  min-height: 46px;
+  margin: 4px 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  padding: 0 12px;
+}
+
+.dictionary-results {
+  display: grid;
+  gap: 7px;
+  max-height: 346px;
+  overflow-y: auto;
 }
 
 textarea {

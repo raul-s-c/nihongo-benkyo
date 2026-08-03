@@ -2,6 +2,22 @@
 
 ## Implementadas
 
+### Biblioteca inicial y plan personalizado
+
+La app incluye un primer paquete de 27 ejercicios originales N5-N4 para practicar desde el movil: traducciones, particulas, respuestas utiles, descripciones, preguntas abiertas, vocabulario por categoria y situaciones de vida diaria y empresa.
+
+Cada ejercicio aporta nivel, habilidades relacionadas, vocabulario con lectura, significado y explicacion gramatical o comunicativa.
+
+El plan diario se genera por perfil segun minutos disponibles, objetivo JLPT, enfoque elegido, habilidades menos desarrolladas y ejercicios que el usuario marco para repasar.
+
+Tras ver la correccion, el usuario elige entre Necesito repasarlo y Lo he entendido. La primera opcion vuelve a priorizar el ejercicio; la segunda registra mas avance en sus habilidades.
+
+### Diccionario rapido y ayudas contextuales
+
+La pantalla Practicar incluye ayuda contextual desplegable para cada ejercicio, tarjetas con palabra, lectura y significado, y un diccionario local con busqueda por japones, romaji o espanol.
+
+Objetivo: evitar abandonar la sesion para buscar una palabra basica fuera de la app.
+
 ### Navegacion movil
 
 La app usa una navegacion inferior con cuatro vistas:

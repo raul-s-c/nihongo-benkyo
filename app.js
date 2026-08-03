@@ -1,6 +1,6 @@
 const STORAGE_KEY = "nihongo-benkyo-state-v2";
 const LEGACY_STORAGE_KEY = "nihongo-benkyo-state";
-const APP_VERSION = "0.3.0";
+const APP_VERSION = "0.4.0";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -22,45 +22,17 @@ const jlptTargets = {
   N1: { vocab: 10000, kanji: 2000, grammar: 760, particles: 520, reading: 650, writing: 500, listening: 520, work: 300 }
 };
 
-const exercises = [
-  {
-    type: "Traduccion JP → ES",
-    prompt: "今日は会社で会議があります。",
-    accepted: "Hoy hay una reunion en la empresa.",
-    tags: ["vocab", "reading", "work"]
-  },
-  {
-    type: "Traduccion ES → JP",
-    prompt: "Mañana llamare al cliente.",
-    accepted: "明日、お客さんに電話します。",
-    tags: ["writing", "grammar", "work", "particles"]
-  },
-  {
-    type: "Particula",
-    prompt: "Escribe una frase sencilla usando で para indicar lugar de accion.",
-    accepted: "図書館で勉強します。",
-    tags: ["particles", "writing", "grammar"]
-  },
-  {
-    type: "Categoria",
-    prompt: "Di cinco palabras japonesas utiles en una oficina.",
-    accepted: "会社、会議、資料、電話、メール",
-    tags: ["vocab", "work"]
-  },
-  {
-    type: "Pregunta",
-    prompt: "日本語を勉強する理由は何ですか。",
-    accepted: "日本で働きたいからです。",
-    tags: ["writing", "grammar", "work"]
-  }
-];
+const exercises = window.NIHONGO_CONTENT?.exercises || [];
+const embeddedDictionary = window.NIHONGO_CONTENT?.dictionary || [];
 
 const defaultUserState = {
   settings: {
     renshuuApiKey: window.NIHONGO_LOCAL_CONFIG?.renshuuApiKey || "",
     mainGoal: "work",
     dailyMinutes: 10,
-    showFurigana: false
+    showFurigana: false,
+    targetJlpt: "N4",
+    studyFocus: "balanced"
   },
   progress: {
     vocab: 90,
@@ -77,7 +49,9 @@ const defaultUserState = {
     syncedAt: "",
     error: ""
   },
-  currentExercise: 0
+  currentExerciseId: "n5-01",
+  dailyPlan: { date: "", exerciseIds: [], completedIds: [] },
+  exerciseHistory: {}
 };
 
 let appState = loadAppState();
@@ -96,7 +70,8 @@ const furiganaEntries = [
   ["働", "はたら"],
   ["理由", "りゆう"],
   ["何", "なん"],
-  ["資料", "しりょう"]
+  ["資料", "しりょう"],
+  ...embeddedDictionary.map((item) => [item.text, item.reading])
 ].sort((a, b) => b[0].length - a[0].length);
 
 const romajiDictionary = [
@@ -188,7 +163,9 @@ function mergeUserState(userState) {
     ...userState,
     settings: { ...defaultUserState.settings, ...(userState?.settings || {}) },
     progress: { ...defaultUserState.progress, ...(userState?.progress || {}) },
-    renshuu: { ...defaultUserState.renshuu, ...(userState?.renshuu || {}) }
+    renshuu: { ...defaultUserState.renshuu, ...(userState?.renshuu || {}) },
+    dailyPlan: { ...defaultUserState.dailyPlan, ...(userState?.dailyPlan || {}) },
+    exerciseHistory: userState?.exerciseHistory || {}
   };
 }
 
@@ -408,39 +385,112 @@ function renderMatrix() {
   }).join("");
 }
 
+function getCurrentExercise() {
+  return exercises.find((exercise) => exercise.id === state.currentExerciseId)
+    || exercises.find((exercise) => exercise.id === state.dailyPlan.exerciseIds[0])
+    || exercises[0];
+}
+
+function todayKey() {
+  return new Date().toLocaleDateString("en-CA");
+}
+
+function levelRank(level) {
+  return ["N5", "N4", "N3", "N2", "N1"].indexOf(level);
+}
+
+function ensureDailyPlan() {
+  if (!exercises.length || (state.dailyPlan.date === todayKey() && state.dailyPlan.exerciseIds.length)) return;
+  const targetLevel = state.settings.targetJlpt || "N4";
+  const candidates = exercises.filter((item) => levelRank(item.level) <= levelRank(targetLevel));
+  const count = state.settings.dailyMinutes <= 6 ? 2 : state.settings.dailyMinutes <= 15 ? 3 : 4;
+  const target = jlptTargets[targetLevel];
+  const focus = state.settings.studyFocus;
+  const sorted = [...candidates].sort((left, right) => scorePlanExercise(left, target, focus) - scorePlanExercise(right, target, focus));
+  const ids = sorted.slice(0, count).map((item) => item.id);
+  state.dailyPlan = { date: todayKey(), exerciseIds: ids, completedIds: [] };
+  state.currentExerciseId = ids[0];
+  saveState();
+}
+
+function scorePlanExercise(exercise, target, focus) {
+  const history = state.exerciseHistory[exercise.id] || {};
+  const weakness = exercise.tags.reduce((sum, tag) => sum + ((state.progress[tag] || 0) / (target[tag] || 1)), 0) / exercise.tags.length;
+  return weakness + (focus !== "balanced" && exercise.tags.includes(focus) ? -0.5 : 0) + (history.status === "review" ? -1 : 0) + (history.attempts || 0) * 0.08;
+}
+
+function renderDailyPlan() {
+  ensureDailyPlan();
+  const plan = state.dailyPlan;
+  document.querySelector("#planCount").textContent = plan.completedIds.length + " / " + plan.exerciseIds.length;
+  const focusText = { balanced: "equilibrar tus habilidades", work: "situaciones de empresa", daily: "vida diaria", writing: "producción escrita", grammar: "gramática y partículas" }[state.settings.studyFocus] || "equilibrar tus habilidades";
+  document.querySelector("#planReason").textContent = "Plan para " + focusText + ", ajustado a tu objetivo " + state.settings.targetJlpt + ".";
+  document.querySelector("#planSteps").innerHTML = plan.exerciseIds.map((id, index) => {
+    const item = exercises.find((exercise) => exercise.id === id);
+    const done = plan.completedIds.includes(id);
+    return '<button class="plan-step ' + (done ? "done" : "") + ' ' + (id === state.currentExerciseId ? "current" : "") + '" data-plan-exercise="' + id + '"><span>' + (done ? "✓" : index + 1) + "</span><strong>" + item.type + "</strong><small>" + item.level + "</small></button>";
+  }).join("");
+  document.querySelectorAll("[data-plan-exercise]").forEach((button) => button.addEventListener("click", () => {
+    state.currentExerciseId = button.dataset.planExercise;
+    saveState();
+    switchView("practice");
+    renderExercise();
+  }));
+}
+
 function renderExercise() {
-  const exercise = exercises[state.currentExercise];
+  ensureDailyPlan();
+  const exercise = getCurrentExercise();
+  if (!exercise) return;
   document.querySelector("#exerciseType").textContent = exercise.type;
   setJapaneseText(document.querySelector("#exercisePrompt"), exercise.prompt);
   document.querySelector("#answerInput").value = "";
+  document.querySelector("#practiceMeta").textContent = exercise.level + " · " + exercise.tags.map((tag) => skills.find((skill) => skill.id === tag)?.label || tag).join(" · ");
+  document.querySelector("#contextHelp").innerHTML = exercise.help.map((item) => '<button class="term-helper" data-dictionary-term="' + item.text + '"><strong>' + item.text + "</strong><span>" + item.reading + "</span><small>" + item.meaning + "</small></button>").join("") + "<p>" + exercise.explanation + "</p>";
+  document.querySelector("#contextHelp").classList.add("hidden");
+  document.querySelector("#helpToggle").setAttribute("aria-expanded", "false");
   document.querySelector("#feedbackPanel").classList.add("hidden");
 }
 
 function evaluateAnswer(answer, exercise) {
   const trimmed = answer.trim();
-  const hasJapanese = /[\u3040-\u30ff\u3400-\u9fff]/.test(trimmed);
-  const lengthScore = Math.min(100, Math.round(trimmed.length / Math.max(1, exercise.accepted.length) * 85));
-  const objective = trimmed ? Math.max(25, Math.min(96, lengthScore + (hasJapanese ? 8 : 0))) : 0;
-  const comprehension = trimmed ? Math.max(objective, Math.min(98, objective + 14)) : 0;
+  const normalized = normalizeAnswer(trimmed);
+  const expected = exercise.target.split("|").filter(Boolean).map(normalizeAnswer);
+  const keywords = exercise.keywords.map(normalizeAnswer);
+  const checks = expected.length ? expected : keywords;
+  const matches = checks.filter((item) => normalized.includes(item)).length;
+  const objective = trimmed ? Math.max(15, Math.min(95, Math.round((matches / Math.max(1, checks.length)) * 85) + 10)) : 0;
+  const comprehension = trimmed ? Math.max(objective, Math.min(96, objective + (matches ? 10 : 0))) : 0;
 
   return {
     objective,
     comprehension,
     feedback: trimmed
-      ? "Correccion provisional: valoro que hay una respuesta interpretable. La siguiente fase conectara un evaluador IA para medir naturalidad, intencion y errores concretos."
+      ? "Estimación local basada en elementos clave. Revisa la explicación y registra si lo has entendido: esa decisión guía tus próximos repasos."
       : "Necesito una respuesta para poder corregir.",
     better: `Respuesta modelo: ${exercise.accepted}`
   };
 }
 
-function applyProgress(exercise, objective, comprehension) {
-  const gain = Math.max(1, Math.round((objective + comprehension) / 55));
+function normalizeAnswer(value) {
+  return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[\s、。,.!?¿¡]/g, "");
+}
+
+function applyProgress(exercise, confidence, result) {
+  const gain = confidence === "solid" ? Math.max(2, Math.round((result.objective + result.comprehension) / 45)) : 1;
   exercise.tags.forEach((tag) => {
     state.progress[tag] = (state.progress[tag] || 0) + gain;
   });
+  state.exerciseHistory[exercise.id] = {
+    attempts: (state.exerciseHistory[exercise.id]?.attempts || 0) + 1,
+    status: confidence,
+    lastAttempted: new Date().toISOString()
+  };
+  if (!state.dailyPlan.completedIds.includes(exercise.id)) state.dailyPlan.completedIds.push(exercise.id);
   saveState();
   drawRadar();
   renderMatrix();
+  renderDailyPlan();
 }
 
 function switchView(view) {
@@ -460,11 +510,27 @@ function bindEvents() {
   document.querySelector("#startSessionButton").addEventListener("click", () => switchView("practice"));
   document.querySelector("#jlptLevelSelect").addEventListener("change", drawRadar);
   document.querySelector("#syncRenshuuButton").addEventListener("click", syncRenshuuProgress);
+  document.querySelector("#dictionarySearch").addEventListener("input", (event) => renderDictionary(event.target.value));
+  document.addEventListener("click", (event) => {
+    const helper = event.target.closest("[data-dictionary-term]");
+    if (!helper) return;
+    const query = helper.dataset.dictionaryTerm;
+    document.querySelector("#dictionarySearch").value = query;
+    renderDictionary(query);
+  });
 
   document.querySelector("#newExerciseButton").addEventListener("click", () => {
-    state.currentExercise = (state.currentExercise + 1) % exercises.length;
+    ensureDailyPlan();
+    const current = state.dailyPlan.exerciseIds.indexOf(state.currentExerciseId);
+    state.currentExerciseId = state.dailyPlan.exerciseIds[(current + 1) % state.dailyPlan.exerciseIds.length];
     saveState();
     renderExercise();
+  });
+
+  document.querySelector("#helpToggle").addEventListener("click", () => {
+    const help = document.querySelector("#contextHelp");
+    const isHidden = help.classList.toggle("hidden");
+    document.querySelector("#helpToggle").setAttribute("aria-expanded", String(!isHidden));
   });
 
   document.querySelectorAll(".keyboard-row button").forEach((button) => {
@@ -489,14 +555,24 @@ function bindEvents() {
   });
 
   document.querySelector("#checkAnswerButton").addEventListener("click", () => {
-    const exercise = exercises[state.currentExercise];
+    const exercise = getCurrentExercise();
     const result = evaluateAnswer(document.querySelector("#answerInput").value, exercise);
     document.querySelector("#objectiveScore").textContent = result.objective;
     document.querySelector("#comprehensionScore").textContent = result.comprehension;
     document.querySelector("#feedbackText").textContent = result.feedback;
     setJapaneseText(document.querySelector("#betterAnswer"), result.better);
+    document.querySelector("#exerciseExplanation").textContent = exercise.explanation;
     document.querySelector("#feedbackPanel").classList.remove("hidden");
-    applyProgress(exercise, result.objective, result.comprehension);
+    document.querySelectorAll("[data-review]").forEach((button) => {
+      button.onclick = () => {
+        applyProgress(exercise, button.dataset.review, result);
+        const plan = state.dailyPlan.exerciseIds;
+        const index = plan.indexOf(exercise.id);
+        state.currentExerciseId = plan[(index + 1) % plan.length];
+        saveState();
+        renderExercise();
+      };
+    });
   });
 
   document.querySelector("#saveSettingsButton").addEventListener("click", () => {
@@ -507,7 +583,12 @@ function bindEvents() {
     state.settings.renshuuApiKey = nextRenshuuApiKey;
     state.settings.mainGoal = document.querySelector("#mainGoal").value;
     state.settings.dailyMinutes = Number(document.querySelector("#dailyMinutes").value || 10);
+    state.settings.targetJlpt = document.querySelector("#targetJlpt").value;
+    state.settings.studyFocus = document.querySelector("#studyFocus").value;
+    state.dailyPlan = structuredClone(defaultUserState.dailyPlan);
     saveState();
+    ensureDailyPlan();
+    renderAll();
     switchView("today");
   });
 
@@ -565,6 +646,9 @@ function hydrateSettings() {
   document.querySelector("#renshuuApiKey").value = state.settings.renshuuApiKey || "";
   document.querySelector("#mainGoal").value = state.settings.mainGoal || "work";
   document.querySelector("#dailyMinutes").value = state.settings.dailyMinutes || 10;
+  document.querySelector("#targetJlpt").value = state.settings.targetJlpt || "N4";
+  document.querySelector("#studyFocus").value = state.settings.studyFocus || "balanced";
+  document.querySelector("#jlptLevelSelect").value = state.settings.targetJlpt || "N4";
   document.querySelector("#furiganaToggle").classList.toggle("active", Boolean(state.settings.showFurigana));
   document.querySelector("#furiganaToggle").setAttribute(
     "aria-label",
@@ -575,10 +659,24 @@ function hydrateSettings() {
 
 function renderAll() {
   hydrateSettings();
+  ensureDailyPlan();
   renderExercise();
+  renderDailyPlan();
   drawRadar();
   renderMatrix();
   renderRenshuuProgress();
+  renderDictionary();
+}
+
+function renderDictionary(query = "") {
+  const normalized = normalizeAnswer(query);
+  const matches = embeddedDictionary.filter((item) => !normalized || [item.text, item.reading, item.meaning].some((value) => normalizeAnswer(value).includes(normalized))).slice(0, 10);
+  document.querySelector("#dictionaryResults").innerHTML = matches.map((item) => '<button class="dictionary-row" data-insert-dictionary="' + item.text + '"><strong>' + item.text + "</strong><span>" + item.reading + "</span><small>" + item.meaning + (item.note ? " · " + item.note : "") + "</small></button>").join("") || '<p class="muted">No hay coincidencias aún.</p>';
+  document.querySelectorAll("[data-insert-dictionary]").forEach((button) => button.addEventListener("click", () => {
+    const input = document.querySelector("#answerInput");
+    input.value += (input.value ? " " : "") + button.dataset.insertDictionary;
+    input.focus();
+  }));
 }
 
 function setJapaneseText(element, text) {

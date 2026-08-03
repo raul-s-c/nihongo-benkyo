@@ -38,6 +38,18 @@
             <button class="primary-action" id="startSessionButton" data-tooltip="Abre la practica recomendada para tu sesion de hoy.">Empezar</button>
           </div>
 
+          <section class="daily-plan" aria-labelledby="dailyPlanTitle">
+            <div class="section-head compact-head">
+              <div>
+                <p class="eyebrow">Plan personalizado</p>
+                <h3 id="dailyPlanTitle">Tu ruta de hoy</h3>
+              </div>
+              <span class="plan-count" id="planCount">0 / 0</span>
+            </div>
+            <p class="muted" id="planReason"></p>
+            <div class="plan-steps" id="planSteps"></div>
+          </section>
+
           <section class="renshuu-panel" aria-labelledby="renshuuTitle">
             <div class="section-head compact-head">
               <div>
@@ -79,9 +91,13 @@
             <button class="ghost-button" id="newExerciseButton" data-tooltip="Cambia al siguiente ejercicio sin modificar tu progreso.">Nuevo</button>
           </div>
 
+          <div class="practice-meta" id="practiceMeta"></div>
+
           <div class="exercise-card">
             <p class="tag" id="exerciseType">Traduccion JP → ES</p>
             <h3 id="exercisePrompt" class="japanese-text">今日は会社で会議があります。</h3>
+            <button class="help-toggle" id="helpToggle" aria-expanded="false" data-tooltip="Muestra vocabulario, lectura y una pista para este ejercicio.">Ayuda contextual</button>
+            <div class="context-help hidden" id="contextHelp"></div>
             <textarea id="answerInput" lang="ja" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Escribe tu respuesta aqui..."></textarea>
             <div class="ime-panel hidden" id="imePanel" aria-label="Sugerencias japonesas">
               <div class="ime-head">
@@ -114,7 +130,23 @@
             </div>
             <p id="feedbackText"></p>
             <p class="muted" id="betterAnswer"></p>
+            <p class="explanation" id="exerciseExplanation"></p>
+            <div class="review-actions" id="reviewActions">
+              <button class="ghost-button" data-review="review" data-tooltip="Registra que quieres volver a ver este contenido; el plan lo priorizara.">Necesito repasarlo</button>
+              <button class="primary-action" data-review="solid" data-tooltip="Registra que has comprendido el ejercicio y avanza al siguiente.">Lo he entendido</button>
+            </div>
           </div>
+
+          <section class="dictionary-panel" aria-labelledby="dictionaryTitle">
+            <div class="section-head compact-head">
+              <div>
+                <p class="eyebrow">Referencia</p>
+                <h3 id="dictionaryTitle">Diccionario rapido</h3>
+              </div>
+            </div>
+            <input id="dictionarySearch" type="search" autocomplete="off" placeholder="Busca 日本語, romaji o espanol">
+            <div class="dictionary-results" id="dictionaryResults"></div>
+          </section>
         </section>
 
         <section class="view" id="view-progress" aria-labelledby="progressTitle">
@@ -149,6 +181,26 @@
             </select>
           </label>
           <label class="field">
+            <span>Objetivo JLPT</span>
+            <select id="targetJlpt">
+              <option value="N5">Consolidar N5</option>
+              <option value="N4">Llegar a N4</option>
+              <option value="N3">Llegar a N3</option>
+              <option value="N2">Llegar a N2</option>
+              <option value="N1">Llegar a N1</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>En que quieres insistir</span>
+            <select id="studyFocus">
+              <option value="balanced">Equilibrado</option>
+              <option value="work">Japon en la empresa</option>
+              <option value="daily">Vida diaria</option>
+              <option value="writing">Escritura y produccion</option>
+              <option value="grammar">Gramatica y particulas</option>
+            </select>
+          </label>
+          <label class="field">
             <span>Minutos diarios</span>
             <input id="dailyMinutes" type="number" min="3" max="90" step="1">
           </label>
@@ -178,6 +230,7 @@
     </div>
 
     <script src="secrets.local.js"></script>
+    <script src="content.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
