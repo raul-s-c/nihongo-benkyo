@@ -282,3 +282,7 @@ Se anadio una propuesta breve posterior a Renshuu. La app lee que categoria tuvo
 Se elimino la presentacion ambigua de puntuaciones bajas como 15 en objetivo y comprension.
 
 La interfaz ahora distingue entre elementos de la respuesta modelo detectados y evaluacion semantica pendiente. Los ejercicios abiertos no reciben una puntuacion ficticia.
+
+### Actualizacion fiable de la PWA
+
+Se detecto que la PWA podia seguir mostrando un app.js anterior pese a que GitHub Pages hubiese terminado el despliegue. Se incremento la version de cache del service worker, se fuerza una consulta de red sin cache para recursos de la propia app y se versionaron las referencias de contenido y aplicacion en HTML.

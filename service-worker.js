@@ -1,4 +1,4 @@
-const CACHE_NAME = "nihongo-benkyo-v1";
+const CACHE_NAME = "nihongo-benkyo-v2";
 const APP_FILES = ["./", "index.html", "styles.css", "app.js", "manifest.webmanifest", "assets/app-icon.svg"];
 
 self.addEventListener("install", (event) => {
@@ -21,7 +21,7 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, { cache: "no-store" })
       .then((response) => {
         if (response.ok && new URL(event.request.url).origin === self.location.origin) {
           const cachedResponse = response.clone();
