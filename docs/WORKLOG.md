@@ -364,3 +364,7 @@ Para la produccion japonesa etiquetada como gramatica, la correccion local verif
 ### Inicio de sesion y sincronizacion con GitHub
 
 Se registro una OAuth App propia y se desplego un Cloudflare Worker para completar OAuth sin incluir el Client Secret en la PWA. Desde Ajustes, `Conectar GitHub` abre la autorizacion; el Worker valida el estado de la sesion y devuelve el token solo a la pestaña de GitHub Pages que la inicio. Tras autorizar, el progreso se conserva en un Gist privado con el alcance minimo `gist`, se descubre automaticamente desde otro movil u ordenador y se sincroniza despues de cada cambio local. El token sigue siendo local a cada navegador; no forma parte de exportaciones de perfil ni del repositorio.
+
+### Correccion explicable y progreso de sesion
+
+Se sustituyo el renderizado iterativo de furigana por un recorrido de texto que genera cada bloque `ruby` una sola vez; asi se evita que terminos solapados vuelvan a envolver kanji ya anotados. La correccion distingue ahora entre coincidencia con la referencia y comprension probable. Cuando falta un requisito, enumera el termino ausente y detecta sustituciones sencillas de particula, por ejemplo `家に` frente a `家で` al indicar el lugar donde se estudia. La vista Practicar incorpora una barra con el avance real de la sesion diaria y conserva ese contador cuando se abre una practica libre.

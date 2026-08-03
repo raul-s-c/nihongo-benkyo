@@ -20,7 +20,7 @@ test("acepta una conjugacion japonesa del termino requerido", () => {
   });
 
   assert.equal(result.objective, 100);
-  assert.equal(result.comprehension, 85);
+  assert.equal(result.comprehension, 90);
   assert.match(result.feedback, /forma conjugada/);
 });
 
@@ -66,4 +66,28 @@ test("marca una frase japonesa sin final verbal como gramatica basica pendiente"
   assert.equal(result.objective, 100);
   assert.equal(result.comprehension, 55);
   assert.match(result.feedback, /frase japonesa suficiente/);
+});
+
+test("explica una particula de lugar incorrecta sin negar la comprension", () => {
+  const result = evaluator.evaluateAnswer("今日は家に日本語を勉強します。", {
+    type: "Traduce ES → JP",
+    target: "今日|家で|日本語|勉強します",
+    keywords: [],
+    tags: ["writing", "grammar", "particles"],
+    accepted: "今日は家で日本語を勉強します。"
+  });
+
+  assert.equal(result.objective, 75);
+  assert.equal(result.comprehension, 80);
+  assert.match(result.correction, /家.*で.*に/);
+});
+
+test("el furigana no vuelve a envolver texto ya procesado", () => {
+  const start = source.indexOf("function addFurigana");
+  const end = source.indexOf("function escapeRegExp");
+  const renderer = new Function(`${source.slice(start, end)}; return { addFurigana };`)();
+  const output = renderer.addFurigana("日本語を勉強します。", [["日本語", "にほんご"], ["日本", "にほん"], ["勉強", "べんきょう"]]);
+
+  assert.equal((output.match(/<ruby>/g) || []).length, 2);
+  assert.equal(output.slice(1, output.indexOf("</ruby>")).includes("<ruby>"), false);
 });

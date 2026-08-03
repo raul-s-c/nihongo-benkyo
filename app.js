@@ -4,7 +4,7 @@ const GITHUB_SYNC_KEY = "nihongo-benkyo-github-sync-v1";
 const GITHUB_GIST_DESCRIPTION = "Nihongo Benkyo private progress sync";
 const GITHUB_GIST_FILE = "nihongo-benkyo-progress.json";
 const GITHUB_AUTH_PROXY_URL = "https://nihongo-benkyo-auth.raul-nihongo.workers.dev";
-const APP_VERSION = "0.8.1";
+const APP_VERSION = "0.8.2";
 const RENSHUU_PROFILE_URL = "https://api.renshuu.org/v1/profile";
 
 const skills = [
@@ -1428,6 +1428,7 @@ function renderExercise() {
   ensureActivePlanExercise();
   const exercise = getCurrentExercise();
   renderPracticePicker();
+  renderSessionProgress();
   if (!exercise) {
     document.querySelector("#exerciseType").textContent = "Sesion completada";
     document.querySelector("#exercisePrompt").textContent = "No hay otro ejercicio disponible para tu nivel ahora mismo.";
@@ -1452,6 +1453,21 @@ function renderExercise() {
   document.querySelector("#contextHelp").classList.add("hidden");
   document.querySelector("#helpToggle").setAttribute("aria-expanded", "false");
   document.querySelector("#feedbackPanel").classList.add("hidden");
+}
+
+function renderSessionProgress() {
+  const panel = document.querySelector("#sessionProgress");
+  const scheduledIds = state.dailyPlan.exerciseIds.filter((id) => !(state.dailyPlan.skippedIds || []).includes(id));
+  const completed = scheduledIds.filter((id) => state.dailyPlan.completedIds.includes(id)).length;
+  const total = scheduledIds.length;
+  const percent = total ? Math.round((completed / total) * 100) : 0;
+  const isManual = Boolean(state.manualExerciseId);
+  panel.classList.toggle("hidden", !total);
+  document.querySelector("#sessionProgressText").textContent = isManual
+    ? `Practica libre - plan: ${completed} de ${total}`
+    : `Sesion de hoy: ${completed} de ${total}`;
+  document.querySelector("#sessionProgressPercent").textContent = `${percent}%`;
+  document.querySelector("#sessionProgressBar").style.width = `${percent}%`;
 }
 
 function speakJapanese(text) {
@@ -1480,8 +1496,19 @@ function evaluateAnswer(answer, exercise) {
     : null;
   const japaneseCharacters = (trimmed.match(/[ぁ-んァ-ン一-龯]/g) || []).length;
   const grammar = evaluateBasicGrammar(trimmed, exercise, japaneseCharacters);
-  const comprehension = hasCompleteRequiredTerms ? (grammar.valid === false ? 55 : 85) : null;
+  const coverage = checks.length ? matches.length / checks.length : 0;
+  const comprehension = !trimmed
+    ? null
+    : grammar.valid === false
+      ? (matches.length ? 55 : 35)
+      : hasCompleteRequiredTerms
+        ? 90
+        : matches.length
+          ? Math.round(50 + coverage * 40)
+          : grammar.valid === true ? 45 : null;
   const conjugated = matches.find((item) => item.match === "conjugated");
+  const missing = checks.filter((item) => !matches.some((match) => match.item === item));
+  const correction = getMissingReferenceFeedback(trimmed, missing);
 
   return {
     objective,
@@ -1497,8 +1524,23 @@ function evaluateAnswer(answer, exercise) {
             ? "No he reconocido todavía el término requerido o una de sus formas habituales. Puede haber una alternativa correcta que esta comprobación local no sepa interpretar."
             : "Este es un ejercicio abierto: no se puntúa automáticamente para no inventar una nota.")
       : "Necesito una respuesta para poder corregir.",
-    better: `Respuesta modelo: ${exercise.accepted}`
+    better: `Respuesta modelo: ${exercise.accepted}`,
+    correction
   };
+}
+
+function getMissingReferenceFeedback(answer, missing) {
+  if (!missing.length) return "";
+  const replacement = missing.map((reference) => {
+    const expectedParticle = reference.at(-1);
+    const base = reference.slice(0, -1);
+    const baseIndex = answer.indexOf(base);
+    const usedParticle = baseIndex >= 0 ? answer.at(baseIndex + base.length) : "";
+    return base && usedParticle && usedParticle !== expectedParticle
+      ? `Despues de ${base}, usa ${expectedParticle} en lugar de ${usedParticle}.`
+      : "";
+  }).find(Boolean);
+  return replacement || `Falta incluir: ${missing.join(", ")}.`;
 }
 
 function evaluateBasicGrammar(answer, exercise, japaneseCharacters) {
@@ -1698,7 +1740,14 @@ function bindEvents() {
     document.querySelector("#scoreMeaning").textContent = result.comprehension !== null
       ? "Reconocemos el término requerido y una frase japonesa con suficiente contexto. La naturalidad fina sigue necesitando revisión humana o una futura corrección con IA."
       : "No he reconocido suficientes elementos de referencia. Esto no demuestra que tu frase sea incorrecta.";
-    document.querySelector("#feedbackText").textContent = result.feedback;
+    document.querySelector("#objectiveLabel").textContent = result.objective === null ? "sin coincidencia" : "referencia";
+    document.querySelector("#comprehensionLabel").textContent = result.comprehension === null ? "sin estimacion" : "comprension probable";
+    document.querySelector("#scoreMeaning").textContent = result.objective === 100
+      ? "Coincide con los requisitos locales del ejercicio. La naturalidad fina sigue requiriendo revision humana o una futura correccion con IA."
+      : result.comprehension !== null
+        ? "La referencia no coincide por completo, pero la estimacion indica cuanto probablemente se entiende tu frase."
+        : "La app no ha encontrado suficiente evidencia local para estimar la comprension.";
+    document.querySelector("#feedbackText").textContent = [result.feedback, result.correction].filter(Boolean).join(" ");
     setJapaneseText(document.querySelector("#betterAnswer"), result.better);
     document.querySelector("#exerciseExplanation").textContent = exercise.explanation;
     document.querySelector("#feedbackPanel").classList.remove("hidden");
@@ -1880,12 +1929,27 @@ function setJapaneseText(element, text) {
   element.innerHTML = addFurigana(text);
 }
 
-function addFurigana(text) {
-  let output = escapeHtml(text);
-  furiganaEntries.forEach(([kanji, reading]) => {
-    const escapedKanji = escapeRegExp(kanji);
-    output = output.replace(new RegExp(escapedKanji, "g"), `<ruby>${kanji}<rt>${reading}</rt></ruby>`);
+function addFurigana(text, entries = furiganaEntries) {
+  const uniqueEntries = [];
+  const seen = new Set();
+  entries.forEach(([kanji, reading]) => {
+    if (kanji && reading && !seen.has(kanji)) {
+      seen.add(kanji);
+      uniqueEntries.push([kanji, reading]);
+    }
   });
+  uniqueEntries.sort((a, b) => b[0].length - a[0].length);
+  let output = "";
+  for (let index = 0; index < text.length;) {
+    const entry = uniqueEntries.find(([kanji]) => text.startsWith(kanji, index));
+    if (entry) {
+      output += `<ruby>${escapeHtml(entry[0])}<rt>${escapeHtml(entry[1])}</rt></ruby>`;
+      index += entry[0].length;
+    } else {
+      output += escapeHtml(text[index]);
+      index += 1;
+    }
+  }
   return output;
 }
 
